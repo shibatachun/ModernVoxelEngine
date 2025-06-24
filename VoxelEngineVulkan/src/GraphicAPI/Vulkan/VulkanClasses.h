@@ -180,10 +180,17 @@ namespace vulkan {
 	class GraphicPipeline final {
 	public:
 		VULKAN_NON_COPIABLE(GraphicPipeline)
-		GraphicPipeline();
+		GraphicPipeline(std::unordered_map<std::string, asset::shader>& shaders, VkDevice device);
 		~GraphicPipeline();
 	private:
-
+		VkShaderModule CreateShaderModule(const std::vector<char>& code);
+		void CreateGraphicsPipeline(std::string pipelineName);
+	private:
+		std::unordered_map<std::string, VkPipeline> _graphicsPipeline;
+		std::unordered_map<std::string, asset::shader>& _shaders;
+		VkDevice _device;
+		VkShaderModule _shaderModule;
+		
 	};
 	
 	

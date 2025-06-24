@@ -29,7 +29,6 @@ asset::shader asset::ShadersManager::loadVulkanShaderFromFiles(const std::string
 			out_shader.vertexShader = asset::readFile(entry.path);
 		}
 	}
-	
 	return out_shader;
 }
 

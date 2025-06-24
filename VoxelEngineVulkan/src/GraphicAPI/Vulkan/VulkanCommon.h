@@ -27,6 +27,8 @@ private: \
 #include <set>
 #include <string>
 
+#include "../../ResourcesManager/AssetManager.h"
+
 namespace vulkan {
 
 

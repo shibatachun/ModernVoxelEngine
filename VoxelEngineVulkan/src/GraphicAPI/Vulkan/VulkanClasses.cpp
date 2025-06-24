@@ -686,3 +686,68 @@ uint32_t vulkan::SwapChain::ChooseImageCount(const VkSurfaceCapabilitiesKHR& cap
 	}
 	return imageCount;
 }
+
+
+
+vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader>& shaders,  VkDevice device) : _shaders(shaders), _device(device)
+{
+
+}
+
+vulkan::GraphicPipeline::~GraphicPipeline()
+{
+}
+
+VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<char>& code)
+{
+	
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = code.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+	VkShaderModule shaderModule;
+	Check(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule), "Create shader Module");
+	return shaderModule;
+	
+}
+
+void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
+{
+	if (_shaders[pipelineName].fragmentShader.empty() || _shaders[pipelineName].vertexShader.empty())
+	{
+		std::cerr << "shader file" << pipelineName << "is not exist." << std::endl;
+		return;
+	}
+	//创建Shader Module
+	VkShaderModule vertShaderModule = CreateShaderModule(_shaders[pipelineName].vertexShader);
+	VkShaderModule fragShaderModule = CreateShaderModule(_shaders[pipelineName].fragmentShader);
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertShaderStageInfo.module = vertShaderModule;
+	vertShaderStageInfo.pName = pipelineName.c_str();
+
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = fragShaderModule;
+	fragShaderStageInfo.pName = pipelineName.c_str();
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	//创建动态状态
+	std::vector<VkDynamicState> dynamicStates = {
+	VK_DYNAMIC_STATE_VIEWPORT,
+	VK_DYNAMIC_STATE_SCISSOR
+	};
+	VkPipelineDynamicStateCreateInfo dynamicState{};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
+	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
+
+}
+
+
