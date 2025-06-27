@@ -1,5 +1,6 @@
 #pragma once
 #include "../IRenderer.h"
+#include "../../ResourcesManager/AssetManager.h"
 #include "VulkanClasses.h"
 
 namespace vulkan
@@ -10,7 +11,7 @@ namespace vulkan
 	{
 	public:
 		VULKAN_NON_COPIABLE(VulkanRenderer)
-		VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentMode);
+		VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentMode,asset::AssetManager& assetManager);
 		bool Init() override;
 		void DrawFrame() override;
 		void Cleanup() override;
@@ -18,17 +19,21 @@ namespace vulkan
 	private:
 		const VkPresentModeKHR _presentMode;
 		GLFWwindow* _window;
+		asset::AssetManager& _assetManager;
 		std::unique_ptr<class vulkan::Instance> _instance;
 		std::unique_ptr<class vulkan::Surface> _surface;
 		std::unique_ptr<class vulkan::DebugUtilsMessenger> _debugMessenger;
 		std::unique_ptr<class vulkan::Device> _devices;
-		std::unique_ptr<class vulkan::SwapChain> _swaphcin;
+		std::unique_ptr<class vulkan::SwapChain> _swapchin;
+		std::unique_ptr<class vulkan::GraphicPipeline> _graphicsPipline;
+		
 		VkRenderPass _renderPass = VK_NULL_HANDLE;
 		
-		VkPipeline _graphicsPipline = VK_NULL_HANDLE;
+		
 	private:
 		void SetPhysicalDevices();
 		void SetSwapChain();
+		void CreateGraphicPipeline();
 		bool isMinimized() const;
 
 

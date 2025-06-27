@@ -148,6 +148,7 @@ namespace vulkan {
 	public:
 		VULKAN_NON_COPIABLE(SwapChain)
 		SwapChain(const Device& device, VkPresentModeKHR presentationMode);
+		const VkExtent2D GetSwapchainExtent() const { return _extent; };
 		~SwapChain();
 	private:
 		struct SupportDetails
@@ -171,7 +172,7 @@ namespace vulkan {
 		uint32_t _minImageCount;
 		VkPresentModeKHR _presentMode;
 		VkFormat _format;
-		VkExtent2D _extent{};
+		VkExtent2D _extent;
 		std::vector<VkImage> _images;
 		std::vector<VkImageView> _imageViews;
 
@@ -180,7 +181,7 @@ namespace vulkan {
 	class GraphicPipeline final {
 	public:
 		VULKAN_NON_COPIABLE(GraphicPipeline)
-		GraphicPipeline(std::unordered_map<std::string, asset::shader>& shaders, VkDevice device);
+		GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const  SwapChain& swapchain);
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -190,6 +191,8 @@ namespace vulkan {
 		std::unordered_map<std::string, asset::shader>& _shaders;
 		VkDevice _device;
 		VkShaderModule _shaderModule;
+		const SwapChain& _swapChain;
+		VkPipelineLayout _pipelineLayout;
 		
 	};
 	

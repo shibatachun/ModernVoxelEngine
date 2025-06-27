@@ -67,9 +67,14 @@ void vulkan::VulkanRenderer::SetSwapChain()
 		glfwWaitEvents();
 	}
 
-	_swaphcin.reset(new vulkan::SwapChain(*_devices, _presentMode));
+	_swapchin.reset(new vulkan::SwapChain(*_devices, _presentMode));
 
 
+}
+
+void vulkan::VulkanRenderer::CreateGraphicPipeline()
+{
+	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchin));
 }
 
 bool vulkan::VulkanRenderer::isMinimized() const
@@ -80,7 +85,7 @@ bool vulkan::VulkanRenderer::isMinimized() const
 	return width==0 && height==0;
 }
 
-vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode) :_window(window), _presentMode(presentmode)
+vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(presentmode), _assetManager(assetManager)
 {
 	if (!Init())
 	{
