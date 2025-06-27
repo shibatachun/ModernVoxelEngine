@@ -3,7 +3,7 @@
 
 
 
-std::unique_ptr<IRenderer> CreateRenderer(API api, GLFWwindow* windows, VkPresentModeKHR presentMode, asset::AssetManager assetManager)
+std::unique_ptr<IRenderer> CreateRenderer(API api, GLFWwindow* windows, VkPresentModeKHR presentMode, asset::AssetManager& assetManager)
 {
 	switch (api)
 	{

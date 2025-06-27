@@ -7,12 +7,13 @@
 
 
 std::unique_ptr<asset::AssetManager> g_assetManager;
+
 int main() {
 	uint32_t width = 1280;
 	uint32_t height = 800;
 	GLFWwindow* window = initWindow("GLFW example", width, height);
 	API api = API::VULKAN;
-	auto renderer = CreateRenderer(api, window, VK_PRESENT_MODE_FIFO_RELAXED_KHR);	
+	
 	g_assetManager.reset(new asset::AssetManager());
 	
 	if (!g_assetManager->Init())
@@ -20,6 +21,7 @@ int main() {
 		std::cerr << "Failed to initialize assetManager" << std::endl;
 		return -1;
 	}
+	auto renderer = CreateRenderer(api, window, VK_PRESENT_MODE_FIFO_RELAXED_KHR, *g_assetManager);
 	auto _shaderAssets = g_assetManager->getShaderAssets();
 	while (!glfwWindowShouldClose(window))
 	{

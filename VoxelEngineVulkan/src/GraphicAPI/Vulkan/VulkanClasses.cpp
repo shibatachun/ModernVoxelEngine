@@ -697,6 +697,7 @@ uint32_t vulkan::SwapChain::ChooseImageCount(const VkSurfaceCapabilitiesKHR& cap
 vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const SwapChain& swapchain)
 	: _shaders(shaders), _device(device), _swapChain(swapchain)
 {
+	CreateGraphicsPipeline("Triangle_Vulkan");
 }
 
 vulkan::GraphicPipeline::~GraphicPipeline()
