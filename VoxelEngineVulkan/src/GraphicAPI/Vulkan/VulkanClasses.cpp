@@ -688,20 +688,80 @@ uint32_t vulkan::SwapChain::ChooseImageCount(const VkSurfaceCapabilitiesKHR& cap
 	return imageCount;
 }
 
+vulkan::RenderPass::RenderPass(const SwapChain& swapchain) : _swapChain(swapchain)
+{
+	VkAttachmentDescription colorAttachment{};
+	colorAttachment.format = _swapChain.GetSwaphchainImageFormat();
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	//关于stencil data的操作 深度缓冲等等
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
+	//在swapchian 里面的image需要被转换成适合的layouts
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+	VkAttachmentReference colorAttachmentRef{};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	//创建subpass，一个render pass有一个或多个subpass，用于存储渲染操作
+	VkSubpassDescription subpass{};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
 
+	//开始创建renderPass
+	VkRenderPassCreateInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	Check(vkCreateRenderPass(_swapChain.GetDevice().Handle(), &renderPassInfo, nullptr, &_renderPass), "Create Render Pass");
+}
 
+vulkan::RenderPass::~RenderPass()
+{
 
-vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const SwapChain& swapchain)
-	: _shaders(shaders), _device(device), _swapChain(swapchain)
+}
+
+void vulkan::RenderPass::Destroy()
+{
+	vkDestroyRenderPass(_swapChain.GetDevice().Handle(), _renderPass, nullptr);
+}
+
+vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
+	: _shaders(shaders), _device(device), _swapChain(swapchain),_renderPass(renderpass)
 {
 	CreateGraphicsPipeline("Triangle_Vulkan");
 }
 
+void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
+{
+
+	if (_graphicsPipeline[pipelineName])
+	{
+		vkDestroyPipeline(_device, _graphicsPipeline[pipelineName], nullptr);
+	}
+	if (_graphicsPipelineLayout[pipelineName])
+	{
+		vkDestroyPipelineLayout(_device, _graphicsPipelineLayout[pipelineName], nullptr);
+	}
+}
+
 vulkan::GraphicPipeline::~GraphicPipeline()
 {
+	for (auto &graphicPipeline : _graphicsPipeline)
+	{
+		vkDestroyPipeline(_device, graphicPipeline.second, nullptr);
+	}
+	for (auto &graphicPipelineLayout : _graphicsPipelineLayout)
+	{
+		vkDestroyPipelineLayout(_device, graphicPipelineLayout.second, nullptr);
+	}
 }
 
 VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<char>& code)
@@ -731,17 +791,15 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	vertShaderStageInfo.module = vertShaderModule;
-	vertShaderStageInfo.pName = pipelineName.c_str();
+	vertShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
 	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fragShaderStageInfo.module = fragShaderModule;
-	fragShaderStageInfo.pName = pipelineName.c_str();
+	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-
 
 
 	//顶点输入，用来输入到pipeline中的vertex shader的vertex信息
@@ -844,9 +902,31 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_pipelineLayout), "Create Pipeline Layout!");
+	std::string pipelineLayoutNameInfo = "Create pipeline for ";
+	pipelineLayoutNameInfo += pipelineName;
+	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_graphicsPipelineLayout[pipelineName]), pipelineLayoutNameInfo.c_str());
 	
+	VkGraphicsPipelineCreateInfo pipelineInfo{};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = nullptr;
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
+	pipelineInfo.layout = _graphicsPipelineLayout[pipelineName];
+	pipelineInfo.renderPass = _renderPass.GetRenderPass();
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //optional
+	pipelineInfo.basePipelineIndex = -1; //Optional
+	std::string pipelineNameInfo = "Create pipeline for ";
+	pipelineNameInfo += pipelineName;
+	Check(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &_graphicsPipeline[pipelineName]), pipelineNameInfo.c_str());
+
+
 	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
 

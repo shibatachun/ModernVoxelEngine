@@ -26,8 +26,8 @@ namespace vulkan
 		std::unique_ptr<class vulkan::Device> _devices;
 		std::unique_ptr<class vulkan::SwapChain> _swapchin;
 		std::unique_ptr<class vulkan::GraphicPipeline> _graphicsPipline;
+		std::unique_ptr<class vulkan::RenderPass> _renderPass;
 		
-		VkRenderPass _renderPass = VK_NULL_HANDLE;
 		
 		
 	private:

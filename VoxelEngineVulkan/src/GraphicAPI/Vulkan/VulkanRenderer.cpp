@@ -75,7 +75,8 @@ void vulkan::VulkanRenderer::SetSwapChain()
 
 void vulkan::VulkanRenderer::CreateGraphicPipeline()
 {
-	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchin));
+	_renderPass.reset(new vulkan::RenderPass(*_swapchin));
+	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchin,*_renderPass));
 }
 
 bool vulkan::VulkanRenderer::isMinimized() const

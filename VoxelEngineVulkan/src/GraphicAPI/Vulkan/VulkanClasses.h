@@ -149,6 +149,8 @@ namespace vulkan {
 		VULKAN_NON_COPIABLE(SwapChain)
 		SwapChain(const Device& device, VkPresentModeKHR presentationMode);
 		const VkExtent2D GetSwapchainExtent() const { return _extent; };
+		const VkFormat GetSwaphchainImageFormat() const { return _format; };
+		const Device& GetDevice() const { return _device; };
 		~SwapChain();
 	private:
 		struct SupportDetails
@@ -178,10 +180,30 @@ namespace vulkan {
 
 	};
 
+	class RenderPass final {
+	public:
+
+		VULKAN_NON_COPIABLE(RenderPass)
+		RenderPass(const SwapChain& swapchain);
+		~RenderPass();
+		const VkRenderPass GetRenderPass() const { return _renderPass; }
+		void Destroy();
+
+	private:
+		const SwapChain& _swapChain;
+		VkRenderPass _renderPass;
+
+	};
+
 	class GraphicPipeline final {
 	public:
 		VULKAN_NON_COPIABLE(GraphicPipeline)
-		GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const  SwapChain& swapchain);
+		GraphicPipeline(
+			std::unordered_map<std::string, 
+			asset::shader> shaders, VkDevice device,
+			const  SwapChain& swapchain, 
+			const RenderPass& renderpass);
+		void Destroy(std::string pipelineName);
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -189,10 +211,12 @@ namespace vulkan {
 	private:
 		std::unordered_map<std::string, VkPipeline> _graphicsPipeline;
 		std::unordered_map<std::string, asset::shader>& _shaders;
+		std::unordered_map<std::string, VkPipelineLayout> _graphicsPipelineLayout;
 		VkDevice _device;
 		VkShaderModule _shaderModule;
 		const SwapChain& _swapChain;
-		VkPipelineLayout _pipelineLayout;
+		const RenderPass& _renderPass;
+
 		
 	};
 	
