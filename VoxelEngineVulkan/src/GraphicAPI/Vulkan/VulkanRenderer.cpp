@@ -21,10 +21,20 @@ void vulkan::VulkanRenderer::DrawFrame()
 
 void vulkan::VulkanRenderer::Cleanup()
 {
-	vkDeviceWaitIdle(_devices->Handle());
+	_devices->WaitIdle();
 	for (auto framebuffer : _swapChainFramebuffers) {
 		vkDestroyFramebuffer(_devices->Handle(), framebuffer, nullptr);
 	}
+	_renderPass->Destroy();
+	_swapchain.reset();
+	_graphicsPipline.reset();
+	_devices.reset();
+	_surface.reset();
+#ifdef _DEBUG
+	_debugMessenger.reset();
+#endif // _DEBUG
+
+	_instance.reset();
 }
 
 void vulkan::VulkanRenderer::SetPhysicalDevices()
