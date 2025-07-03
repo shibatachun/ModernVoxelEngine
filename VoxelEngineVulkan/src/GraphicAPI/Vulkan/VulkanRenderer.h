@@ -24,9 +24,11 @@ namespace vulkan
 		std::unique_ptr<class vulkan::Surface> _surface;
 		std::unique_ptr<class vulkan::DebugUtilsMessenger> _debugMessenger;
 		std::unique_ptr<class vulkan::Device> _devices;
-		std::unique_ptr<class vulkan::SwapChain> _swapchin;
+		std::unique_ptr<class vulkan::SwapChain> _swapchain;
 		std::unique_ptr<class vulkan::GraphicPipeline> _graphicsPipline;
 		std::unique_ptr<class vulkan::RenderPass> _renderPass;
+
+		std::vector<VkFramebuffer> _swapChainFramebuffers;
 		
 		
 		
@@ -34,6 +36,7 @@ namespace vulkan
 		void SetPhysicalDevices();
 		void SetSwapChain();
 		void CreateGraphicPipeline();
+		void CreateFrameBuffer();
 		bool isMinimized() const;
 
 

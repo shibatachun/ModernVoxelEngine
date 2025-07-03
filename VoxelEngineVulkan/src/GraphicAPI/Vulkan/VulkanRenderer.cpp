@@ -8,6 +8,7 @@ bool vulkan::VulkanRenderer::Init()
 	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
 	SetPhysicalDevices();
 	CreateGraphicPipeline();
+	CreateFrameBuffer();
 	
 	return true;
 
@@ -20,6 +21,10 @@ void vulkan::VulkanRenderer::DrawFrame()
 
 void vulkan::VulkanRenderer::Cleanup()
 {
+	vkDeviceWaitIdle(_devices->Handle());
+	for (auto framebuffer : _swapChainFramebuffers) {
+		vkDestroyFramebuffer(_devices->Handle(), framebuffer, nullptr);
+	}
 }
 
 void vulkan::VulkanRenderer::SetPhysicalDevices()
@@ -68,15 +73,38 @@ void vulkan::VulkanRenderer::SetSwapChain()
 		glfwWaitEvents();
 	}
 
-	_swapchin.reset(new vulkan::SwapChain(*_devices, _presentMode));
+	_swapchain.reset(new vulkan::SwapChain(*_devices, _presentMode));
 
 
 }
 
 void vulkan::VulkanRenderer::CreateGraphicPipeline()
 {
-	_renderPass.reset(new vulkan::RenderPass(*_swapchin));
-	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchin,*_renderPass));
+	_renderPass.reset(new vulkan::RenderPass(*_swapchain));
+	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchain,*_renderPass));
+}
+
+void vulkan::VulkanRenderer::CreateFrameBuffer()
+{
+	_swapChainFramebuffers.resize(_swapchain->GetImageViews().size());
+	auto ImageViewSize = _swapchain->GetImageViews().size();
+	for (size_t i = 0; i < ImageViewSize; i++)
+	{
+		VkImageView attachments[] = {
+			_swapchain->GetImageViews()[i]
+		};
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = _renderPass->GetRenderPass();
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = _swapchain->GetSwapchainExtent().width;
+		framebufferInfo.height = _swapchain->GetSwapchainExtent().height;
+		framebufferInfo.layers = 1;
+		Check(vkCreateFramebuffer(_devices->Handle(), &framebufferInfo, nullptr, &_swapChainFramebuffers[i]), "Create framebuffer!");
+
+	}
+	
 }
 
 bool vulkan::VulkanRenderer::isMinimized() const

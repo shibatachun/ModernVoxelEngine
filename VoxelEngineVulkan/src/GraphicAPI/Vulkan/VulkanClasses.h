@@ -150,6 +150,7 @@ namespace vulkan {
 		SwapChain(const Device& device, VkPresentModeKHR presentationMode);
 		const VkExtent2D GetSwapchainExtent() const { return _extent; };
 		const VkFormat GetSwaphchainImageFormat() const { return _format; };
+		std::vector<VkImageView>& GetImageViews() { return _imageViews; };
 		const Device& GetDevice() const { return _device; };
 		~SwapChain();
 	private:

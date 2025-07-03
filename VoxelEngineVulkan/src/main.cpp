@@ -28,6 +28,7 @@ int main() {
 		glfwPollEvents();
 		//renderer->DrawFrame();
 	}
+	renderer->Cleanup();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
