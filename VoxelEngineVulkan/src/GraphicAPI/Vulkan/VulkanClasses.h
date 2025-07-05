@@ -200,11 +200,12 @@ namespace vulkan {
 	public:
 		VULKAN_NON_COPIABLE(GraphicPipeline)
 		GraphicPipeline(
-			std::unordered_map<std::string, 
-			asset::shader> shaders, VkDevice device,
+			std::unordered_map<std::string, asset::shader> shaders, 
+			VkDevice device,
 			const  SwapChain& swapchain, 
 			const RenderPass& renderpass);
 		void Destroy(std::string pipelineName);
+		std::unordered_map<std::string, VkPipeline> GetGraphicsPipeline() { return _graphicsPipeline; };
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -220,8 +221,7 @@ namespace vulkan {
 
 		
 	};
-	
-	
+		
 }
 
 

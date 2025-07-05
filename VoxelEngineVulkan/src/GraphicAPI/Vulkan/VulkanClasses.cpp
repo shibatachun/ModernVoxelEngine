@@ -125,7 +125,6 @@ void vulkan::Instance::CheckValidationLayerSupport(const std::vector<const char*
 	}
 }
 
-
 vulkan::Surface::Surface(const Instance& instance) : instance_(instance)
 {
 	instance_.getWindow();
@@ -139,7 +138,6 @@ vulkan::Surface::~Surface()
 		vkDestroySurfaceKHR(instance_.Handle(), surface_, nullptr);
 	}
 }
-
 
 namespace
 {
@@ -336,7 +334,6 @@ vulkan::DebugUtils::DebugUtils(VkInstance instance) :
 #endif
 }
 
-
 namespace
 {
 	std::vector<VkQueueFamilyProperties>::const_iterator FindQueue(
@@ -482,8 +479,6 @@ void vulkan::Device::CheckRequiredExtensions(VkPhysicalDevice physicalDevice, co
 		throw (std::runtime_error("missing required extensions: " + extensions));
 	}
 }
-
-
 
 vulkan::SwapChain::SwapChain(const Device& device, VkPresentModeKHR presentationMode) : _physicalDevice(device.PhysicalDevice()), _device(device)
 {

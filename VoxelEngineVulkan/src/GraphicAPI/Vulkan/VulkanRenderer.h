@@ -5,8 +5,6 @@
 
 namespace vulkan
 {
-
-
 	class VulkanRenderer : public IRenderer
 	{
 	public:
@@ -29,6 +27,8 @@ namespace vulkan
 		std::unique_ptr<class vulkan::RenderPass> _renderPass;
 
 		std::vector<VkFramebuffer> _swapChainFramebuffers;
+		VkCommandPool _commandPool;
+		VkCommandBuffer _commandBuffer;
 		
 		
 		
@@ -37,6 +37,9 @@ namespace vulkan
 		void SetSwapChain();
 		void CreateGraphicPipeline();
 		void CreateFrameBuffer();
+		void CreateCommandPool();
+		void CreateCommandBuffer();
+		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
 		bool isMinimized() const;
 
 
