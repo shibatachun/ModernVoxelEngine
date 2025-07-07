@@ -9,6 +9,9 @@ bool vulkan::VulkanRenderer::Init()
 	SetPhysicalDevices();
 	CreateGraphicPipeline();
 	CreateFrameBuffer();
+	CreateCommandPool();
+	CreateCommandBuffer();
+	CreateSyncObjects();
 	
 	return true;
 	 
@@ -16,12 +19,51 @@ bool vulkan::VulkanRenderer::Init()
 
 void vulkan::VulkanRenderer::DrawFrame()
 {
-	std::cout << "yo, wasup" << std::endl;
+	vkWaitForFences(_devices->Handle(), 1, &_inFlightFence, VK_TRUE, UINT64_MAX);
+	vkResetFences(_devices->Handle(), 1, &_inFlightFence);
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(_devices->Handle(), _swapchain->Handle(), UINT64_MAX, _imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	vkResetCommandBuffer(_commandBuffer, 0);
+	recordCommandBuffer(_commandBuffer, imageIndex,"Triangle_Vulkan");
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { _imageAvailableSemaphore };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &_commandBuffer;
+	
+	VkSemaphore signalSemaphores[] = { _renderFinishedSemaphore };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	Check(vkQueueSubmit(_devices->GraphicsQueue(), 1, &submitInfo, _inFlightFence), "Submit to graphics queue family");
+
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { _swapchain->Handle() };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr;
+	vkQueuePresentKHR(_devices->PresentQueue(), &presentInfo);
+
+	
 }
 
 void vulkan::VulkanRenderer::Cleanup()
 {
+
 	_devices->WaitIdle();
+	vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphore, nullptr);
+	vkDestroySemaphore(_devices->Handle(), _renderFinishedSemaphore, nullptr);
+	vkDestroyFence(_devices->Handle(), _inFlightFence, nullptr);
 	for (auto framebuffer : _swapChainFramebuffers) {
 		vkDestroyFramebuffer(_devices->Handle(), framebuffer, nullptr);
 	}
@@ -181,6 +223,20 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 
 	Check(vkEndCommandBuffer(_commandBuffer), "Record command buffer!");
 
+}
+
+void vulkan::VulkanRenderer::CreateSyncObjects()
+{
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_imageAvailableSemaphore), "Create Image avaiable Semaphore");
+	Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_renderFinishedSemaphore), "Create render finish Semaphore");
+	Check(vkCreateFence(_devices->Handle(), &fenceInfo, nullptr, &_inFlightFence), "Create fence");
 }
 
 bool vulkan::VulkanRenderer::isMinimized() const

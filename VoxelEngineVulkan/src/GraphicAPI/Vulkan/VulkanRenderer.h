@@ -29,6 +29,9 @@ namespace vulkan
 		std::vector<VkFramebuffer> _swapChainFramebuffers;
 		VkCommandPool _commandPool;
 		VkCommandBuffer _commandBuffer;
+		VkSemaphore _imageAvailableSemaphore;
+		VkSemaphore _renderFinishedSemaphore;
+		VkFence _inFlightFence;
 		
 		
 		
@@ -40,6 +43,7 @@ namespace vulkan
 		void CreateCommandPool();
 		void CreateCommandBuffer();
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
+		void CreateSyncObjects();
 		bool isMinimized() const;
 
 

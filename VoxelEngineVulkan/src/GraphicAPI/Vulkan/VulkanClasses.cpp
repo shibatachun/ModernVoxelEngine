@@ -429,8 +429,10 @@ vulkan::Device::Device(
 	Check(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &device_), "create logical device");
 
 	_debugUtils.SetDevice(device_);
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         (device_, graphicsFamilyIndex_, 0, &graphicsQueue_);
+	          
+	vkGetDeviceQueue(device_, graphicsFamilyIndex_, 0, &graphicsQueue_);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (device_, graphicsFamilyIndex_, 0, &graphicsQueue_);
 	vkGetDeviceQueue(device_, presentFamilyIndex_, 0, &presentQueue_);
+
 
 
 }
@@ -708,6 +710,14 @@ vulkan::RenderPass::RenderPass(const SwapChain& swapchain) : _swapChain(swapchai
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 
+	VkSubpassDependency dependency{};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	//这里指向我们的subpass，从外部进来，转换到我们的subpass的layout
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	//开始创建renderPass
 	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -715,6 +725,8 @@ vulkan::RenderPass::RenderPass(const SwapChain& swapchain) : _swapChain(swapchai
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
 	Check(vkCreateRenderPass(_swapChain.GetDevice().Handle(), &renderPassInfo, nullptr, &_renderPass), "Create Render Pass");
 }
 

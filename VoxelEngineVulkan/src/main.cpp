@@ -26,7 +26,7 @@ int main() {
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
-		//renderer->DrawFrame();
+		renderer->DrawFrame();
 	}
 	renderer->Cleanup();
 	glfwDestroyWindow(window);
