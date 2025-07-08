@@ -1,6 +1,5 @@
 #include "utils/GlfwHelper.h"
-#include "GraphicAPI/RenderFactory.h"
-#include "ResourcesManager/AssetManager.h"
+#include "Application.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h> 
@@ -8,6 +7,11 @@
 
 std::unique_ptr<asset::AssetManager> g_assetManager;
 
+
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto app = reinterpret_cast<IRenderer*>(glfwGetWindowUserPointer(window));
+	//app->framebufferResized = true;
+}
 int main() {
 	uint32_t width = 1280;
 	uint32_t height = 800;

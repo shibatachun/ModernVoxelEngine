@@ -484,6 +484,11 @@ void vulkan::Device::CheckRequiredExtensions(VkPhysicalDevice physicalDevice, co
 
 vulkan::SwapChain::SwapChain(const Device& device, VkPresentModeKHR presentationMode) : _physicalDevice(device.PhysicalDevice()), _device(device)
 {
+	CreateSwapChain(presentationMode);
+}
+
+void vulkan::SwapChain::CreateSwapChain(VkPresentModeKHR presentationMode)
+{
 	const auto details = QuerySwapChainSupport(_physicalDevice, _device.VulkanSurface().Handle());
 	if (details.Formats.empty() || details.PresentModes.empty())
 	{
@@ -511,13 +516,13 @@ vulkan::SwapChain::SwapChain(const Device& device, VkPresentModeKHR presentation
 	.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 	.presentMode = actualPresentMode,
 	.clipped = VK_TRUE,
-	.oldSwapchain = nullptr};
+	.oldSwapchain = nullptr };
 
 	//如果渲染和呈现用的是同一个队列族，用 独占（EXCLUSIVE） 模式，性能最好。
 	//如果它们在不同的队列族，就用 并发（CONCURRENT） 模式，并把两条队列族索引都告诉 Vulkan，让它自动帮你管理图像的访问与同步。
 	if (_device.GraphicsFamilyIndex() != _device.PresentFamilyIndex())
 	{
-		uint32_t queueFamilyIndices[] = { _device.GraphicsFamilyIndex(), device.PresentFamilyIndex() };
+		uint32_t queueFamilyIndices[] = { _device.GraphicsFamilyIndex(), _device.PresentFamilyIndex() };
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
 		createInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -542,17 +547,17 @@ vulkan::SwapChain::SwapChain(const Device& device, VkPresentModeKHR presentation
 		throw std::runtime_error("unable find vk image");
 	}
 	_imageViews.resize(_images.size());
-	for (size_t i = 0; i < _imageViews.size(); i ++ )
+	for (size_t i = 0; i < _imageViews.size(); i++)
 	{
 		VkImageViewCreateInfo createInfo{ };
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-		createInfo.image = _images[i],
-		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D,
-		createInfo.format = surfaceFormat.format,
-		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.image = _images[i],
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D,
+			createInfo.format = surfaceFormat.format,
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		createInfo.subresourceRange.baseMipLevel = 0;
 		createInfo.subresourceRange.levelCount = 1;
@@ -571,8 +576,43 @@ vulkan::SwapChain::SwapChain(const Device& device, VkPresentModeKHR presentation
 
 	_format = surfaceFormat.format;
 	_extent = extent;
-
 }
+
+void vulkan::SwapChain::CreateFrameBuffer(VkRenderPass renderPass)
+{
+	_swapChainFramebuffers.resize(_imageViews.size());
+	auto ImageViewSize = _imageViews.size();
+	for (size_t i = 0; i < ImageViewSize; i++)
+	{
+		VkImageView attachments[] = {
+			_imageViews[i]
+		};
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = _extent.width;
+		framebufferInfo.height = _extent.height;
+		framebufferInfo.layers = 1;
+		Check(vkCreateFramebuffer(_device.Handle(), &framebufferInfo, nullptr, &_swapChainFramebuffers[i]), "Create framebuffer!");
+
+	}
+}
+
+void vulkan::SwapChain::CleanUpSwapChain()
+{
+	for (size_t i = 0; i < _swapChainFramebuffers.size(); i++) {
+		vkDestroyFramebuffer(_device.Handle(), _swapChainFramebuffers[i], nullptr);
+	}
+
+	for (size_t i = 0; i < _imageViews.size(); i++) {
+		vkDestroyImageView(_device.Handle(), _imageViews[i], nullptr);
+	}
+
+	vkDestroySwapchainKHR(_device.Handle(), _swapChain, nullptr);
+}
+
 
 vulkan::SwapChain::~SwapChain()
 {

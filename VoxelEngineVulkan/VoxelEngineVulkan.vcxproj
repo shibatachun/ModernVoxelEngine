@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ResourcesManager\Shaders.cpp" />
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp" />
     <ClCompile Include="src\GraphicAPI\DirectX\D3DClasses.cpp" />
@@ -145,6 +146,7 @@
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\ResourcesManager\Shaders.h" />
     <ClInclude Include="src\ResourcesManager\AssetCommonUtils.h" />
     <ClInclude Include="src\ResourcesManager\AssetManager.h" />

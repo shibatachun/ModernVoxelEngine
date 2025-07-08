@@ -18,21 +18,24 @@ namespace vulkan
 		const VkPresentModeKHR _presentMode;
 		GLFWwindow* _window;
 		asset::AssetManager& _assetManager;
-		std::unique_ptr<class vulkan::Instance> _instance;
-		std::unique_ptr<class vulkan::Surface> _surface;
-		std::unique_ptr<class vulkan::DebugUtilsMessenger> _debugMessenger;
-		std::unique_ptr<class vulkan::Device> _devices;
-		std::unique_ptr<class vulkan::SwapChain> _swapchain;
-		std::unique_ptr<class vulkan::GraphicPipeline> _graphicsPipline;
-		std::unique_ptr<class vulkan::RenderPass> _renderPass;
+		std::unique_ptr<class vulkan::Instance>					_instance;
+		std::unique_ptr<class vulkan::Surface>					_surface;
+		std::unique_ptr<class vulkan::DebugUtilsMessenger>		_debugMessenger;
+		std::unique_ptr<class vulkan::Device>					_devices;
+		std::unique_ptr<class vulkan::SwapChain>				_swapchain;
+		std::unique_ptr<class vulkan::GraphicPipeline>			_graphicsPipline;
+		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
 
-		std::vector<VkFramebuffer> _swapChainFramebuffers;
-		VkCommandPool _commandPool;
-		VkCommandBuffer _commandBuffer;
-		VkSemaphore _imageAvailableSemaphore;
-		VkSemaphore _renderFinishedSemaphore;
-		VkFence _inFlightFence;
 		
+		VkCommandPool											_commandPool;
+
+		std::vector<VkCommandBuffer>							_commandBuffers;
+		std::vector<VkSemaphore>								_imageAvailableSemaphores;
+		std::vector<VkSemaphore>								_renderFinishedSemaphores;
+		std::vector<VkFence>									_inFlightFences;
+		
+		bool													_framebufferResized = false;
+		uint32_t												_currentFrame = 0;
 		
 		
 	private:
@@ -44,6 +47,7 @@ namespace vulkan
 		void CreateCommandBuffer();
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
 		void CreateSyncObjects();
+		void recreateSwapChain();
 		bool isMinimized() const;
 
 
