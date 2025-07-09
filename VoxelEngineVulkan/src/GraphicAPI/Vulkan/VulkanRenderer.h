@@ -13,6 +13,10 @@ namespace vulkan
 		bool Init() override;
 		void DrawFrame() override;
 		void Cleanup() override;
+		API getAPI() const override { return API::VULKAN; }
+		
+	public:
+		bool													_framebufferResized = false;
 
 	private:
 		const VkPresentModeKHR _presentMode;
@@ -34,7 +38,7 @@ namespace vulkan
 		std::vector<VkSemaphore>								_renderFinishedSemaphores;
 		std::vector<VkFence>									_inFlightFences;
 		
-		bool													_framebufferResized = false;
+		
 		uint32_t												_currentFrame = 0;
 		
 		

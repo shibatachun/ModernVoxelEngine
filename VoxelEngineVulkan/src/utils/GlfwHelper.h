@@ -4,7 +4,7 @@
 
 
 
-GLFWwindow* initWindow(const char* windowTitle, uint32_t& outWidth, uint32_t& outHeight)
+inline GLFWwindow* initWindow(const char* windowTitle, uint32_t& outWidth, uint32_t& outHeight)
 {
 	glfwSetErrorCallback([](int error, const char* description)
 		{

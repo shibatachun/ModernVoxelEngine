@@ -5,8 +5,12 @@
 #include "GraphicAPI/RenderFactory.h"
 #include "ResourcesManager/AssetManager.h"
 #include "utils/GlfwHelper.h"
+
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h> 
 class Application
 {
+public:
 	Application(GLFWwindow* window);
 	~Application();
 	Application(const Application&) = delete;
@@ -24,9 +28,13 @@ public:
 	void Init();
 	void InitRendererBackend(API api);
 	void InitAssetManager();
-	
+	void Resize();
+	void Draw();
+	void Finish();
+	void SetWindowUserPointer();
+
 public:
-	const bool _frameBufferResize = false;
+	bool _frameBufferResize = false;
 private:
 	API										_graphicApi;
 	std::unique_ptr<IRenderer>				_render;
@@ -34,6 +42,6 @@ private:
 	GLFWwindow*								_window;
 
 };
-std::unique_ptr<Application>	Application::instance;
-std::once_flag					Application::initFlag;
+inline std::unique_ptr<Application>		Application::instance;
+inline std::once_flag					Application::initFlag;
 

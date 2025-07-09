@@ -84,12 +84,7 @@ void vulkan::VulkanRenderer::Cleanup()
 		vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(_devices->Handle(), _inFlightFences[i], nullptr);
 	}
-
-	for (auto framebuffer : _swapchain->GetSwapChainBuffer()) {
-		vkDestroyFramebuffer(_devices->Handle(), framebuffer, nullptr);
-	}
 	_renderPass->Destroy();
-	_swapchain.reset();
 	_graphicsPipline.reset();
 	vkDestroyCommandPool(_devices->Handle(), _commandPool, nullptr);
 	_devices.reset();
@@ -97,9 +92,10 @@ void vulkan::VulkanRenderer::Cleanup()
 #ifdef _DEBUG
 	_debugMessenger.reset();
 #endif // _DEBUG
-	
 	_instance.reset();
 }
+
+
 
 void vulkan::VulkanRenderer::SetPhysicalDevices()
 {
@@ -259,8 +255,6 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
 	
 }
-
-
 
 bool vulkan::VulkanRenderer::isMinimized() const
 {
