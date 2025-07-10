@@ -1,5 +1,6 @@
 #pragma once
 #include "AssetCommonUtils.h"
+#include "../../res/models/testVertexData.h"
 #include "Shaders.h"
 namespace asset {
 	class AssetManager final {

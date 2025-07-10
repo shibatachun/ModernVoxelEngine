@@ -846,12 +846,15 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 
 	//顶点输入，用来输入到pipeline中的vertex shader的vertex信息
 	//主要两个作用， 绑定顶点中的间隔的距离，还有他们属性的类型以及偏移
+
+	auto bindingDescriptions = getBindingDescription();
+	auto attributeDescriptions = getAttributeDescriptions();
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr; // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescriptions; // Optional
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
 
 	//规定图元类型，如三角形，线，点等
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};

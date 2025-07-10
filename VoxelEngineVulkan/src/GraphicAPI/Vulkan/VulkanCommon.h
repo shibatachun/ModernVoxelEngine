@@ -26,8 +26,10 @@ private: \
 #include <stdexcept>
 #include <set>
 #include <string>
+#include <array>
 
 #include "../../ResourcesManager/AssetManager.h"
+
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -99,5 +101,31 @@ namespace vulkan {
         {
             std::cout << "Success: do " << operation << " success!" << std::endl;
         }
+    }
+
+    inline VkVertexInputBindingDescription getBindingDescription(){
+        VkVertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(Vertex);
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return bindingDescription;
+    }
+
+    inline  std::array<VkVertexInputAttributeDescription,2> getAttributeDescriptions() {
+        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+        attributeDescriptions[0].binding = 0;
+        attributeDescriptions[0].location = 0;
+        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        //float: VK_FORMAT_R32_SFLOAT
+        //vec2: VK_FORMAT_R32G32_SFLOAT
+        //vec3 : VK_FORMAT_R32G32B32_SFLOAT
+        //vec4 : VK_FORMAT_R32G32B32A32_SFLOAT
+        attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+        attributeDescriptions[1].binding = 0;
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[1].offset = offsetof(Vertex, color);
+        return attributeDescriptions;
     }
 }

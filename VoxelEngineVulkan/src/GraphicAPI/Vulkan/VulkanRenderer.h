@@ -37,6 +37,9 @@ namespace vulkan
 		std::vector<VkSemaphore>								_imageAvailableSemaphores;
 		std::vector<VkSemaphore>								_renderFinishedSemaphores;
 		std::vector<VkFence>									_inFlightFences;
+
+		VkBuffer												_vertexBuffer;
+		VkDeviceMemory											_vertexBufferMemory;
 		
 		
 		uint32_t												_currentFrame = 0;
@@ -52,7 +55,11 @@ namespace vulkan
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
 		void CreateSyncObjects();
 		void recreateSwapChain();
+		void createVertexBuffer();
+		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		bool isMinimized() const;
+
+
 
 
 	};

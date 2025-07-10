@@ -12,6 +12,7 @@ bool vulkan::VulkanRenderer::Init()
 	CreateCommandPool();
 	CreateCommandBuffer();
 	CreateSyncObjects();
+	createVertexBuffer();
 	
 	return true;
 	 
@@ -79,6 +80,8 @@ void vulkan::VulkanRenderer::Cleanup()
 
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
+	vkDestroyBuffer(_devices->Handle(), _vertexBuffer, nullptr);
+	vkFreeMemory(_devices->Handle(), _vertexBufferMemory, nullptr);
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(_devices->Handle(), _renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphores[i], nullptr);
@@ -203,6 +206,10 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline()[pipeline_name]);
+	VkBuffer vertexBuffers[] = { _vertexBuffer }; 
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -218,7 +225,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = _swapchain->GetSwapchainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -254,6 +261,47 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 	_swapchain->CreateSwapChain(_presentMode);
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
 	
+}
+
+void vulkan::VulkanRenderer::createVertexBuffer()
+{
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	Check(vkCreateBuffer(_devices->Handle(), &bufferInfo, nullptr, &_vertexBuffer), "Create vertex buffer");
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(_devices->Handle(), _vertexBuffer, &memRequirements);
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &_vertexBufferMemory), "Allocate buffer memroy");
+
+	vkBindBufferMemory(_devices->Handle(), _vertexBuffer, _vertexBufferMemory, 0);
+
+	void* data;
+	vkMapMemory(_devices->Handle(), _vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+	vkUnmapMemory(_devices->Handle(), _vertexBufferMemory);
+
+}
+
+uint32_t vulkan::VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(_devices->PhysicalDevice(), &memProperties); 
+	//´ý»á³ò³ò¿´
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++){
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+	
+	throw std::runtime_error("failed to find suitable memory type!");
 }
 
 bool vulkan::VulkanRenderer::isMinimized() const
