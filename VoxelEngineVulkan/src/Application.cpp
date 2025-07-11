@@ -23,7 +23,7 @@ void Application::InitRendererBackend(API api)
 	switch (api)
 	{
 	case API::VULKAN:
-		_render = CreateRenderer(API::VULKAN, _window, VK_PRESENT_MODE_FIFO_RELAXED_KHR, *_assetManager);
+		_render = CreateRenderer(API::VULKAN, _window, VK_PRESENT_MODE_IMMEDIATE_KHR, *_assetManager);
 		
 	default:
 		break;

@@ -63,6 +63,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 	result = vkQueuePresentKHR(_devices->PresentQueue(), &presentInfo);
+	vkDeviceWaitIdle(_devices->Handle());
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || _framebufferResized){
 		_framebufferResized = false;
 		recreateSwapChain();
@@ -98,8 +99,6 @@ void vulkan::VulkanRenderer::Cleanup()
 #endif // _DEBUG
 	_instance.reset();
 }
-
-
 
 void vulkan::VulkanRenderer::SetPhysicalDevices()
 {
@@ -328,6 +327,13 @@ void vulkan::VulkanRenderer::CreateSyncObjects()
 
 void vulkan::VulkanRenderer::recreateSwapChain()
 {
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(_window, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(_window, &width, &height);
+		glfwWaitEvents();
+	}
+
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
 	_swapchain->CreateSwapChain(_presentMode);

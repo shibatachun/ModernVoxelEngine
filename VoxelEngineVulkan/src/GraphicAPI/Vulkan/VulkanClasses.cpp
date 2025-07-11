@@ -674,6 +674,10 @@ VkPresentModeKHR vulkan::SwapChain::ChooseSwapPresentMode(const std::vector<VkPr
 	switch (presentMode)
 	{
 	case VK_PRESENT_MODE_IMMEDIATE_KHR:
+		if (std::find(presentModes.begin(), presentModes.end(), presentMode) != presentModes.end())
+		{
+			return presentMode;
+		}
 		break;
 	case VK_PRESENT_MODE_MAILBOX_KHR:
 		break;
