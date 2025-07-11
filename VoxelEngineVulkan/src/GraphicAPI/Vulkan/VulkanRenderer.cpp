@@ -91,7 +91,11 @@ void vulkan::VulkanRenderer::Cleanup()
 	}
 	_renderPass->Destroy();
 	_graphicsPipline.reset();
-	//vkDestroyCommandPool(_devices->Handle(), _commandPool, nullptr);
+	for (auto& pool : _commandPools)
+	{
+		vkDestroyCommandPool(_devices->Handle(), pool.second, nullptr);
+	}
+	
 	_devices.reset();
 	_surface.reset();
 #ifdef _DEBUG
