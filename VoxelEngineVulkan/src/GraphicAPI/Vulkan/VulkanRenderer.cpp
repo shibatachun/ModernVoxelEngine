@@ -9,8 +9,9 @@ bool vulkan::VulkanRenderer::Init()
 	SetPhysicalDevices();
 	CreateGraphicPipeline();
 	CreateFrameBuffer();
-	CreateCommandPool();
-	CreateCommandBuffer();
+	CreateCommandPool(QueueFamily::GRAPHIC);
+	CreateCommandPool(QueueFamily::TRANSFER);
+	CreateCommandBuffer(QueueFamily::GRAPHIC);
 	CreateSyncObjects();
 	createVertexBuffer();
 	
@@ -89,7 +90,7 @@ void vulkan::VulkanRenderer::Cleanup()
 	}
 	_renderPass->Destroy();
 	_graphicsPipline.reset();
-	vkDestroyCommandPool(_devices->Handle(), _commandPool, nullptr);
+	//vkDestroyCommandPool(_devices->Handle(), _commandPool, nullptr);
 	_devices.reset();
 	_surface.reset();
 #ifdef _DEBUG
@@ -163,21 +164,37 @@ void vulkan::VulkanRenderer::CreateFrameBuffer()
 	
 }
 
-void vulkan::VulkanRenderer::CreateCommandPool()
+
+void vulkan::VulkanRenderer::CreateCommandPool(QueueFamily family)
 {
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = _devices->GraphicsFamilyIndex();
-	Check(vkCreateCommandPool(_devices->Handle(), &poolInfo, nullptr, &_commandPool), "Create Command pool");
+	switch (family)
+	{
+	case vulkan::GRAPHIC:
+		poolInfo.queueFamilyIndex = _devices->GraphicsFamilyIndex();
+		break;
+	case vulkan::PRESENT:
+		break;
+	case vulkan::COMPUTE:
+		break;
+	case vulkan::TRANSFER:
+		poolInfo.queueFamilyIndex = _devices->TransferFamilyIndex();
+		break;
+	default:
+		break;
+	}
+	
+	Check(vkCreateCommandPool(_devices->Handle(), &poolInfo, nullptr, &_commandPools[family]), "Create Command pool");
 }
 
-void vulkan::VulkanRenderer::CreateCommandBuffer()
+void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 {
 	_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 	VkCommandBufferAllocateInfo allocaInfo{};
 	allocaInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocaInfo.commandPool = _commandPool;
+	allocaInfo.commandPool = _commandPools[family];
 	allocaInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocaInfo.commandBufferCount = (uint32_t) _commandBuffers.size();
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
@@ -233,6 +250,61 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 
 }
 
+void vulkan::VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+{
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+	bufferInfo.queueFamilyIndexCount = 2;
+	uint32_t families[] = { _devices->GraphicsFamilyIndex(), _devices->TransferFamilyIndex() };
+	bufferInfo.pQueueFamilyIndices = families;
+	Check(vkCreateBuffer(_devices->Handle(), &bufferInfo, nullptr, &buffer), "Create buffer!");
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(_devices->Handle(), buffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &bufferMemory), "AllocateMemory!");
+
+	vkBindBufferMemory(_devices->Handle(), buffer, bufferMemory, 0);
+}
+
+void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = _commandPools[family];
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(_devices->Handle(), &allocInfo, &commandBuffer);
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	vkQueueSubmit(_devices->TransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(_devices->TransferQueue());
+	vkFreeCommandBuffers(_devices->Handle(), _commandPools[family], 1, &commandBuffer);
+}
+
 void vulkan::VulkanRenderer::CreateSyncObjects()
 {
 	_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -265,28 +337,27 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 
 void vulkan::VulkanRenderer::createVertexBuffer()
 {
-	VkBufferCreateInfo bufferInfo{};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	Check(vkCreateBuffer(_devices->Handle(), &bufferInfo, nullptr, &_vertexBuffer), "Create vertex buffer");
+	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_devices->Handle(), _vertexBuffer, &memRequirements);
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &_vertexBufferMemory), "Allocate buffer memroy");
-
-	vkBindBufferMemory(_devices->Handle(), _vertexBuffer, _vertexBufferMemory, 0);
+	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(_devices->Handle(), _vertexBufferMemory, 0, bufferInfo.size, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-	vkUnmapMemory(_devices->Handle(), _vertexBufferMemory);
+	vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, vertices.data(), (size_t)bufferSize);
+	vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		_vertexBuffer, _vertexBufferMemory);
+	CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, TRANSFER);
+	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
 
 }
 

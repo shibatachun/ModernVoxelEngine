@@ -5,6 +5,14 @@
 
 namespace vulkan
 {
+	enum QueueFamily
+	{
+		GRAPHIC,
+		PRESENT,
+		COMPUTE,
+		TRANSFER
+	};
+
 	class VulkanRenderer : public IRenderer
 	{
 	public:
@@ -31,7 +39,8 @@ namespace vulkan
 		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
 
 		
-		VkCommandPool											_commandPool;
+		std::unordered_map<QueueFamily, VkCommandPool>			_commandPools;
+		
 
 		std::vector<VkCommandBuffer>							_commandBuffers;
 		std::vector<VkSemaphore>								_imageAvailableSemaphores;
@@ -50,9 +59,11 @@ namespace vulkan
 		void SetSwapChain();
 		void CreateGraphicPipeline();
 		void CreateFrameBuffer();
-		void CreateCommandPool();
-		void CreateCommandBuffer();
+		void CreateCommandPool(QueueFamily family);
+		void CreateCommandBuffer(QueueFamily family);
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
+		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
 		void CreateSyncObjects();
 		void recreateSwapChain();
 		void createVertexBuffer();

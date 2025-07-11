@@ -385,6 +385,7 @@ vulkan::Device::Device(
 	}
 	const auto graphicsFamily = FindQueue(queueFamily_, "graphics", VK_QUEUE_GRAPHICS_BIT, 0);
 	const auto computeFamily = FindQueue(queueFamily_, "compute", VK_QUEUE_COMPUTE_BIT, VK_QUEUE_GRAPHICS_BIT);
+	const auto transferFamily = FindQueue(queueFamily_, "transfer", VK_QUEUE_TRANSFER_BIT, VK_QUEUE_GRAPHICS_BIT);
 
 	const auto presentFamily = std::find_if(queueFamily_.begin(), queueFamily_.end(), [&](const VkQueueFamilyProperties& queueFamily) {
 		VkBool32 presentSupport = false;
@@ -398,10 +399,13 @@ vulkan::Device::Device(
 	}
 	graphicsFamilyIndex_ = static_cast<uint32_t>(graphicsFamily - queueFamily_.begin());
 	presentFamilyIndex_ = static_cast<uint32_t>(presentFamily - queueFamily_.begin());
+	_transferFamilyIndex = static_cast<uint32_t>(transferFamily - queueFamily_.begin());
 
+	//获取各个Queuefamilies
 	const std::set<uint32_t> uniqueQueueFamilies = {
 		graphicsFamilyIndex_,
 		presentFamilyIndex_,
+		_transferFamilyIndex,
 	};
 
 	float queuePriority = 1.0f;
@@ -432,6 +436,7 @@ vulkan::Device::Device(
 	          
 	vkGetDeviceQueue(device_, graphicsFamilyIndex_, 0, &graphicsQueue_);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (device_, graphicsFamilyIndex_, 0, &graphicsQueue_);
 	vkGetDeviceQueue(device_, presentFamilyIndex_, 0, &presentQueue_);
+	vkGetDeviceQueue(device_, _transferFamilyIndex, 0, &_transferQueue);
 
 
 

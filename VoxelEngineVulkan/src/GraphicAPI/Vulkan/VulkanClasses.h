@@ -228,10 +228,12 @@ namespace vulkan {
 
 		uint32_t GraphicsFamilyIndex() const { return graphicsFamilyIndex_; }
 		uint32_t PresentFamilyIndex() const { return presentFamilyIndex_; }
+		uint32_t TransferFamilyIndex() const { return _transferFamilyIndex; }
 		VkPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
 		const Surface& VulkanSurface() const { return _surface; }
 		VkQueue GraphicsQueue() const { return graphicsQueue_; }
 		VkQueue PresentQueue() const { return presentQueue_; }
+		VkQueue TransferQueue() const { return _transferQueue; }
 		const DebugUtils& DebugUtils() const { return _debugUtils; }
 		void WaitIdle() const;
 	private:
@@ -242,9 +244,11 @@ namespace vulkan {
 		class DebugUtils _debugUtils;
 		uint32_t graphicsFamilyIndex_{};
 		uint32_t presentFamilyIndex_{};
+		uint32_t _transferFamilyIndex{};
 
 		VkQueue graphicsQueue_{};
 		VkQueue presentQueue_{};
+		VkQueue _transferQueue{};
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
 
