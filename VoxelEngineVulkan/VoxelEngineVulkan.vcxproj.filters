@@ -113,5 +113,6 @@
     </None>
     <None Include="res\shaders\triangle.frag.spv" />
     <None Include="res\shaders\triangle.vert.spv" />
+    <None Include="res\shaders\rectangle.vert" />
   </ItemGroup>
 </Project>

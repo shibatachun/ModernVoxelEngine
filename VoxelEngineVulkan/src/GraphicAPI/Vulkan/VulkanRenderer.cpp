@@ -190,7 +190,6 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
 }
 
-
 void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name)
 {
 	if (!_graphicsPipline->GetGraphicsPipeline()[pipeline_name])

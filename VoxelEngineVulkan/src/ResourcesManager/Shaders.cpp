@@ -5,8 +5,8 @@
 asset::ShadersManager::ShadersManager(std::string dir) :
 	_vulkan_shaders(asset::IterateDirectory(dir, { "spv" })),
 	_d3d_shaders(asset::IterateDirectory(dir, { "hlsl" })){
-	
-	
+	ConstructShader("Triangle_Vulkan", "triangle_vert", "triangle_frag");
+	ConstructShader("Rectangle_Vulkan", "rectangle_vert", "triangle_frag");
 }
 
 asset::ShadersManager::~ShadersManager(){
@@ -36,6 +36,24 @@ asset::shader asset::ShadersManager::loadD3DShaderFromFiles( const std::string& 
 
 	shader out_shader;
 	return out_shader;
+}
+
+void asset::ShadersManager::ConstructShader(std::string name, std::string vertex, std::string fragment)
+{
+	shader TargetShader;
+	for (auto entry : _vulkan_shaders) {
+		if (entry.name == fragment) {
+			TargetShader.fragmentShader = asset::readFile(entry.path);
+		}
+		else if (entry.name == vertex)
+		{
+			TargetShader.vertexShader = asset::readFile(entry.path);
+		}
+	}
+	if (!TargetShader.fragmentShader.empty() && !TargetShader.vertexShader.empty())
+	{
+		_shaderAssets.emplace(name, TargetShader);
+	}
 }
 
 

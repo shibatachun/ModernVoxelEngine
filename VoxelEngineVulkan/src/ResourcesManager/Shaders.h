@@ -14,12 +14,15 @@ namespace asset
 		~ShadersManager();
 		shader loadVulkanShaderFromFiles(const std::string& filename);
 		shader loadD3DShaderFromFiles(const std::string& filename);
-
+		std::unordered_map<std::string, asset::shader> GetShaderAssets() { return _shaderAssets; };
+		void ConstructShader(std::string name, std::string vertex, std::string fragment);
+		
 	private:
-	
+		
 	private:
 		std::vector<FileInfo> _vulkan_shaders;
 		std::vector<FileInfo>_d3d_shaders;
+		std::unordered_map<std::string, asset::shader> _shaderAssets;
 
 	};
 
