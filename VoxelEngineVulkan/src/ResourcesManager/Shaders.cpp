@@ -38,6 +38,7 @@ asset::shader asset::ShadersManager::loadD3DShaderFromFiles( const std::string& 
 	return out_shader;
 }
 
+//For vertex name and fragment name, must match the exact file name, you can exclude the extension.
 void asset::ShadersManager::ConstructShader(std::string name, std::string vertex, std::string fragment)
 {
 	shader TargetShader;

@@ -783,6 +783,9 @@ void vulkan::RenderPass::Destroy()
 	vkDestroyRenderPass(_swapChain.GetDevice().Handle(), _renderPass, nullptr);
 }
 
+
+/////////////////////////////////////////////////////////////////////////GRAPHIC PIPELINE//////////////////////////////////////////////////////////////
+
 vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
 	: _shaders(shaders), _device(device), _swapChain(swapchain),_renderPass(renderpass)
 {
@@ -986,6 +989,9 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 
 }
 
+
+
+/////////////////////////////////////////////////////////////////////////COMMAND POOL//////////////////////////////////////////////////////////////
 vulkan::CommandPool::CommandPool(const Device& device) : _device(device)
 {
 	Init();
