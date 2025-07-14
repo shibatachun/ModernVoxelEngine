@@ -318,10 +318,11 @@ namespace vulkan {
 			const RenderPass& renderpass);
 		void Destroy(std::string pipelineName);
 		std::unordered_map<std::string, VkPipeline> GetGraphicsPipeline() { return _graphicsPipeline; };
+		void CreateGraphicsPipeline(std::string pipelineName, const RenderPass& renderPass);
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
-		void CreateGraphicsPipeline(std::string pipelineName);
+		
 	private:
 		std::unordered_map<std::string, VkPipeline>					_graphicsPipeline;
 		std::unordered_map<std::string, asset::shader>&				_shaders;

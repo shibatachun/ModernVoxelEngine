@@ -789,7 +789,7 @@ void vulkan::RenderPass::Destroy()
 vulkan::GraphicPipeline::GraphicPipeline(std::unordered_map<std::string, asset::shader> shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
 	: _shaders(shaders), _device(device), _swapChain(swapchain),_renderPass(renderpass)
 {
-	CreateGraphicsPipeline("Triangle_Vulkan");
+	CreateGraphicsPipeline("Triangle_Vulkan",renderpass);
 }
 
 void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
@@ -831,7 +831,7 @@ VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<cha
 	
 }
 
-void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
+void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, const RenderPass& renderPass)
 {
 	if (_shaders[pipelineName].fragmentShader.empty() || _shaders[pipelineName].vertexShader.empty())
 	{
@@ -976,7 +976,7 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = _graphicsPipelineLayout[pipelineName];
-	pipelineInfo.renderPass = _renderPass.GetRenderPass();
+	pipelineInfo.renderPass = renderPass.GetRenderPass();
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //optional
 	pipelineInfo.basePipelineIndex = -1; //Optional
 	std::string pipelineNameInfo = "Create pipeline for ";
