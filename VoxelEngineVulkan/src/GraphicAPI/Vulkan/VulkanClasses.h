@@ -226,35 +226,31 @@ namespace vulkan {
 		Device(VkPhysicalDevice device,const Surface&, const std::vector<const char*>& requiredExtension, const VkPhysicalDeviceFeatures& deviceFeatures, const void* nextDeviceFeatures);
 		~Device();
 
-		uint32_t GraphicsFamilyIndex() const { return graphicsFamilyIndex_; }
-		uint32_t PresentFamilyIndex() const { return presentFamilyIndex_; }
+		uint32_t GraphicsFamilyIndex() const { return _graphicsFamilyIndex; }
+		uint32_t PresentFamilyIndex() const { return _presentFamilyIndex; }
 		uint32_t TransferFamilyIndex() const { return _transferFamilyIndex; }
 		VkPhysicalDevice PhysicalDevice() const { return _physicalDevice; }
 		const Surface& VulkanSurface() const { return _surface; }
-		VkQueue GraphicsQueue() const { return graphicsQueue_; }
-		VkQueue PresentQueue() const { return presentQueue_; }
+		VkQueue GraphicsQueue() const { return _graphicsQueue; }
+		VkQueue PresentQueue() const { return _presentQueue; }
 		VkQueue TransferQueue() const { return _transferQueue; }
 		const DebugUtils& DebugUtils() const { return _debugUtils; }
 		void WaitIdle() const;
 	private:
-		const VkPhysicalDevice _physicalDevice;
-		const Surface& _surface;
-		std::vector<VkExtensionProperties> availableExtensions_;
-		VULKAN_HANDLE(VkDevice, device_)
-		class DebugUtils _debugUtils;
-		uint32_t graphicsFamilyIndex_{};
-		uint32_t presentFamilyIndex_{};
-		uint32_t _transferFamilyIndex{};
+		VULKAN_HANDLE(VkDevice, _device)
+		const VkPhysicalDevice							_physicalDevice;
+		const Surface&									_surface;
+		std::vector<VkExtensionProperties>				_availableExtensions;
+		class DebugUtils								_debugUtils;
+		uint32_t										_graphicsFamilyIndex{};
+		uint32_t										_presentFamilyIndex{};
+		uint32_t										_transferFamilyIndex{};
 
-		VkQueue graphicsQueue_{};
-		VkQueue presentQueue_{};
-		VkQueue _transferQueue{};
+		VkQueue											_graphicsQueue{};
+		VkQueue											_presentQueue{};
+		VkQueue											_transferQueue{};
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
-
-
-
-
 	};
 
 	class SwapChain final {
@@ -284,21 +280,17 @@ namespace vulkan {
 		static VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& presentModes, VkPresentModeKHR presentMode);
 		static VkExtent2D ChooseSwapExtent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
 		static uint32_t ChooseImageCount(const VkSurfaceCapabilitiesKHR& capabilities);
-
-		const VkPhysicalDevice _physicalDevice;
-		const class Device& _device;
-
+	private:
 		VULKAN_HANDLE(VkSwapchainKHR, _swapChain)
-
-		uint32_t _minImageCount;
-		VkPresentModeKHR _presentMode;
-		VkFormat _format;
-		VkExtent2D _extent;
-		std::vector<VkImage> _images;
-		std::vector<VkImageView> _imageViews;
-
-		std::vector<VkFramebuffer>								_swapChainFramebuffers;
-
+		const VkPhysicalDevice										_physicalDevice;
+		const class Device&											_device;
+		uint32_t													_minImageCount;
+		VkPresentModeKHR											_presentMode;
+		VkFormat													_format;
+		VkExtent2D													_extent;
+		std::vector<VkImage>										_images;
+		std::vector<VkImageView>									_imageViews;
+		std::vector<VkFramebuffer>									_swapChainFramebuffers;
 	};
 
 	class RenderPass final {
@@ -311,8 +303,8 @@ namespace vulkan {
 		void Destroy();
 
 	private:
-		const SwapChain& _swapChain;
-		VkRenderPass _renderPass;
+		const SwapChain&											_swapChain;
+		VkRenderPass												_renderPass;
 
 	};
 
@@ -331,15 +323,31 @@ namespace vulkan {
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		void CreateGraphicsPipeline(std::string pipelineName);
 	private:
-		std::unordered_map<std::string, VkPipeline> _graphicsPipeline;
-		std::unordered_map<std::string, asset::shader>& _shaders;
-		std::unordered_map<std::string, VkPipelineLayout> _graphicsPipelineLayout;
-		VkDevice _device;
-		VkShaderModule _shaderModule;
-		const SwapChain& _swapChain;
-		const RenderPass& _renderPass;
+		std::unordered_map<std::string, VkPipeline>					_graphicsPipeline;
+		std::unordered_map<std::string, asset::shader>&				_shaders;
+		std::unordered_map<std::string, VkPipelineLayout>			_graphicsPipelineLayout;
+		VkDevice													_device;
+		VkShaderModule												_shaderModule;
+		const SwapChain&											_swapChain;
+		const RenderPass&											_renderPass;
 
 		
+	};
+
+	class CommandPool final {
+	public:
+		VULKAN_NON_COPIABLE(CommandPool)
+			CommandPool(const Device& device);
+		~CommandPool();
+		void CreateCommandPool(QueueFamily);
+		VkCommandPool GetCommandPool(QueueFamily family) { return _commandPools[family]; };
+		void FreeCommandBuffer(QueueFamily, uint32_t, const VkCommandBuffer&);
+	private:
+		void Init();
+		std::unordered_map<QueueFamily, VkCommandPool>				_commandPools;
+		const Device&												_device;
+
+
 	};
 		
 }

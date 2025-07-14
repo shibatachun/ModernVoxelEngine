@@ -397,14 +397,14 @@ vulkan::Device::Device(
 	{
 		throw (std::runtime_error("found no presentation queue"));
 	}
-	graphicsFamilyIndex_ = static_cast<uint32_t>(graphicsFamily - queueFamily_.begin());
-	presentFamilyIndex_ = static_cast<uint32_t>(presentFamily - queueFamily_.begin());
+	_graphicsFamilyIndex = static_cast<uint32_t>(graphicsFamily - queueFamily_.begin());
+	_presentFamilyIndex = static_cast<uint32_t>(presentFamily - queueFamily_.begin());
 	_transferFamilyIndex = static_cast<uint32_t>(transferFamily - queueFamily_.begin());
 
 	//获取各个Queuefamilies
 	const std::set<uint32_t> uniqueQueueFamilies = {
-		graphicsFamilyIndex_,
-		presentFamilyIndex_,
+		_graphicsFamilyIndex,
+		_presentFamilyIndex,
 		_transferFamilyIndex,
 	};
 
@@ -430,13 +430,13 @@ vulkan::Device::Device(
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
-	Check(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &device_), "create logical device");
+	Check(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device), "create logical device");
 
-	_debugUtils.SetDevice(device_);
+	_debugUtils.SetDevice(_device);
 	          
-	vkGetDeviceQueue(device_, graphicsFamilyIndex_, 0, &graphicsQueue_);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (device_, graphicsFamilyIndex_, 0, &graphicsQueue_);
-	vkGetDeviceQueue(device_, presentFamilyIndex_, 0, &presentQueue_);
-	vkGetDeviceQueue(device_, _transferFamilyIndex, 0, &_transferQueue);
+	vkGetDeviceQueue(_device, _graphicsFamilyIndex, 0, &_graphicsQueue);
+	vkGetDeviceQueue(_device, _presentFamilyIndex, 0, &_presentQueue);
+	vkGetDeviceQueue(_device, _transferFamilyIndex, 0, &_transferQueue);
 
 
 
@@ -444,15 +444,15 @@ vulkan::Device::Device(
 
 vulkan::Device::~Device()
 {
-	if (device_ != nullptr) {
-		vkDestroyDevice(device_, nullptr);
-		device_ = nullptr;
+	if (_device != nullptr) {
+		vkDestroyDevice(_device, nullptr);
+		_device = nullptr;
 	}
 }
 
 void vulkan::Device::WaitIdle() const
 {
-	Check(vkDeviceWaitIdle(device_), "wait for device idle");
+	Check(vkDeviceWaitIdle(_device), "wait for device idle");
 }
 
 void vulkan::Device::CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions) 
@@ -461,12 +461,12 @@ void vulkan::Device::CheckRequiredExtensions(VkPhysicalDevice physicalDevice, co
 	vkEnumerateDeviceExtensionProperties(_physicalDevice, static_cast<const char*>(nullptr), &extensionsCount, nullptr);
 	if (extensionsCount)
 	{
-		availableExtensions_.resize(extensionsCount);
+		_availableExtensions.resize(extensionsCount);
 	}
-	vkEnumerateDeviceExtensionProperties(_physicalDevice, static_cast<const char*>(nullptr), &extensionsCount, availableExtensions_.data());
+	vkEnumerateDeviceExtensionProperties(_physicalDevice, static_cast<const char*>(nullptr), &extensionsCount, _availableExtensions.data());
 	std::set<std::string> required(requiredExtensions.begin(), requiredExtensions.end());
 
-	for (const auto& extension : availableExtensions_)
+	for (const auto& extension : _availableExtensions)
 	{
 		required.erase(extension.extensionName);
 	}
@@ -986,4 +986,47 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName)
 
 }
 
+vulkan::CommandPool::CommandPool(const Device& device) : _device(device)
+{
+	Init();
+}
 
+vulkan::CommandPool::~CommandPool()
+{
+	for (auto& pool : _commandPools)
+	{
+		vkDestroyCommandPool(_device.Handle(), pool.second, nullptr);
+	}
+}
+
+void vulkan::CommandPool::CreateCommandPool(QueueFamily family)
+{
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	switch (family)
+	{
+	case QueueFamily::GRAPHIC:
+		poolInfo.queueFamilyIndex = _device.GraphicsFamilyIndex();
+		break;
+	case QueueFamily::COMPUTE:
+		break;
+	case QueueFamily::TRANSFER:
+		poolInfo.queueFamilyIndex = _device.TransferFamilyIndex();
+		break;
+	default:
+		break;
+	}
+	Check(vkCreateCommandPool(_device.Handle(), &poolInfo, nullptr, &_commandPools[family]), "Create Command pool");
+}
+
+void vulkan::CommandPool::FreeCommandBuffer(QueueFamily family, uint32_t count, const VkCommandBuffer& buffer)
+{
+	vkFreeCommandBuffers(_device.Handle(), _commandPools[family], count, &buffer);
+}
+
+void vulkan::CommandPool::Init()
+{
+	CreateCommandPool(QueueFamily::GRAPHIC);
+	CreateCommandPool(QueueFamily::TRANSFER);
+}

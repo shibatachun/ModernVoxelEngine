@@ -9,11 +9,11 @@ bool vulkan::VulkanRenderer::Init()
 	SetPhysicalDevices();
 	CreateGraphicPipeline();
 	CreateFrameBuffer();
-	CreateCommandPool(QueueFamily::GRAPHIC);
-	CreateCommandPool(QueueFamily::TRANSFER);
+	CreateCommandPools();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 	CreateSyncObjects();
 	createVertexBuffer();
+	CreateIndexBuffer();
 	
 	return true;
 	 
@@ -82,8 +82,13 @@ void vulkan::VulkanRenderer::Cleanup()
 
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
+
+	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
+	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
+
 	vkDestroyBuffer(_devices->Handle(), _vertexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _vertexBufferMemory, nullptr);
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(_devices->Handle(), _renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphores[i], nullptr);
@@ -91,11 +96,7 @@ void vulkan::VulkanRenderer::Cleanup()
 	}
 	_renderPass->Destroy();
 	_graphicsPipline.reset();
-	for (auto& pool : _commandPools)
-	{
-		vkDestroyCommandPool(_devices->Handle(), pool.second, nullptr);
-	}
-	
+	_commandPools.reset();
 	_devices.reset();
 	_surface.reset();
 #ifdef _DEBUG
@@ -104,6 +105,7 @@ void vulkan::VulkanRenderer::Cleanup()
 	_instance.reset();
 }
 
+//Set up Devices
 void vulkan::VulkanRenderer::SetPhysicalDevices()
 {
 	if (_devices)
@@ -143,6 +145,7 @@ void vulkan::VulkanRenderer::SetPhysicalDevices()
 
 }
 
+//Set up SwapChain
 void vulkan::VulkanRenderer::SetSwapChain()
 {
 	while (isMinimized())
@@ -155,6 +158,7 @@ void vulkan::VulkanRenderer::SetSwapChain()
 
 }
 
+//Create Pipeline
 void vulkan::VulkanRenderer::CreateGraphicPipeline()
 {
 	_renderPass.reset(new vulkan::RenderPass(*_swapchain));
@@ -167,29 +171,12 @@ void vulkan::VulkanRenderer::CreateFrameBuffer()
 	
 }
 
-
-void vulkan::VulkanRenderer::CreateCommandPool(QueueFamily family)
+void vulkan::VulkanRenderer::CreateCommandPools()
 {
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	switch (family)
+	if (!_commandPools)
 	{
-	case vulkan::GRAPHIC:
-		poolInfo.queueFamilyIndex = _devices->GraphicsFamilyIndex();
-		break;
-	case vulkan::PRESENT:
-		break;
-	case vulkan::COMPUTE:
-		break;
-	case vulkan::TRANSFER:
-		poolInfo.queueFamilyIndex = _devices->TransferFamilyIndex();
-		break;
-	default:
-		break;
+		_commandPools.reset(new vulkan::CommandPool(*_devices));
 	}
-	
-	Check(vkCreateCommandPool(_devices->Handle(), &poolInfo, nullptr, &_commandPools[family]), "Create Command pool");
 }
 
 void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
@@ -197,11 +184,12 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 	_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 	VkCommandBufferAllocateInfo allocaInfo{};
 	allocaInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocaInfo.commandPool = _commandPools[family];
+	allocaInfo.commandPool = _commandPools->GetCommandPool(family);
 	allocaInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocaInfo.commandBufferCount = (uint32_t) _commandBuffers.size();
+	allocaInfo.commandBufferCount = (uint32_t)_commandBuffers.size();
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
 }
+
 
 void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name)
 {
@@ -229,7 +217,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	VkBuffer vertexBuffers[] = { _vertexBuffer }; 
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
+	vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -245,7 +233,8 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = _swapchain->GetSwapchainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+	//vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -277,12 +266,31 @@ void vulkan::VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags 
 	vkBindBufferMemory(_devices->Handle(), buffer, bufferMemory, 0);
 }
 
+void vulkan::VulkanRenderer::CreateIndexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	void* data;
+	vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, indices.data(), (size_t)bufferSize);
+	vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _indexBuffer, _indexBufferMemory);
+
+	CopyBuffer(stagingBuffer, _indexBuffer, bufferSize, QueueFamily::TRANSFER);
+	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
+}
+
 void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = _commandPools[family];
+	allocInfo.commandPool = _commandPools->GetCommandPool(family);
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -305,7 +313,8 @@ void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, 
 	submitInfo.pCommandBuffers = &commandBuffer;
 	vkQueueSubmit(_devices->TransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(_devices->TransferQueue());
-	vkFreeCommandBuffers(_devices->Handle(), _commandPools[family], 1, &commandBuffer);
+	_commandPools->FreeCommandBuffer(family,1, commandBuffer);
+
 }
 
 void vulkan::VulkanRenderer::CreateSyncObjects()
@@ -365,7 +374,7 @@ void vulkan::VulkanRenderer::createVertexBuffer()
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		_vertexBuffer, _vertexBufferMemory);
-	CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, TRANSFER);
+	CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
 	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
 

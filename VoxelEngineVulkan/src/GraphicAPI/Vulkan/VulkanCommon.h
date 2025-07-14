@@ -35,7 +35,19 @@ constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 namespace vulkan {
 
+    struct UniformBufferObject
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+    };
 
+    enum class QueueFamily
+    {
+        GRAPHIC,
+        COMPUTE,
+        TRANSFER
+    };
     inline const char* ToString(const VkResult result)
     {
         switch (result)
