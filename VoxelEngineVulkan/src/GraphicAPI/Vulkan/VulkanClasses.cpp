@@ -1050,6 +1050,10 @@ vulkan::DescriptorLayoutManager::DescriptorLayoutManager(const Device& deivce) :
 
 vulkan::DescriptorLayoutManager::~DescriptorLayoutManager()
 {
+	for (auto& entry : _LayoutCache)
+	{
+		vkDestroyDescriptorSetLayout(_device.Handle(), entry.second, nullptr);
+	}
 }
 
 void vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig config)

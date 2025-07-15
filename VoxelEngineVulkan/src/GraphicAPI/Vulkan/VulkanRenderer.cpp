@@ -84,6 +84,7 @@ void vulkan::VulkanRenderer::Cleanup()
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
 
+	_descriptorLayouts.reset();
 	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
 
