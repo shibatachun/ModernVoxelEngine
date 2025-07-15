@@ -14,7 +14,7 @@ namespace asset
 		~ShadersManager();
 		shader loadVulkanShaderFromFiles(const std::string& filename);
 		shader loadD3DShaderFromFiles(const std::string& filename);
-		std::unordered_map<std::string, asset::shader> GetShaderAssets() { return _shaderAssets; };
+		std::unordered_map<std::string, asset::shader>& GetShaderAssets() { return _shaderAssets; };
 		void ConstructShader(std::string name, std::string vertex, std::string fragment);
 		
 	private:

@@ -308,38 +308,41 @@ namespace vulkan {
 
 	};
 
+	struct PipelineEntry
+	{
+		VkPipeline pipeline;
+		VkPipelineLayout layout;
+	};
+
 	class GraphicPipeline final {
+	
 	public:
 		VULKAN_NON_COPIABLE(GraphicPipeline)
 		GraphicPipeline(
-			std::unordered_map<std::string, asset::shader> shaders, 
+			const std::unordered_map<std::string, asset::shader>& shaders, 
 			VkDevice device,
 			const  SwapChain& swapchain, 
 			const RenderPass& renderpass);
 		void Destroy(std::string pipelineName);
-		std::unordered_map<std::string, VkPipeline> GetGraphicsPipeline() { return _graphicsPipeline; };
-		void CreateGraphicsPipeline(std::string pipelineName, const RenderPass& renderPass);
+		PipelineEntry GetGraphicsPipeline(std::string pipelineName);
+		void CreateGraphicsPipeline(std::string pipelineName, VkRenderPass renderPass, VkDescriptorSetLayout descriptorLayout);
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		
 	private:
-		std::unordered_map<std::string, VkPipeline>					_graphicsPipeline;
-		std::unordered_map<std::string, asset::shader>&				_shaders;
-		std::unordered_map<std::string, VkPipelineLayout>			_graphicsPipelineLayout;
+		std::unordered_map<std::string, PipelineEntry>				_pipelineEntrys;
+		const std::unordered_map<std::string, asset::shader>&		_shaders;
 		VkDevice													_device;
-		VkShaderModule												_shaderModule;
 		const SwapChain&											_swapChain;
 		const RenderPass&											_renderPass;
-
-		
 	};
 
-	class CommandPool final {
+	class CommandPoolManager final {
 	public:
-		VULKAN_NON_COPIABLE(CommandPool)
-			CommandPool(const Device& device);
-		~CommandPool();
+		VULKAN_NON_COPIABLE(CommandPoolManager)
+		CommandPoolManager(const Device& device);
+		~CommandPoolManager();
 		void CreateCommandPool(QueueFamily);
 		VkCommandPool GetCommandPool(QueueFamily family) { return _commandPools[family]; };
 		void FreeCommandBuffer(QueueFamily, uint32_t, const VkCommandBuffer&);
@@ -348,6 +351,75 @@ namespace vulkan {
 		std::unordered_map<QueueFamily, VkCommandPool>				_commandPools;
 		const Device&												_device;
 
+
+	};
+
+	struct LayoutConfig {
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		// 如果还有 push constant ranges，也可以放在这里：
+		// std::vector<VkPushConstantRange> pushConstants;
+
+		// 比较运算符：先比大小，再逐一比较字段
+		bool operator==(LayoutConfig const& o) const {
+			if (bindings.size() != o.bindings.size()) return false;
+			for (size_t i = 0; i < bindings.size(); i++) {
+				const auto& a = bindings[i];
+				const auto& b = o.bindings[i];
+				if (a.binding != b.binding ||
+					a.descriptorType != b.descriptorType ||
+					a.descriptorCount != b.descriptorCount ||
+					a.stageFlags != b.stageFlags ||
+					a.pImmutableSamplers != b.pImmutableSamplers   // 通常 nullptr
+					) return false;
+			}
+			// 同理比较 pushConstants…
+			return true;
+		}
+	};
+	inline void hashCombine(std::size_t& seed, std::size_t v) {
+		seed ^= v + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+	}
+	struct LayoutConfigHash {
+		std::size_t operator()(LayoutConfig const& cfg) const noexcept {
+			std::size_t h = 0;
+			for (auto const& b : cfg.bindings) {
+				// 把每个字段都混合进 seed
+				hashCombine(h, std::hash<uint32_t>()(b.binding));
+				hashCombine(h, std::hash<uint32_t>()(b.descriptorType));
+				hashCombine(h, std::hash<uint32_t>()(b.descriptorCount));
+				hashCombine(h, std::hash<uint32_t>()(b.stageFlags));
+				// pImmutableSamplers 通常都是 nullptr 才会相等，否则需要根据地址或内容再 hash
+				hashCombine(h, std::hash<uintptr_t>()(
+					reinterpret_cast<uintptr_t>(b.pImmutableSamplers)));
+			}
+			// 如果有 pushConstants，再把它们也混合进 h
+			// for (auto const &p : cfg.pushConstants) { … }
+			return h;
+		}
+	};
+
+	class DescriptorLayoutManager final {
+	public:
+		VULKAN_NON_COPIABLE(DescriptorLayoutManager)
+		DescriptorLayoutManager(const Device& deivce);
+		VkDescriptorSetLayout GetDescriptorSetLayout(LayoutConfig config) { return _LayoutCache[config]; };
+		~DescriptorLayoutManager();
+		void CreateDescriptorSetLayout(LayoutConfig config);
+	private:
+		std::unordered_map<LayoutConfig, VkDescriptorSetLayout, LayoutConfigHash>				_LayoutCache;
+		const Device&																			_device;
+	};
+
+	class DescriptorPoolManager final {
+	public:
+		VULKAN_NON_COPIABLE(DescriptorPoolManager)
+		DescriptorPoolManager();
+		~DescriptorPoolManager();
+		void CreateDescriptorPool();
+
+	private:
+		VkDescriptorPool					_GlobalPool;
+		VkDescriptorPool					_PerFramePool;
 
 	};
 		

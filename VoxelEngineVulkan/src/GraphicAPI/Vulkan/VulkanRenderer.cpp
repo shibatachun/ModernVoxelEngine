@@ -7,6 +7,7 @@ bool vulkan::VulkanRenderer::Init()
 	_surface.reset(new vulkan::Surface(*_instance));
 	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
 	SetPhysicalDevices();
+	SetUpDescriptorLayoutManager();
 	CreateGraphicPipeline();
 	CreateFrameBuffer();
 	CreateCommandPools();
@@ -163,6 +164,22 @@ void vulkan::VulkanRenderer::CreateGraphicPipeline()
 {
 	_renderPass.reset(new vulkan::RenderPass(*_swapchain));
 	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchain,*_renderPass));
+	LayoutConfig config;
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+	config.bindings.push_back(uboLayoutBinding);
+	_descriptorLayouts->CreateDescriptorSetLayout(config);
+	_graphicsPipline->CreateGraphicsPipeline("Triangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
+}
+
+//Set up DescriptorLayoutManager
+void vulkan::VulkanRenderer::SetUpDescriptorLayoutManager()
+{
+	_descriptorLayouts.reset(new DescriptorLayoutManager(*_devices));
 }
 
 void vulkan::VulkanRenderer::CreateFrameBuffer()
@@ -175,7 +192,7 @@ void vulkan::VulkanRenderer::CreateCommandPools()
 {
 	if (!_commandPools)
 	{
-		_commandPools.reset(new vulkan::CommandPool(*_devices));
+		_commandPools.reset(new vulkan::CommandPoolManager(*_devices));
 	}
 }
 
@@ -192,7 +209,7 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 
 void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name)
 {
-	if (!_graphicsPipline->GetGraphicsPipeline()[pipeline_name])
+	if (!_graphicsPipline->GetGraphicsPipeline(pipeline_name).layout || !_graphicsPipline->GetGraphicsPipeline(pipeline_name).pipeline)
 	{
 		throw std::runtime_error("This pipeline is unaccessiable!");
 	}
@@ -212,7 +229,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline()[pipeline_name]);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline(pipeline_name).pipeline);
 	VkBuffer vertexBuffers[] = { _vertexBuffer }; 
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);

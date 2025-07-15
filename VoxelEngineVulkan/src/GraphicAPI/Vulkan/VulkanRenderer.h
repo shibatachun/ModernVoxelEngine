@@ -31,7 +31,9 @@ namespace vulkan
 		std::unique_ptr<class vulkan::SwapChain>				_swapchain;
 		std::unique_ptr<class vulkan::GraphicPipeline>			_graphicsPipline;
 		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
-		std::unique_ptr<class vulkan::CommandPool>				_commandPools;
+		std::unique_ptr<class vulkan::CommandPoolManager>		_commandPools;
+		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;
+		
 
 		
 
@@ -52,6 +54,7 @@ namespace vulkan
 		void SetPhysicalDevices();
 		void SetSwapChain();
 		void CreateGraphicPipeline();
+		void SetUpDescriptorLayoutManager();
 		void CreateFrameBuffer();
 		void CreateCommandPools();
 		void CreateCommandBuffer(QueueFamily family);

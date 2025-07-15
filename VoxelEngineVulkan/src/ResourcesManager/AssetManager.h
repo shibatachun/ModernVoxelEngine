@@ -7,7 +7,7 @@ namespace asset {
 	public:
 		AssetManager();
 		~AssetManager();
-		const std::unordered_map<std::string, asset::shader> getShaderAssets() { return _shadersManager->GetShaderAssets(); };
+		const std::unordered_map<std::string, asset::shader>& getShaderAssets() { return _shadersManager->GetShaderAssets(); };
 		bool Init();
 
 	private:
