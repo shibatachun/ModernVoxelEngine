@@ -1044,7 +1044,7 @@ void vulkan::CommandPoolManager::Init()
 
 vulkan::DescriptorLayoutManager::DescriptorLayoutManager(const Device& deivce) : _device(deivce)
 {
-
+	
 
 }
 
@@ -1068,3 +1068,59 @@ void vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig con
 	}
 	
 }
+
+vulkan::DescriptorPoolManager::DescriptorPoolManager(const Device& deivce) : _device(deivce)
+{
+
+}
+
+vulkan::DescriptorPoolManager::~DescriptorPoolManager()
+{
+}
+
+void vulkan::DescriptorPoolManager::CreateGlobalDescriptorPool()
+{
+	VkDescriptorPoolSize globalPoolSizes[] = {
+		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 50 }, };
+	VkDescriptorPoolCreateInfo globalPoolInfo{};
+	globalPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	globalPoolInfo.poolSizeCount = 1;
+	globalPoolInfo.pPoolSizes = globalPoolSizes;
+	globalPoolInfo.maxSets = 50;
+
+	Check(vkCreateDescriptorPool(_device.Handle(), &globalPoolInfo, nullptr, &_GlobalPool), "Create GlobalDescriptorPool");
+}
+
+void vulkan::DescriptorPoolManager::CreatePerFrameDescriptorPool()
+{
+	_PerFramePool.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		VkDescriptorPoolSize poolSizes[] = {
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20},
+		};
+		VkDescriptorPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = 1;
+		poolInfo.pPoolSizes = poolSizes;
+		poolInfo.maxSets = 20;
+
+		Check(vkCreateDescriptorPool(_device.Handle(), &poolInfo, nullptr, &_PerFramePool[i]), "Create per frame descriptor pool");
+	}
+}
+
+void vulkan::DescriptorPoolManager::CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts){
+	_hardCodeDescriptorSet.resize(MAX_FRAMES_IN_FLIGHT);
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+	{
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = _PerFramePool[i];
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		allocInfo.pSetLayouts = layouts.data();
+		Check(vkAllocateDescriptorSets(_device.Handle(), &allocInfo, _hardCodeDescriptorSet.data()), "Allocate Descriptor set");
+	}
+
+}
+
+

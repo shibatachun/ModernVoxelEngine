@@ -46,6 +46,10 @@ namespace vulkan
 		VkDeviceMemory											_vertexBufferMemory;
 		VkBuffer												_indexBuffer;
 		VkDeviceMemory											_indexBufferMemory;
+
+		std::vector<VkBuffer>									_uniformBuffers;
+		std::vector<VkDeviceMemory>								_uniformBuffersMemory;
+		std::vector<void*>										_uniformBuffersMapped;
 		
 		uint32_t												_currentFrame = 0;
 		
@@ -65,6 +69,8 @@ namespace vulkan
 		void CreateSyncObjects();
 		void recreateSwapChain();
 		void createVertexBuffer();
+		void CreateUniformBuffers();
+		void updateUniformBuffer(uint32_t currentImage);
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		bool isMinimized() const;
 

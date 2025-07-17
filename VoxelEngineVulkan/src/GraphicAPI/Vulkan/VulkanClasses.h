@@ -256,13 +256,18 @@ namespace vulkan {
 	class DescriptorPoolManager final {
 	public:
 		VULKAN_NON_COPIABLE(DescriptorPoolManager)
-		DescriptorPoolManager();
+		DescriptorPoolManager(const Device& deivce);
 		~DescriptorPoolManager();
-		void CreateDescriptorPool();
+		void CreateGlobalDescriptorPool();
+		void CreatePerFrameDescriptorPool();
+		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 
 	private:
-		VkDescriptorPool					_GlobalPool;
-		VkDescriptorPool					_PerFramePool;
+		VkDescriptorPool														_GlobalPool;
+		std::vector<VkDescriptorPool>											_PerFramePool;
+		std::vector<VkDescriptorSet>											_hardCodeDescriptorSet;
+		std::unordered_map<VkDescriptorSetLayout, std::vector<VkDescriptorSet>> _descriptorSetCache;
+		const Device&															_device;
 
 	};
 		

@@ -35,6 +35,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	}
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
+	updateUniformBuffer(_currentFrame);
 	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,"Triangle_Vulkan");
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -47,11 +48,12 @@ void vulkan::VulkanRenderer::DrawFrame()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &_commandBuffers[_currentFrame];
 	
+	
 	VkSemaphore signalSemaphores[] = { _renderFinishedSemaphores[_currentFrame]};
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
-
-	Check(vkQueueSubmit(_devices->GraphicsQueue(), 1, &submitInfo, _inFlightFences[_currentFrame]), "Submit to graphics queue family");
+	vkQueueSubmit(_devices->GraphicsQueue(), 1, &submitInfo, _inFlightFences[_currentFrame]);
+	//Check(vkQueueSubmit(_devices->GraphicsQueue(), 1, &submitInfo, _inFlightFences[_currentFrame]), "Submit to graphics queue family");
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -84,7 +86,15 @@ void vulkan::VulkanRenderer::Cleanup()
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
 
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroyBuffer(_devices->Handle(), _uniformBuffers[i], nullptr);
+		vkFreeMemory(_devices->Handle(), _uniformBuffersMemory[i], nullptr);
+	}
 	_descriptorLayouts.reset();
+
+	
+
+	
 	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
 
@@ -218,7 +228,8 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0;
 	beginInfo.pInheritanceInfo = nullptr;
-	Check(vkBeginCommandBuffer(commandBuffer, &beginInfo), "Start record commandbuffer");
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	//Check(vkBeginCommandBuffer(commandBuffer, &beginInfo), "Start record commandbuffer");
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -250,12 +261,14 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = _swapchain->GetSwapchainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+
 	//vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
-	Check(vkEndCommandBuffer(commandBuffer), "Record command buffer!");
+	vkEndCommandBuffer(commandBuffer);
+	//Check(vkEndCommandBuffer(commandBuffer), "Record command buffer!");
 
 }
 
@@ -395,6 +408,40 @@ void vulkan::VulkanRenderer::createVertexBuffer()
 	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
 
+}
+
+void vulkan::VulkanRenderer::CreateUniformBuffers()
+{
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+			_uniformBuffers[i], _uniformBuffersMemory[i]);
+
+		vkMapMemory(_devices->Handle(), _uniformBuffersMemory[i], 0, bufferSize, 0, &_uniformBuffersMapped[i]);
+	}
+}
+
+void vulkan::VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
+{
+	static auto startTime = std::chrono::high_resolution_clock::now();
+	
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	UniformBufferObject ubo{};
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.proj = glm::perspective(glm::radians(45.0f),
+		_swapchain->GetSwapchainExtent().width / (float)_swapchain->GetSwapchainExtent().height, 
+		0.1f, 10.f);
+	ubo.proj[1][1] *= -1;
+	memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
 uint32_t vulkan::VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
