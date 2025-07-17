@@ -8,6 +8,7 @@ bool vulkan::VulkanRenderer::Init()
 	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
 	SetPhysicalDevices();
 	SetUpDescriptorLayoutManager();
+	SetUpDescriptorPoolsManager();
 	CreateGraphicPipeline();
 	CreateFrameBuffer();
 	CreateCommandPools();
@@ -15,6 +16,9 @@ bool vulkan::VulkanRenderer::Init()
 	CreateSyncObjects();
 	createVertexBuffer();
 	CreateIndexBuffer();
+	CreateUniformBuffers();
+	ConfigureDescriptorSet();
+	
 	
 	return true;
 	 
@@ -36,7 +40,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
 	updateUniformBuffer(_currentFrame);
-	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,"Triangle_Vulkan");
+	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,"Rectangle_Vulkan");
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -185,12 +189,20 @@ void vulkan::VulkanRenderer::CreateGraphicPipeline()
 	config.bindings.push_back(uboLayoutBinding);
 	_descriptorLayouts->CreateDescriptorSetLayout(config);
 	_graphicsPipline->CreateGraphicsPipeline("Triangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
+	_graphicsPipline->CreateGraphicsPipeline("Rectangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,_descriptorLayouts->GetDescriptorSetLayout(config));
+	_descriptorPools->CreatePreFrameDescriptorSets(layouts);
 }
 
 //Set up DescriptorLayoutManager
 void vulkan::VulkanRenderer::SetUpDescriptorLayoutManager()
 {
 	_descriptorLayouts.reset(new DescriptorLayoutManager(*_devices));
+}
+
+void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
+{
+	_descriptorPools.reset(new DescriptorPoolManager(*_devices));
 }
 
 void vulkan::VulkanRenderer::CreateFrameBuffer()
@@ -247,6 +259,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
+
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -261,6 +274,11 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = _swapchain->GetSwapchainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		_graphicsPipline->GetGraphicsPipeline("Rectangle_Vulkan").layout,
+		0, 1,
+		&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
+		0, nullptr);
 
 	//vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
@@ -425,6 +443,28 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 			_uniformBuffers[i], _uniformBuffersMemory[i]);
 
 		vkMapMemory(_devices->Handle(), _uniformBuffersMemory[i], 0, bufferSize, 0, &_uniformBuffersMapped[i]);
+	}
+}
+
+void vulkan::VulkanRenderer::ConfigureDescriptorSet()
+{
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = _uniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+		descriptorWrite.pImageInfo = nullptr;
+		descriptorWrite.pTexelBufferView = nullptr;
+		vkUpdateDescriptorSets(_devices->Handle(),1, &descriptorWrite, 0, nullptr);
 	}
 }
 

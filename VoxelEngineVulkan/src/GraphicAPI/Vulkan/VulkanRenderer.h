@@ -33,6 +33,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
 		std::unique_ptr<class vulkan::CommandPoolManager>		_commandPools;
 		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;
+		std::unique_ptr<class vulkan::DescriptorPoolManager>	_descriptorPools;
 		
 
 		
@@ -59,6 +60,7 @@ namespace vulkan
 		void SetSwapChain();
 		void CreateGraphicPipeline();
 		void SetUpDescriptorLayoutManager();
+		void SetUpDescriptorPoolsManager();
 		void CreateFrameBuffer();
 		void CreateCommandPools();
 		void CreateCommandBuffer(QueueFamily family);
@@ -70,6 +72,7 @@ namespace vulkan
 		void recreateSwapChain();
 		void createVertexBuffer();
 		void CreateUniformBuffers();
+		void ConfigureDescriptorSet();
 		void updateUniformBuffer(uint32_t currentImage);
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		bool isMinimized() const;

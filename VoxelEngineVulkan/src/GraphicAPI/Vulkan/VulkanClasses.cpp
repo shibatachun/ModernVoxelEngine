@@ -920,7 +920,7 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
@@ -958,7 +958,7 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1; // Optional
 	pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
@@ -1071,7 +1071,8 @@ void vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig con
 
 vulkan::DescriptorPoolManager::DescriptorPoolManager(const Device& deivce) : _device(deivce)
 {
-
+	CreateGlobalDescriptorPool();
+	CreatePerFrameDescriptorPool();
 }
 
 vulkan::DescriptorPoolManager::~DescriptorPoolManager()

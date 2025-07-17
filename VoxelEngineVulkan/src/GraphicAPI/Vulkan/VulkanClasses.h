@@ -261,6 +261,7 @@ namespace vulkan {
 		void CreateGlobalDescriptorPool();
 		void CreatePerFrameDescriptorPool();
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
+		std::vector<VkDescriptorSet> GetHardCodedDescriptorSet() { return _hardCodeDescriptorSet; };
 
 	private:
 		VkDescriptorPool														_GlobalPool;
