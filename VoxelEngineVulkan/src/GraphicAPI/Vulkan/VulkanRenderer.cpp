@@ -94,11 +94,9 @@ void vulkan::VulkanRenderer::Cleanup()
 		vkDestroyBuffer(_devices->Handle(), _uniformBuffers[i], nullptr);
 		vkFreeMemory(_devices->Handle(), _uniformBuffersMemory[i], nullptr);
 	}
+	_descriptorPools.reset();
 	_descriptorLayouts.reset();
 
-	
-
-	
 	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
 

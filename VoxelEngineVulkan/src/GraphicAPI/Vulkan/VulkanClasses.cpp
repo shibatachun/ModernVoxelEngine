@@ -1077,6 +1077,12 @@ vulkan::DescriptorPoolManager::DescriptorPoolManager(const Device& deivce) : _de
 
 vulkan::DescriptorPoolManager::~DescriptorPoolManager()
 {
+	vkDestroyDescriptorPool(_device.Handle(), _GlobalPool, nullptr);
+	for (auto& pool: _PerFramePool)
+	{
+		vkDestroyDescriptorPool(_device.Handle(), pool, nullptr);
+	}
+	
 }
 
 void vulkan::DescriptorPoolManager::CreateGlobalDescriptorPool()
