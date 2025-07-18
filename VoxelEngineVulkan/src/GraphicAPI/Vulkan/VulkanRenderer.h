@@ -21,9 +21,10 @@ namespace vulkan
 		bool													_framebufferResized = false;
 
 	private:
-		const VkPresentModeKHR _presentMode;
-		GLFWwindow* _window;
-		asset::AssetManager& _assetManager;
+		const VkPresentModeKHR									_presentMode;
+		GLFWwindow*												_window;
+		asset::AssetManager&									_assetManager;
+
 		std::unique_ptr<class vulkan::Instance>					_instance;
 		std::unique_ptr<class vulkan::Surface>					_surface;
 		std::unique_ptr<class vulkan::DebugUtilsMessenger>		_debugMessenger;
