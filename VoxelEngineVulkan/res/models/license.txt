@@ -1,0 +1,11 @@
+Model Information:
+* title:	Generator LP
+* source:	https://sketchfab.com/3d-models/generator-lp-9127ac84a3c84d56be6e3993ed350eff
+* author:	YoeriBervoets (https://sketchfab.com/YoeriBervoets)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Generator LP" (https://sketchfab.com/3d-models/generator-lp-9127ac84a3c84d56be6e3993ed350eff) by YoeriBervoets (https://sketchfab.com/YoeriBervoets) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

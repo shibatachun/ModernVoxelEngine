@@ -3,6 +3,7 @@
 namespace vulkan {
 
 
+
 	class Instance final {
 	public:
 		VULKAN_NON_COPIABLE(Instance);
@@ -206,7 +207,6 @@ namespace vulkan {
 		VkRenderPass												_renderPass;
 
 	};
-
 
 	class GraphicPipeline final {
 	

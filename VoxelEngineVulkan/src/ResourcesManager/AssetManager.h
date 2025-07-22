@@ -2,6 +2,7 @@
 #include "AssetCommonUtils.h"
 #include "../../res/models/testVertexData.h"
 #include "Shaders.h"
+#include "ModelManager.h"
 namespace asset {
 	class AssetManager final {
 	public:
@@ -12,9 +13,11 @@ namespace asset {
 
 	private:
 		void InitShaderManager();
+		void InitModelManager();
 		
 	private:
-		std::unique_ptr<asset::ShadersManager> _shadersManager;
+		std::unique_ptr<asset::ShadersManager>	_shadersManager;
+		std::unique_ptr<asset::ModelManager>	_modelManager;
 	
 	};
 }

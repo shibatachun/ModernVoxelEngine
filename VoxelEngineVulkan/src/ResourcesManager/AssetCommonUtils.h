@@ -7,6 +7,12 @@
 #include <unordered_map>
 #include <filesystem>
 #include <string>
+
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
+#include <assimp/version.h>
+
 #include "../utils/TypeDefine.h"
 
 

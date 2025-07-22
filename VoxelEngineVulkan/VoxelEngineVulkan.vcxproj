@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ResourcesManager\ModelManager.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ResourcesManager\Shaders.cpp" />
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ResourcesManager\ModelManager.h" />
     <ClInclude Include="res\models\testVertexData.h" />
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="src\ResourcesManager\Shaders.h" />
@@ -158,6 +160,7 @@
     <ClInclude Include="src\GraphicAPI\IRenderer.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanCommon.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\utils\Pool.h" />
     <ClInclude Include="src\utils\TypeDefine.h" />
     <ClInclude Include="src\utils\GlfwHelper.h" />
     <ClInclude Include="src\utils\GlslangCompiler.h" />
@@ -166,6 +169,7 @@
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanClasses.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\models\generator_LP.fbx" />
     <None Include="res\shaders\compileShader.bat" />
     <None Include="res\shaders\rectangle.vert" />
     <None Include="res\shaders\triangle.frag" />
