@@ -6,6 +6,7 @@
 #include "ResourcesManager/AssetManager.h"
 #include "utils/GlfwHelper.h"
 
+
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h> 
 class Application

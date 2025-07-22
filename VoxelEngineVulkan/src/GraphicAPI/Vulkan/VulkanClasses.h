@@ -16,11 +16,12 @@ namespace vulkan {
 	private:
 		GLFWwindow* _window;
 		uint32_t _vulkanVersion = VK_API_VERSION_1_3;
-		std::vector<const char*> validationLayers_;
+		std::vector<const char*>					validationLayers_;
 		VULKAN_HANDLE(VkInstance, instance_)
-		std::vector<VkExtensionProperties> extension_;
-		std::vector<VkLayerProperties> layers_;
-		std::vector<VkPhysicalDevice> physicalDevices_;
+		std::vector<VkExtensionProperties>			extension_;
+		std::vector<VkLayerProperties>				layers_;
+		std::vector<VkPhysicalDevice>				physicalDevices_;
+	
 
 
 
@@ -31,6 +32,8 @@ namespace vulkan {
 
 		void CheckVulkanMinimumVersion(const uint32_t minVersion);
 		void CheckValidationLayerSupport(const std::vector<const char*>& validationLayers);
+
+		
 
 	};
 
@@ -142,6 +145,9 @@ namespace vulkan {
 		VkQueue											_graphicsQueue{};
 		VkQueue											_presentQueue{};
 		VkQueue											_transferQueue{};
+
+		VkPhysicalDeviceProperties2						_physicalDeviceProperties2;
+		VkPhysicalDeviceDriverProperties				_physicalDeviceDriverProerties;
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
 	};
@@ -201,6 +207,7 @@ namespace vulkan {
 
 	};
 
+
 	class GraphicPipeline final {
 	
 	public:
@@ -218,6 +225,7 @@ namespace vulkan {
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		
 	private:
+		
 		std::unordered_map<std::string, PipelineEntry>				_pipelineEntrys;
 		const std::unordered_map<std::string, asset::shader>&		_shaders;
 		VkDevice													_device;

@@ -198,10 +198,12 @@ void vulkan::VulkanRenderer::SetUpDescriptorLayoutManager()
 	_descriptorLayouts.reset(new DescriptorLayoutManager(*_devices));
 }
 
+//Set up DescriptorPoolsManger
 void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
 {
 	_descriptorPools.reset(new DescriptorPoolManager(*_devices));
 }
+
 
 void vulkan::VulkanRenderer::CreateFrameBuffer()
 {
@@ -442,7 +444,7 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 
 		vkMapMemory(_devices->Handle(), _uniformBuffersMemory[i], 0, bufferSize, 0, &_uniformBuffersMapped[i]);
 	}
-}
+} 
 
 void vulkan::VulkanRenderer::ConfigureDescriptorSet()
 {

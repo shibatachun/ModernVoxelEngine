@@ -43,8 +43,7 @@ vulkan::Instance::Instance(GLFWwindow* window) : _window(window)
 
 	Check(vkCreateInstance(&createInfo, nullptr, &instance_), "create instance");
 	GetVulkanPhysicalDevices();
-	
-	
+
 }
 
 vulkan::Instance::~Instance()
@@ -437,8 +436,24 @@ vulkan::Device::Device(
 	vkGetDeviceQueue(_device, _graphicsFamilyIndex, 0, &_graphicsQueue);
 	vkGetDeviceQueue(_device, _presentFamilyIndex, 0, &_presentQueue);
 	vkGetDeviceQueue(_device, _transferFamilyIndex, 0, &_transferQueue);
+	
+	_physicalDeviceDriverProerties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+	_physicalDeviceDriverProerties.pNext = nullptr;
+	_physicalDeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	_physicalDeviceProperties2.pNext = &_physicalDeviceDriverProerties;
 
-
+	
+	vkGetPhysicalDeviceProperties2(_physicalDevice, &_physicalDeviceProperties2);
+	 
+	
+	const uint32_t apiVersion = _physicalDeviceProperties2.properties.apiVersion;
+	LLOGL("Vulakn physical device: %s\n", _physicalDeviceProperties2.properties.deviceName);
+	LLOGL("                 API version : %i.%i.%i.%i\n", 
+		VK_API_VERSION_MAJOR(apiVersion),							
+		VK_API_VERSION_MINOR(apiVersion),							
+		VK_API_VERSION_PATCH(apiVersion),							
+		VK_API_VERSION_VARIANT(apiVersion));
+	LLOGL("                 Driver info : %s %s\n", _physicalDeviceDriverProerties.driverName, _physicalDeviceDriverProerties.driverInfo);
 
 }
 
@@ -747,7 +762,7 @@ vulkan::RenderPass::RenderPass(const SwapChain& swapchain) : _swapChain(swapchai
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	//创建subpass，一个render pass有一个或多个subpass，用于存储渲染操作
+	//创建subpass，一个render pass有一个或多个subp ass，用于存储渲染操作
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
