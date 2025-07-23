@@ -3,7 +3,6 @@
 namespace vulkan {
 
 
-
 	class Instance final {
 	public:
 		VULKAN_NON_COPIABLE(Instance);

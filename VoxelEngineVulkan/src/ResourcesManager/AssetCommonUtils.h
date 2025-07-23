@@ -12,8 +12,12 @@
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/version.h>
+#include <assimp/Importer.hpp>
 
 #include "../utils/TypeDefine.h"
+#include "../utils/minilog.h"
+#include "../utils/Utils.h"
+#include "DataFormat.h"
 
 
 namespace asset
@@ -123,5 +127,18 @@ namespace asset
         fileInfo.ext = path.has_extension() ? path.extension().string().substr(1) : "";
         fileInfo.dir = path.parent_path().string();
         return fileInfo;
+    }
+
+    inline uint64_t GetLastModifiedTime(const std::string& filePath)
+    {
+        try {
+            auto ftime = std::filesystem::last_write_time(filePath);
+            auto systemTime = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+            return std::chrono::duration_cast<std::chrono::seconds>(systemTime.time_since_epoch()).count();
+        }
+        catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "Error reading file timestamp: " << e.what() << "\n";
+            return 0;
+        }
     }
 }

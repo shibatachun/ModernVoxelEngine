@@ -3,10 +3,7 @@
 
 namespace asset {
 
-	struct Model
-	{
 
-	};
 class ModelManager
 {
 public:
@@ -14,7 +11,12 @@ public:
 	~ModelManager();
 	void loadModel(const char* filename);
 private:
-	std::unordered_map<std::string, Model>						_model;
+	void processNode(aiNode* node, const aiScene* scene);
+	
+	
+private:
+	std::unordered_map<std::string, ModelData>						_model;
+	
 
 };
 }

@@ -143,10 +143,12 @@
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utils\GlslangCompiler.cpp" />
+    <ClCompile Include="src\utils\Math.cpp" />
     <ClCompile Include="src\utils\minilog.cpp" />
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ResourcesManager\DataFormat.h" />
     <ClInclude Include="src\ResourcesManager\ModelManager.h" />
     <ClInclude Include="res\models\testVertexData.h" />
     <ClInclude Include="src\Application.h" />
@@ -160,6 +162,8 @@
     <ClInclude Include="src\GraphicAPI\IRenderer.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanCommon.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\utils\GlmUtils.h" />
+    <ClInclude Include="src\utils\Math.h" />
     <ClInclude Include="src\utils\Pool.h" />
     <ClInclude Include="src\utils\TypeDefine.h" />
     <ClInclude Include="src\utils\GlfwHelper.h" />
@@ -167,6 +171,7 @@
     <ClInclude Include="src\utils\minilog.h" />
     <ClInclude Include="src\utils\ScopeExit.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanClasses.h" />
+    <ClInclude Include="src\utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />
