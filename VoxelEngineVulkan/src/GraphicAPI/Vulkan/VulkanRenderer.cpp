@@ -404,7 +404,13 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 
 void vulkan::VulkanRenderer::createVertexBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+	auto it = _assetManager.getModelDatas().find("generator_LP");
+	if (it == _assetManager.getModelDatas().end()) {
+
+		throw std::runtime_error("can't not create vertiex buffer");
+	}
+	
+	VkDeviceSize bufferSize = sizeof(it->second.meshes[0].vertices[0]) * it->second.meshes[0].vertices.size();;
 
 	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
 	VkBuffer stagingBuffer;
@@ -414,8 +420,12 @@ void vulkan::VulkanRenderer::createVertexBuffer()
 		stagingBuffer, stagingBufferMemory);
 
 	void* data;
+	
+
+	
 	vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
+
+	memcpy(data, it->second.meshes[0].vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
 
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |

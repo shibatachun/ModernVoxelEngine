@@ -89,7 +89,7 @@ void asset::ModelManager::loadModel(const char* filename)
 	}
 	importer.FreeScene();
 
-	_model.emplace(filename, modelData);
+	_model.emplace(modelData.name, modelData);
 
 }
 

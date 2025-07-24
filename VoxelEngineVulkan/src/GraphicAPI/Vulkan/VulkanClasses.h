@@ -226,6 +226,7 @@ namespace vulkan {
 	private:
 		
 		std::unordered_map<std::string, PipelineEntry>				_pipelineEntrys;
+		//TODO Remove this 
 		const std::unordered_map<std::string, asset::shader>&		_shaders;
 		VkDevice													_device;
 		const SwapChain&											_swapChain;

@@ -285,7 +285,7 @@ namespace vulkan {
     inline VkVertexInputBindingDescription getBindingDescription(){
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(Vertex);
+        bindingDescription.stride = sizeof(Vertex1);
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
@@ -309,5 +309,31 @@ namespace vulkan {
     }
 
 
+	inline  std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptionsV2() {
+		std::array<VkVertexInputAttributeDescription, 4> attrDesc{};
+		attrDesc[0].location = 0;
+		attrDesc[0].binding = 0;
+		attrDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attrDesc[0].offset = offsetof(Vertex1, position);
+
+		// location 1 ！！ vec3 normal
+		attrDesc[1].location = 1;
+		attrDesc[1].binding = 0;
+		attrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attrDesc[1].offset = offsetof(Vertex1, normal);
+
+		// location 2 ！！ vec2 uv
+		attrDesc[2].location = 2;
+		attrDesc[2].binding = 0;
+		attrDesc[2].format = VK_FORMAT_R32G32_SFLOAT;
+		attrDesc[2].offset = offsetof(Vertex1, uv);
+
+		// location 3 ！！ vec3 tangent
+		attrDesc[3].location = 3;
+		attrDesc[3].binding = 0;
+		attrDesc[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attrDesc[3].offset = offsetof(Vertex1, tangent);
+		return attrDesc;
+	}
 
 }
