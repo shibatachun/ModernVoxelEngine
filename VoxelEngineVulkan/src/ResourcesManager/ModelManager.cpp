@@ -97,4 +97,9 @@ void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 {
 }
 
+void asset::ModelManager::loadImage(std::string filename)
+{
+	//TODO:遍历texture文件夹，加载图片
+}
+
 

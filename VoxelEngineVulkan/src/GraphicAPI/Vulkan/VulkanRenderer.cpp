@@ -307,7 +307,7 @@ void vulkan::VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = vulkan::VulkanResource::findMemoryType(memRequirements.memoryTypeBits, properties,_devices->PhysicalDevice());
 
 	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &bufferMemory), "AllocateMemory!");
 
@@ -493,19 +493,6 @@ void vulkan::VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 	memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-uint32_t vulkan::VulkanRenderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-{
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(_devices->PhysicalDevice(), &memProperties); 
-	//´ý»á³ò³ò¿´
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++){
-		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-			return i;
-		}
-	}
-	
-	throw std::runtime_error("failed to find suitable memory type!");
-}
 
 bool vulkan::VulkanRenderer::isMinimized() const
 {

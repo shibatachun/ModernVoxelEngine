@@ -979,22 +979,6 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	createinfo.createInfo.renderPass = renderPass;
 	createinfo.createInfo.stageCount = 2;
 	createinfo.UpdateAllArrays();
-	//VkGraphicsPipelineCreateInfo pipelineInfo{};
-	//pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	//pipelineInfo.stageCount = 2;
-	//pipelineInfo.pStages = shaderStages;
-	//pipelineInfo.pVertexInputState = &vertexInputInfo;
-	//pipelineInfo.pInputAssemblyState = &inputAssembly;
-	//pipelineInfo.pViewportState = &viewportState;
-	//pipelineInfo.pRasterizationState = &rasterizer;
-	//pipelineInfo.pMultisampleState = &multisampling;
-	//pipelineInfo.pDepthStencilState = nullptr;
-	//pipelineInfo.pColorBlendState = &colorBlending;
-	//pipelineInfo.pDynamicState = &dynamicState;
-	//pipelineInfo.layout = entry.layout;
-	//pipelineInfo.renderPass = renderPass;
-	//pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //optional
-	//pipelineInfo.basePipelineIndex = -1; //Optional
 	std::string pipelineNameInfo = "Create pipeline for ";
 	pipelineNameInfo += pipelineName;
 	

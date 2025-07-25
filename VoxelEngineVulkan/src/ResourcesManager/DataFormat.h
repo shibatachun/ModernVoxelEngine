@@ -39,3 +39,11 @@ struct ModelData {
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
 };
+
+struct Image {
+    std::string name;
+    char* pixel;
+    int texWidth;
+    int texHeight;
+    int texChannels;
+};

@@ -20,6 +20,10 @@
 #include "DataFormat.h"
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../utils/stb_image.h"
+
+
 namespace asset
 {
 	inline static std::vector<char> readFile(const std::filesystem::path& filepath)

@@ -301,5 +301,27 @@ namespace vulkan {
 
 	void getPipelineVertexInputState(const std::vector<VertexComponent> components,  graphicsPipelineCreateInfoPack& createinfo);
 
+	namespace VulkanResource {
+		struct VulkanRenderObject {
+			ModelData data;
+			PipelineEntry pipleEntry;
+			std::vector<VkImage> textures;
+
+		};
+
+		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device);
+
+		void createImage(uint32_t width, uint32_t height, VkFormat format,
+			VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
+			VkImage& image, VkDeviceMemory& imageMemory, VkDevice& device, VkPhysicalDevice phy_device);
+
+		void createTextureImage();
+
+	
+
+	}
+	
+	
+
 
 }

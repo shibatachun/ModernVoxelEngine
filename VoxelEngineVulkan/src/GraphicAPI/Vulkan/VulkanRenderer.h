@@ -83,7 +83,6 @@ namespace vulkan
 		void CreateUniformBuffers();
 		void ConfigureDescriptorSet();
 		void updateUniformBuffer(uint32_t currentImage);
-		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		bool isMinimized() const;
 
 
