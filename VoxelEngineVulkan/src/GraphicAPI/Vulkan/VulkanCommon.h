@@ -42,6 +42,9 @@ constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 namespace vulkan {
 
+	
+	enum class VertexComponent { Position, Normal, UV, Color, Tangent, Joint0, Weight0 };
+
     struct UniformBufferObject
     {
         glm::mat4 model;
@@ -119,7 +122,7 @@ namespace vulkan {
 			UpdateAllArrayAddresses();
 		}
 		//Getter，这里我没用const修饰符
-		operator VkGraphicsPipelineCreateInfo& () { return createInfo; }
+		operator const VkGraphicsPipelineCreateInfo& () { return createInfo; }
 		//Non-const Function
 		//该函数用于将各个vector中数据的地址赋值给各个创建信息中相应成员，并相应改变各个count
 		void UpdateAllArrays() {
@@ -184,6 +187,7 @@ namespace vulkan {
 		seed ^= v + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
 	}
 
+	
 	struct LayoutConfigHash {
 		std::size_t operator()(LayoutConfig const& cfg) const noexcept {
 			std::size_t h = 0;
@@ -289,51 +293,13 @@ namespace vulkan {
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
+	VkVertexInputBindingDescription inputBindingDescription(uint32_t binding);
+	
+	VkVertexInputAttributeDescription inputAttributeDescription(uint32_t binding, uint32_t location, VertexComponent component);
+	
+	std::vector<VkVertexInputAttributeDescription> inputAttributeDescriptions(uint32_t binding, const std::vector<VertexComponent> components);
 
-    inline  std::array<VkVertexInputAttributeDescription,2> getAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-        attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-        //float: VK_FORMAT_R32_SFLOAT
-        //vec2: VK_FORMAT_R32G32_SFLOAT
-        //vec3 : VK_FORMAT_R32G32B32_SFLOAT
-        //vec4 : VK_FORMAT_R32G32B32A32_SFLOAT
-        attributeDescriptions[0].offset = offsetof(Vertex, pos);
+	void getPipelineVertexInputState(const std::vector<VertexComponent> components,  graphicsPipelineCreateInfoPack& createinfo);
 
-        attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
-        return attributeDescriptions;
-    }
-
-
-	inline  std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptionsV2() {
-		std::array<VkVertexInputAttributeDescription, 4> attrDesc{};
-		attrDesc[0].location = 0;
-		attrDesc[0].binding = 0;
-		attrDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attrDesc[0].offset = offsetof(Vertex1, position);
-
-		// location 1 —— vec3 normal
-		attrDesc[1].location = 1;
-		attrDesc[1].binding = 0;
-		attrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attrDesc[1].offset = offsetof(Vertex1, normal);
-
-		// location 2 —— vec2 uv
-		attrDesc[2].location = 2;
-		attrDesc[2].binding = 0;
-		attrDesc[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attrDesc[2].offset = offsetof(Vertex1, uv);
-
-		// location 3 —— vec3 tangent
-		attrDesc[3].location = 3;
-		attrDesc[3].binding = 0;
-		attrDesc[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attrDesc[3].offset = offsetof(Vertex1, tangent);
-		return attrDesc;
-	}
 
 }

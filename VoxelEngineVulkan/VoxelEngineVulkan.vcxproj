@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanCommon.cpp" />
     <ClCompile Include="src\ResourcesManager\ModelManager.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ResourcesManager\Shaders.cpp" />

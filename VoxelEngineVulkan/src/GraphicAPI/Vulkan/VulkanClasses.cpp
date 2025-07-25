@@ -853,6 +853,7 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 		std::cerr << "shader file " << pipelineName << " is not exist." << std::endl;
 		return;
 	}
+	graphicsPipelineCreateInfoPack createinfo;
 	VkPipeline pipeline;
 	VkPipelineLayout pipelineLayout;
 	PipelineEntry entry;
@@ -872,33 +873,25 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
+	createinfo.shaderStages.emplace_back(vertShaderStageInfo);
+	createinfo.shaderStages.emplace_back(fragShaderStageInfo);
 
 	//顶点输入，用来输入到pipeline中的vertex shader的vertex信息
 	//主要两个作用， 绑定顶点中的间隔的距离，还有他们属性的类型以及偏移
 	//TODO 抽象出来，要弄几个弄几个
-	auto bindingDescriptions = getBindingDescription();
-	auto attributeDescriptions = getAttributeDescriptionsV2();
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescriptions; // Optional
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data(); // Optional
+	
+	getPipelineVertexInputState({ VertexComponent::Position, VertexComponent::Color}, createinfo);
 
 	//规定图元类型，如三角形，线，点等
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
+	createinfo.inputAssemblyStateCi.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	createinfo.inputAssemblyStateCi.primitiveRestartEnable = VK_FALSE;
+
 
 	//创建动态状态
-	std::vector<VkDynamicState> dynamicStates = {
-	VK_DYNAMIC_STATE_VIEWPORT,
-	VK_DYNAMIC_STATE_SCISSOR
-	};
+	createinfo.dynamicStates.emplace_back(VK_DYNAMIC_STATE_VIEWPORT);
+	createinfo.dynamicStates.emplace_back(VK_DYNAMIC_STATE_SCISSOR);
 
-
+	
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -907,22 +900,13 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
+	createinfo.viewports.push_back(viewport);
+
 	VkRect2D scissor{};
 	scissor.offset = { 0,0 };
 	scissor.extent = _swapChain.GetSwapchainExtent();
 
-
-	VkPipelineDynamicStateCreateInfo dynamicState{};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-	dynamicState.pDynamicStates = dynamicStates.data();
-
-	VkPipelineViewportStateCreateInfo viewportState{};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
-	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
+	createinfo.scissors.push_back(scissor);
 
 	//光栅器
 	//The rasterizer takes the geometry that is shaped by the vertices from the vertex shader and turns it into fragments to be colored by the fragment shader. 
@@ -940,6 +924,9 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
 	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+	
+	createinfo.rasterizationStateCi = rasterizer;
+
 
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -950,6 +937,8 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
 	multisampling.alphaToOneEnable = VK_FALSE; // Optional
 
+	createinfo.multisampleStateCi = multisampling;
+
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_FALSE;
@@ -959,6 +948,8 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
 	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+	createinfo.colorBlendAttachmentStates.push_back(colorBlendAttachment);
 
 	VkPipelineColorBlendStateCreateInfo colorBlending{};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -971,6 +962,8 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	colorBlending.blendConstants[2] = 0.0f; // Optional
 	colorBlending.blendConstants[3] = 0.0f; // Optional
 
+	createinfo.colorBlendStateCi = colorBlending;
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1; // Optional
@@ -982,25 +975,30 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 	pipelineLayoutNameInfo += pipelineName;
 	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &entry.layout), pipelineLayoutNameInfo.c_str());
 	
-	VkGraphicsPipelineCreateInfo pipelineInfo{};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr;
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = entry.layout;
-	pipelineInfo.renderPass = renderPass;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //optional
-	pipelineInfo.basePipelineIndex = -1; //Optional
+	createinfo.createInfo.layout = entry.layout;
+	createinfo.createInfo.renderPass = renderPass;
+	createinfo.createInfo.stageCount = 2;
+	createinfo.UpdateAllArrays();
+	//VkGraphicsPipelineCreateInfo pipelineInfo{};
+	//pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	//pipelineInfo.stageCount = 2;
+	//pipelineInfo.pStages = shaderStages;
+	//pipelineInfo.pVertexInputState = &vertexInputInfo;
+	//pipelineInfo.pInputAssemblyState = &inputAssembly;
+	//pipelineInfo.pViewportState = &viewportState;
+	//pipelineInfo.pRasterizationState = &rasterizer;
+	//pipelineInfo.pMultisampleState = &multisampling;
+	//pipelineInfo.pDepthStencilState = nullptr;
+	//pipelineInfo.pColorBlendState = &colorBlending;
+	//pipelineInfo.pDynamicState = &dynamicState;
+	//pipelineInfo.layout = entry.layout;
+	//pipelineInfo.renderPass = renderPass;
+	//pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; //optional
+	//pipelineInfo.basePipelineIndex = -1; //Optional
 	std::string pipelineNameInfo = "Create pipeline for ";
 	pipelineNameInfo += pipelineName;
-	Check(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &entry.pipeline), pipelineNameInfo.c_str());
+	
+	Check(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1,&createinfo.createInfo, nullptr, &entry.pipeline), pipelineNameInfo.c_str());
 
 	_pipelineEntrys[pipelineName] = entry;
 

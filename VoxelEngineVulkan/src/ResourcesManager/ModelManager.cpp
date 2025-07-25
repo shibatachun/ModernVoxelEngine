@@ -45,16 +45,16 @@ void asset::ModelManager::loadModel(const char* filename)
 		for (unsigned int j = 0; j < meshData.vertexCount; j++) {
 			meshData.vertices[j] = (Vertex1{
 				//位置
-				glm::vec3(assimpMesh->mVertices[j].x, assimpMesh->mVertices[j].y, assimpMesh->mVertices[j].z),
+				.pos = glm::vec3(assimpMesh->mVertices[j].x, assimpMesh->mVertices[j].y, assimpMesh->mVertices[j].z),
 				//N向量
-				glm::vec3(assimpMesh->mNormals[j].x, assimpMesh->mNormals[j].y, assimpMesh->mNormals[j].z),
+				.normal = glm::vec3(assimpMesh->mNormals[j].x, assimpMesh->mNormals[j].y, assimpMesh->mNormals[j].z),
 				//UV坐标
-				assimpMesh->HasTextureCoords(0) ? glm::vec2(assimpMesh->mTextureCoords[0][j].x, assimpMesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
+				.uv = assimpMesh->HasTextureCoords(0) ? glm::vec2(assimpMesh->mTextureCoords[0][j].x, assimpMesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
 				//Tangent
-				assimpMesh->HasTangentsAndBitangents() ? glm::vec3(assimpMesh->mTangents[j].x, assimpMesh->mTangents[j].y, assimpMesh->mTangents[j].z) : glm::vec3(0.0f) }
+				.tangent = assimpMesh->HasTangentsAndBitangents() ? glm::vec3(assimpMesh->mTangents[j].x, assimpMesh->mTangents[j].y, assimpMesh->mTangents[j].z) : glm::vec3(0.0f) }
 				);
-			meshData.aabbMin = utils::math::VecMin(meshData.vertices[j].position, meshData.aabbMin);
-			meshData.aabbMax = utils::math::VecMax(meshData.vertices[j].position, meshData.aabbMax);
+			meshData.aabbMin = utils::math::VecMin(meshData.vertices[j].pos, meshData.aabbMin);
+			meshData.aabbMax = utils::math::VecMax(meshData.vertices[j].pos, meshData.aabbMax);
 		}
 		for (unsigned int j = 0; j < assimpMesh->mNumFaces; j++) {
 			const aiFace& face = assimpMesh->mFaces[j];
@@ -73,8 +73,8 @@ void asset::ModelManager::loadModel(const char* filename)
 			Vertex1* vert0 = &meshData.vertices[meshData.indices[i]];
 			Vertex1* vert1 = &meshData.vertices[meshData.indices[i + 1]];
 			Vertex1* vert2 = &meshData.vertices[meshData.indices[i + 2]];
-			glm::vec3 deltaPos1 = vert1->position - vert0->position;
-			glm::vec3 deltaPos2 = vert2->position - vert0->position;
+			glm::vec3 deltaPos1 = vert1->pos - vert0->pos;
+			glm::vec3 deltaPos2 = vert2->pos - vert0->pos;
 			glm::vec2 deltaUV1 = vert1->uv - vert0->uv;
 			glm::vec2 deltaUV2 = vert2->uv - vert0->uv;
 			float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);

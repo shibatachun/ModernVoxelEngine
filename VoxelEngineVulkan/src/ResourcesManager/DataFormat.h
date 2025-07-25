@@ -1,21 +1,19 @@
 #include "../utils/GlmUtils.h"
 #include <vector>
 #include <map>
+#include <optional>
 
 //顶点数据
 struct Vertex1 {
-    glm::vec3 position{};
+    glm::vec3 pos{};
     glm::vec3 normal{};
     glm::vec2 uv{};
+    glm::vec4 color{};
+    glm::vec4 joint0{};
+    glm::vec4 weight0{};
     glm::vec3 tangent{};
-
-    explicit Vertex1(const glm::vec3& pos = {},
-        const glm::vec3& norm = {},
-        const glm::vec2& tex = {},
-        const glm::vec3& tang = {})
-        : position(pos), normal(norm), uv(tex), tangent(tang)
-    {
-    }
+  
+    
 };
 
 //用来存储网格数据的数据结构
