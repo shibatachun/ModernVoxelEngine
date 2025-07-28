@@ -1,5 +1,13 @@
 #include "VulkanRenderer.h"
 
+
+std::vector<Vertex1> test_vertices = {
+	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}},
+	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}},
+	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}},
+	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f}},
+
+};
 bool vulkan::VulkanRenderer::Init()
 {
 	
@@ -10,10 +18,14 @@ bool vulkan::VulkanRenderer::Init()
 	SetUpDescriptorLayoutManager();
 	SetUpDescriptorPoolsManager();
 	CreateGraphicPipeline();
+
 	CreateFrameBuffer();
 	CreateCommandPools();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
+
+	SetUpBufferManager();
 	CreateSyncObjects();
+
 	createVertexBuffer();
 	CreateIndexBuffer();
 	CreateUniformBuffers();
@@ -130,8 +142,6 @@ void vulkan::VulkanRenderer::SetPhysicalDevices()
 	std::vector<const char*> requeredExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
-	VkPhysicalDeviceFeatures  deviceFeatures = {};
-
 	auto isDeviceSuitable = [&](VkPhysicalDevice device)->bool {
 		VkPhysicalDeviceProperties properties{};
 		VkPhysicalDeviceFeatures features{};
@@ -153,7 +163,7 @@ void vulkan::VulkanRenderer::SetPhysicalDevices()
 	VkPhysicalDeviceProperties props{};
 	vkGetPhysicalDeviceProperties(_physicalDevice, &props);
 	std::cout << "Using physical device : " << props.deviceName << std::endl;
-	_devices.reset(new vulkan::Device(_physicalDevice, *_surface, requeredExtensions, deviceFeatures, nullptr));
+	_devices.reset(new vulkan::Device(_physicalDevice, *_surface, requeredExtensions, nullptr));
 	SetSwapChain();
 
 
@@ -209,6 +219,11 @@ void vulkan::VulkanRenderer::CreateFrameBuffer()
 {
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
 	
+}
+
+void vulkan::VulkanRenderer::SetUpBufferManager()
+{
+	_bufferManager.reset(new BufferManager(*_devices, *_commandPools));
 }
 
 void vulkan::VulkanRenderer::CreateCommandPools()
@@ -416,22 +431,33 @@ void vulkan::VulkanRenderer::createVertexBuffer()
 	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+		bufferSize,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		test_vertices.data());
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		bufferSize, 
+		&_vertexBuffer, 
+		&_vertexBufferMemory);
+	//CreateBuffer(bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+	//	stagingBuffer, stagingBufferMemory);
 
-	void* data;
-	
-	vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	//void* data;
+	//
+	//vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
 
-	memcpy(data, test_vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
-
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		_vertexBuffer, _vertexBufferMemory);
-	CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
+	//memcpy(data, test_vertices.data(), (size_t)bufferSize);
+	//vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
+	//CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+	//	_vertexBuffer, _vertexBufferMemory);
+	//CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
+	_bufferManager->copyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
 	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
 
@@ -492,7 +518,6 @@ void vulkan::VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 	ubo.proj[1][1] *= -1;
 	memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
-
 
 bool vulkan::VulkanRenderer::isMinimized() const
 {

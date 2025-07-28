@@ -46,6 +46,9 @@ void vulkan::getPipelineVertexInputState(const std::vector<VertexComponent> comp
 	createinfo.UpdateAllArrays();
 }
 
+
+
+
 uint32_t vulkan::VulkanResource::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;

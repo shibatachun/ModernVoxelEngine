@@ -303,9 +303,12 @@ namespace vulkan {
 
 	namespace VulkanResource {
 		struct VulkanRenderObject {
+			std::string name;
 			ModelData data;
 			PipelineEntry pipleEntry;
 			std::vector<VkImage> textures;
+			VkBuffer		vertexBuffer;
+			VkDeviceMemory	memory;
 
 		};
 

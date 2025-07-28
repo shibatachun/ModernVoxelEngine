@@ -1,6 +1,6 @@
 #pragma once
 #include "AssetCommonUtils.h"
-
+#define STB_IMAGE_IMPLEMENTATION
 namespace asset {
 
 
@@ -18,7 +18,7 @@ private:
 	
 private:
 	std::unordered_map<std::string, ModelData>						_model;
-	std::unordered_map<FileInfo, 
+	/*std::unordered_map<FileInfo, */
 
 };
 }

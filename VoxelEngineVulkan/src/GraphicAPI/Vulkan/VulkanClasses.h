@@ -119,7 +119,7 @@ namespace vulkan {
 	class Device final {
 	public:
 		VULKAN_NON_COPIABLE(Device);
-		Device(VkPhysicalDevice device,const Surface&, const std::vector<const char*>& requiredExtension, const VkPhysicalDeviceFeatures& deviceFeatures, const void* nextDeviceFeatures);
+		Device(VkPhysicalDevice device,const Surface&, const std::vector<const char*>& requiredExtension, const void* nextDeviceFeatures);
 		~Device();
 
 		uint32_t GraphicsFamilyIndex() const { return _graphicsFamilyIndex; }
@@ -132,6 +132,7 @@ namespace vulkan {
 		VkQueue TransferQueue() const { return _transferQueue; }
 		const DebugUtils& DebugUtils() const { return _debugUtils; }
 		void WaitIdle() const;
+		VkPhysicalDeviceMemoryProperties GetPhyDeviceMemProperty() const { return _memProperties; };
 	private:
 		VULKAN_HANDLE(VkDevice, _device)
 		const VkPhysicalDevice							_physicalDevice;
@@ -148,6 +149,14 @@ namespace vulkan {
 
 		VkPhysicalDeviceProperties2						_physicalDeviceProperties2;
 		VkPhysicalDeviceDriverProperties				_physicalDeviceDriverProerties;
+		VkPhysicalDeviceMemoryProperties				_memProperties;
+		//Features
+		VkPhysicalDeviceVulkan13Features vkFeatures13_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+		VkPhysicalDeviceVulkan12Features vkFeatures12_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+														  .pNext = &vkFeatures13_ };
+		VkPhysicalDeviceVulkan11Features vkFeatures11_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+														  .pNext = &vkFeatures12_ };
+		VkPhysicalDeviceFeatures2 vkFeatures10_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, .pNext = &vkFeatures11_ };
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
 	};
@@ -280,6 +289,37 @@ namespace vulkan {
 
 	};
 		
+	class BufferManager final{
+
+	public:
+		BufferManager(const Device& deivce, CommandPoolManager& commandPools);
+		~BufferManager();
+		
+		void createBuffer(VkBufferUsageFlags usageFlags, 
+			VkMemoryPropertyFlags memoryPropertyFlags, 
+			VkDeviceSize size, 
+			VkBuffer *buffer, 
+			VkDeviceMemory *memory, 
+			void *data = nullptr);
+		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
+		VkCommandBuffer createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin = false);
+		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
+		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue,  VkCommandPool pool,  bool free);
+	private:
+		const Device& device;
+		CommandPoolManager& commandPools;
+
+
+	};
+
+	struct VulkanResouce {
+		std::unordered_map<std::string, vulkan::VulkanResource::VulkanRenderObject>			_renderObjects;
+		BufferManager&																		_BufferManager;
+
+		void ConstructVulkanRenderObject();
+	};
 }
+	
+
 
 

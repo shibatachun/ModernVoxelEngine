@@ -5,13 +5,7 @@
 
 namespace vulkan
 {
-	const std::vector<Vertex1> test_vertices = {
-		{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}},
-		{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}},
-		{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}},
-		{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f}},
-		
-	};
+
 	
 
 
@@ -32,6 +26,7 @@ namespace vulkan
 		const VkPresentModeKHR									_presentMode;
 		GLFWwindow*												_window;
 		asset::AssetManager&									_assetManager;
+	
 
 		std::unique_ptr<class vulkan::Instance>					_instance;
 		std::unique_ptr<class vulkan::Surface>					_surface;
@@ -43,6 +38,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::CommandPoolManager>		_commandPools;
 		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;
 		std::unique_ptr<class vulkan::DescriptorPoolManager>	_descriptorPools;
+		std::unique_ptr<class vulkan::BufferManager>			_bufferManager;
 		
 
 		
@@ -52,6 +48,7 @@ namespace vulkan
 		std::vector<VkSemaphore>								_renderFinishedSemaphores;
 		std::vector<VkFence>									_inFlightFences;
 
+		
 		VkBuffer												_vertexBuffer;
 		VkDeviceMemory											_vertexBufferMemory;
 		VkBuffer												_indexBuffer;
@@ -71,6 +68,7 @@ namespace vulkan
 		void SetUpDescriptorLayoutManager();
 		void SetUpDescriptorPoolsManager();
 		void CreateFrameBuffer();
+		void SetUpBufferManager();
 		void CreateCommandPools();
 		void CreateCommandBuffer(QueueFamily family);
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);

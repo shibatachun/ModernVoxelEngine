@@ -361,7 +361,6 @@ vulkan::Device::Device(
 	VkPhysicalDevice device, 
 	const Surface& surface, 
 	const std::vector<const char*>& requiredExtensions, 
-	const VkPhysicalDeviceFeatures& deviceFeatures, 
 	const void* nextDeviceFeatures):
 	_physicalDevice(device),
 	_surface(surface),
@@ -406,7 +405,6 @@ vulkan::Device::Device(
 		_presentFamilyIndex,
 		_transferFamilyIndex,
 	};
-
 	float queuePriority = 1.0f;
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	for (uint32_t queueFamilyIndex : uniqueQueueFamilies)
@@ -418,12 +416,66 @@ vulkan::Device::Device(
 		queueCreateInfo.pQueuePriorities = &queuePriority;
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
+	//启用各个features
+	VkPhysicalDeviceFeatures deviceFeatures10 = {
+	 .geometryShader = vkFeatures10_.features.geometryShader, // enable if supported
+	 .tessellationShader = vkFeatures10_.features.tessellationShader, // enable if supported
+	 .sampleRateShading = VK_TRUE,
+	 .multiDrawIndirect = VK_TRUE,
+	 .drawIndirectFirstInstance = VK_TRUE,
+	 .depthBiasClamp = VK_TRUE,
+	 .fillModeNonSolid = vkFeatures10_.features.fillModeNonSolid, // enable if supported
+	 .samplerAnisotropy = VK_TRUE,
+	 .textureCompressionBC = vkFeatures10_.features.textureCompressionBC, // enable if supported
+	 .vertexPipelineStoresAndAtomics = vkFeatures10_.features.vertexPipelineStoresAndAtomics, // enable if supported
+	 .fragmentStoresAndAtomics = VK_TRUE,
+	 .shaderImageGatherExtended = VK_TRUE,
+	 .shaderInt64 = vkFeatures10_.features.shaderInt64, // enable if supported
+	};
+	VkPhysicalDeviceVulkan11Features deviceFeatures11 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+		.pNext = &deviceFeatures10,
+		.storageBuffer16BitAccess = VK_TRUE,
+		.samplerYcbcrConversion = vkFeatures11_.samplerYcbcrConversion, // enable if supported
+		.shaderDrawParameters = VK_TRUE,
+	};
+	VkPhysicalDeviceVulkan12Features deviceFeatures12 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.pNext = &deviceFeatures11,
+		.drawIndirectCount = vkFeatures12_.drawIndirectCount, // enable if supported
+		.storageBuffer8BitAccess = vkFeatures12_.storageBuffer8BitAccess, // enable if supported
+		.uniformAndStorageBuffer8BitAccess = vkFeatures12_.uniformAndStorageBuffer8BitAccess, // enable if supported
+		.shaderFloat16 = vkFeatures12_.shaderFloat16, // enable if supported
+		.descriptorIndexing = VK_TRUE,
+		.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+		.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
+		.descriptorBindingStorageImageUpdateAfterBind = VK_TRUE,
+		.descriptorBindingUpdateUnusedWhilePending = VK_TRUE,
+		.descriptorBindingPartiallyBound = VK_TRUE,
+		.descriptorBindingVariableDescriptorCount = VK_TRUE,
+		.runtimeDescriptorArray = VK_TRUE,
+		.scalarBlockLayout = VK_TRUE,
+		.uniformBufferStandardLayout = VK_TRUE,
+		.hostQueryReset = vkFeatures12_.hostQueryReset, // enable if supported
+		.timelineSemaphore = VK_TRUE,
+		.bufferDeviceAddress = VK_TRUE,
+		.vulkanMemoryModel = vkFeatures12_.vulkanMemoryModel, // enable if supported
+		.vulkanMemoryModelDeviceScope = vkFeatures12_.vulkanMemoryModelDeviceScope, // enable if supported
+	};
+	VkPhysicalDeviceVulkan13Features deviceFeatures13 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+		.pNext = &deviceFeatures12,
+		.subgroupSizeControl = VK_TRUE,
+		.synchronization2 = VK_TRUE,
+		.dynamicRendering = VK_TRUE,
+		.maintenance4 = VK_TRUE,
+	};
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pNext = nextDeviceFeatures;
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.pEnabledFeatures = &deviceFeatures10;
 	createInfo.enabledLayerCount = static_cast<uint32_t>(_surface.getInstance().GetValidationLayers().size());
 	createInfo.ppEnabledLayerNames = _surface.getInstance().GetValidationLayers().data();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
@@ -444,7 +496,7 @@ vulkan::Device::Device(
 
 	
 	vkGetPhysicalDeviceProperties2(_physicalDevice, &_physicalDeviceProperties2);
-	 
+	vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &_memProperties);
 	
 	const uint32_t apiVersion = _physicalDeviceProperties2.properties.apiVersion;
 	LLOGL("Vulakn physical device: %s\n", _physicalDeviceProperties2.properties.deviceName);
@@ -1127,4 +1179,147 @@ void vulkan::DescriptorPoolManager::CreatePreFrameDescriptorSets(std::vector<VkD
 
 }
 
+vulkan::BufferManager::BufferManager(const Device& deivce, CommandPoolManager& commandPools) : device(deivce), commandPools(commandPools)
+{
 
+}
+
+vulkan::BufferManager::~BufferManager()
+{
+}
+
+void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data)
+{
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usageFlags;
+	bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+	bufferInfo.queueFamilyIndexCount = 2;
+	uint32_t families[] = { device.GraphicsFamilyIndex(), device.TransferFamilyIndex() };
+	bufferInfo.pQueueFamilyIndices = families;
+	Check(vkCreateBuffer(device.Handle(), &bufferInfo, nullptr, buffer), "Create buffer!");
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device.Handle(), *buffer, &memRequirements);
+	VkMemoryAllocateInfo alloInfo{};
+	alloInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	alloInfo.allocationSize = memRequirements.size;
+	alloInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, memoryPropertyFlags);
+	//这玩意光追管线得开，让shader直接访问gpu内存
+	VkMemoryAllocateFlagsInfoKHR allocFlagsInfo{};
+	if (usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) {
+		allocFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHR;
+		allocFlagsInfo.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT_KHR;
+		alloInfo.pNext = &allocFlagsInfo;
+	}
+	Check(vkAllocateMemory(device.Handle(), &alloInfo, nullptr, memory), "Allocate memory");
+
+	if (data != nullptr) {
+		void* mapped;
+		Check(vkMapMemory(device.Handle(), *memory, 0, size, 0, &mapped),"Map memory");
+		memcpy(mapped, data, size);
+		if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
+			VkMappedMemoryRange mappedRange{};
+			mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			mappedRange.offset = 0;
+			mappedRange.size = size;
+			mappedRange.memory = *memory;
+			vkFlushMappedMemoryRanges(device.Handle(), 1, &mappedRange);
+		}
+		vkUnmapMemory(device.Handle(), *memory);
+	}
+	
+	Check(vkBindBufferMemory(device.Handle(), *buffer, *memory, 0), "Bind Memory");
+}
+
+void vulkan::BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
+{
+	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+	vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, 1, & copyRegion);
+	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(family), true);
+
+}
+
+VkCommandBuffer vulkan::BufferManager::createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin)
+{
+	
+	VkCommandBuffer cmdBuffer;
+	VkCommandBufferAllocateInfo cmdBufferAllocateInfo{};
+	cmdBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	cmdBufferAllocateInfo.commandPool = pool;
+	cmdBufferAllocateInfo.commandBufferCount = bufferCount;
+	cmdBufferAllocateInfo.level = level;
+	Check(vkAllocateCommandBuffers(device.Handle(), &cmdBufferAllocateInfo, &cmdBuffer),"Allocate CommandBuffer");
+	if (begin) {
+		VkCommandBufferBeginInfo cmdBeginInfo{};
+		cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		Check(vkBeginCommandBuffer(cmdBuffer, &cmdBeginInfo), "Begin record buffer");
+	}
+	return cmdBuffer;
+
+}
+
+uint32_t vulkan::BufferManager::findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound) const
+{
+	VkPhysicalDeviceMemoryProperties memProperty= device.GetPhyDeviceMemProperty();
+	for (uint32_t i = 0; i < memProperty.memoryTypeCount; i++) {
+		if ((typeBits & 1) == 1) {
+			if ((memProperty.memoryTypes[i].propertyFlags & properties) == properties) {
+				if (memTypeFound) {
+					*memTypeFound = true;
+				}
+				return i;
+			}
+		}
+		typeBits >>= 1;
+	}
+	if (memTypeFound) {
+		*memTypeFound = false;
+		return 0;
+	}
+	else
+	{
+		throw std::runtime_error("Cound not find a matching memory type");
+	}
+
+}
+
+void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free)
+{
+	if (commandBuffer == VK_NULL_HANDLE) {
+		return;
+	}
+	Check(vkEndCommandBuffer(commandBuffer), "end Command buffer");
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	VkFenceCreateInfo fenceCreateInfo{};
+	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceCreateInfo.flags = 0;
+	VkFence fence;
+	Check(vkCreateFence(device.Handle(), &fenceCreateInfo, nullptr, &fence), "Create fence for flush command buffer ");
+	Check(vkQueueSubmit(queue, 1, &submitInfo, fence), "Submit to queue");
+	Check(vkWaitForFences(device.Handle(), 1, &fence, VK_TRUE, 100000000000), "Wait for finished excuting commandbuffer");
+	vkDestroyFence(device.Handle(), fence, nullptr);
+	if (free) {
+		
+		vkFreeCommandBuffers(device.Handle(), pool, 1, &commandBuffer);
+	}
+
+
+}
+
+void vulkan::VulkanResouce::ConstructVulkanRenderObject()
+{
+	//1.iterate the raw data sources
+	//2.Use the data in raw datas to create the buffer for the vertex and index
+	//3.Get the image datas to create Textures for future use
+	//4. animate if any
+	//5 skin if any
+	//6 store it into read to render object
+}
