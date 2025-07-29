@@ -226,15 +226,22 @@ namespace vulkan {
 			const  SwapChain& swapchain, 
 			const RenderPass& renderpass);
 		void Destroy(std::string pipelineName);
-		PipelineEntry GetGraphicsPipeline(std::string pipelineName);
-		void CreateGraphicsPipeline(std::string pipelineName, VkRenderPass renderPass, VkDescriptorSetLayout descriptorLayout);
+		VkPipeline GetGraphicsPipeline(std::string pipelineName);
+		VkPipelineLayout GetGraphicsPipelineLayout(std::string piplineLayoutName);
+		void CreateGraphicsPipeline(std::string pipelineName, std::string pipelineLayoutName,  const asset::shader& shaders, VkRenderPass renderPass);
+		void createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout);
 		~GraphicPipeline();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
+		void createPipelineCache();
 		
 	private:
 		
 		std::unordered_map<std::string, PipelineEntry>				_pipelineEntrys;
+		std::unordered_map<std::string, VkPipeline>					_pipelines;
+		std::unordered_map<std::string, VkPipelineLayout>			_pipelineLayouts;
+
+		VkPipelineCache												_pipelineCache;
 		//TODO Remove this 
 		const std::unordered_map<std::string, asset::shader>&		_shaders;
 		VkDevice													_device;
@@ -312,9 +319,18 @@ namespace vulkan {
 
 	};
 
-	struct VulkanResouce {
+	class VulkanResouceManager final {
+
+		public:
+			VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager);
+			~VulkanResouceManager();
+			void ConstructVulkanRenderObject(std::string name, PipelineEntry* pieline);
+		private:
+
 		std::unordered_map<std::string, vulkan::VulkanResource::VulkanRenderObject>			_renderObjects;
 		BufferManager&																		_BufferManager;
+		const asset::AssetManager&															_assetMnanger;
+		
 
 		void ConstructVulkanRenderObject();
 	};

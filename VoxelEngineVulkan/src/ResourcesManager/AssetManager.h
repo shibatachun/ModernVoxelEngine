@@ -9,8 +9,9 @@ namespace asset {
 		bool Init();
 		AssetManager();
 		~AssetManager();
-		const std::unordered_map<std::string, asset::shader>& getShaderAssets() { return _shadersManager->GetShaderAssets(); };
-		const std::unordered_map<std::string, ModelData>& getModelDatas() { return _modelManager->GetModeDatas(); };
+		const std::unordered_map<std::string, asset::shader>& getShaderAssets() const { return _shadersManager->GetShaderAssets(); };
+		const std::unordered_map<std::string, ModelData>& getModelDatas() const { return _modelManager->GetModeDatas(); };
+		const asset::shader& getShaderByName (std::string) const;
 		
 
 	private:

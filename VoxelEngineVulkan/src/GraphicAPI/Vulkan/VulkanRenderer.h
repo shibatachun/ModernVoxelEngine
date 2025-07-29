@@ -62,6 +62,7 @@ namespace vulkan
 		
 		
 	private:
+		bool InitVulkan();
 		void SetPhysicalDevices();
 		void SetSwapChain();
 		void CreateGraphicPipeline();
@@ -71,7 +72,7 @@ namespace vulkan
 		void SetUpBufferManager();
 		void CreateCommandPools();
 		void CreateCommandBuffer(QueueFamily family);
-		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name);
+		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,  PipelineEntry entry);
 		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void CreateIndexBuffer();
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);

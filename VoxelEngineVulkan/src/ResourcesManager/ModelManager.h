@@ -14,6 +14,7 @@ public:
 private:
 	void processNode(aiNode* node, const aiScene* scene);
 	void loadImage(std::string filename);
+	void loadTestExample();
 	
 	
 private:

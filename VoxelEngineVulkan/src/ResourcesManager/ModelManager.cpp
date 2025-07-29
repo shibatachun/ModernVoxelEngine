@@ -3,6 +3,7 @@
 asset::ModelManager::ModelManager()
 {
 	loadModel("res/models/generator_LP.fbx");
+	loadTestExample();
 }
 
 asset::ModelManager::~ModelManager()
@@ -100,6 +101,41 @@ void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 void asset::ModelManager::loadImage(std::string filename)
 {
 	//TODO:遍历texture文件夹，加载图片
+}
+
+void asset::ModelManager::loadTestExample()
+{
+	ModelData data;
+	data.meshCount = 1;
+	data.meshes.resize(data.meshCount);
+	MeshData& meshData = data.meshes[0];
+	std::vector<Vertex1> test_vertices = {
+	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}},
+	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}},
+	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}},
+	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f}},
+
+	};
+	std::vector<uint16_t> indices = {
+		0,1,2,2,3,0
+	};
+	//push back用于完整的对象，如果容器内的构造的
+	meshData.vertexCount = test_vertices.size();
+	meshData.indexCount = indices.size();
+	//什么时候用reserve，在后面要用push_back加入元素可以减去多次预分配内存使用时间，用reserve事先获得需要的内存，但是reserve也不混直接[i]复制，因为元素的数量没变，需要用resize
+	meshData.vertices.reserve(meshData.vertexCount);
+	meshData.indices.reserve(meshData.indexCount);
+	//为什么用auto &, 因为直接拿引用避免一次拷贝，不拿的话会再auto x阶段又进行一次构造拷贝，push back又进行一次，会增加开销
+	for (const auto& x : test_vertices) {
+		meshData.vertices.push_back(x);
+	}
+	for (auto x : indices) {
+		meshData.indices.push_back(x);
+	}
+
+		
+	_model.emplace("test data", data);
+
 }
 
 

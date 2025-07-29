@@ -856,7 +856,7 @@ void vulkan::RenderPass::Destroy()
 vulkan::GraphicPipeline::GraphicPipeline(const std::unordered_map<std::string, asset::shader>& shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
 	: _shaders(shaders), _device(device), _swapChain(swapchain),_renderPass(renderpass)
 {
-	
+	createPipelineCache();
 }
 
 void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
@@ -865,21 +865,29 @@ void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
 	
 }
 
-vulkan::PipelineEntry vulkan::GraphicPipeline::GetGraphicsPipeline(std::string pipelineName)
+VkPipeline vulkan::GraphicPipeline::GetGraphicsPipeline(std::string pipelineName)
 {
-	
-	return _pipelineEntrys[pipelineName];
-	
-	
+	return findInMap(_pipelines, pipelineName);
+}
+
+
+
+VkPipelineLayout vulkan::GraphicPipeline::GetGraphicsPipelineLayout(std::string piplineLayoutName)
+{
+	return findInMap(_pipelineLayouts, piplineLayoutName);
 }
 
 vulkan::GraphicPipeline::~GraphicPipeline()
 {
-	
-	for (auto& entry : _pipelineEntrys) {
-		vkDestroyPipelineLayout(_device, entry.second.layout, nullptr);
-		vkDestroyPipeline(_device, entry.second.pipeline, nullptr);
+	for (auto& x : _pipelines) {
+		vkDestroyPipeline(_device, x.second, nullptr);
 	}
+	for (auto& x : _pipelineLayouts) {
+		vkDestroyPipelineLayout(_device, x.second, nullptr);
+	}
+	vkDestroyPipelineCache(_device, _pipelineCache, nullptr);
+	
+	
 }
 
 VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<char>& code)
@@ -895,23 +903,35 @@ VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<cha
 	
 }
 
-void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, VkRenderPass  renderPass, VkDescriptorSetLayout descriptorLayout)
+void vulkan::GraphicPipeline::createPipelineCache()
 {
-	auto it = _shaders.find(pipelineName);
-	if (it == _shaders.end()
-		|| it->second.fragmentShader.empty()
-		|| it->second.vertexShader.empty())
-	{
-		std::cerr << "shader file " << pipelineName << " is not exist." << std::endl;
-		return;
-	}
+	VkPipelineCacheCreateInfo cacheInfo{};
+	cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	cacheInfo.initialDataSize = 0;
+	cacheInfo.pInitialData = nullptr;
+	Check(vkCreatePipelineCache(_device, &cacheInfo, nullptr, &_pipelineCache), "Create Pipeline Cache!");
+}
+
+void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName,std::string pipelineLayoutName, const asset::shader& shaders, VkRenderPass renderPass)
+{
+	//auto it = _shaders.find(pipelineName);
+	//if (it == _shaders.end()
+	//	|| it->second.fragmentShader.empty()
+	//	|| it->second.vertexShader.empty())
+	//{
+	//	std::cerr << "shader file " << pipelineName << " is not exist." << std::endl;
+	//	return;
+	//}
 	graphicsPipelineCreateInfoPack createinfo;
 	VkPipeline pipeline;
-	VkPipelineLayout pipelineLayout;
+	auto it = _pipelineLayouts.find(pipelineLayoutName);
+	if (it == _pipelineLayouts.end()) {
+		throw std::runtime_error("Unable to find the required pipelineLayout, please use CreatePipelineLayout to create the asscociate layout first");
+	}
 	PipelineEntry entry;
 	//´´½¨Shader Module
-	VkShaderModule vertShaderModule = CreateShaderModule(it->second.vertexShader);
-	VkShaderModule fragShaderModule = CreateShaderModule(it->second.fragmentShader);
+	VkShaderModule vertShaderModule = CreateShaderModule(shaders.vertexShader);
+	VkShaderModule fragShaderModule = CreateShaderModule(shaders.fragmentShader);
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -1016,30 +1036,47 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName, V
 
 	createinfo.colorBlendStateCi = colorBlending;
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+	//VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	//pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	//pipelineLayoutInfo.setLayoutCount = 1; // Optional
+	//pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
+	//pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+	//pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+	//
+	//std::string pipelineLayoutNameInfo = "Create pipeline for ";
+	//pipelineLayoutNameInfo += pipelineName;
+	//Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &entry.layout), pipelineLayoutNameInfo.c_str());
 	
-	std::string pipelineLayoutNameInfo = "Create pipeline for ";
-	pipelineLayoutNameInfo += pipelineName;
-	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &entry.layout), pipelineLayoutNameInfo.c_str());
-	
-	createinfo.createInfo.layout = entry.layout;
+	createinfo.createInfo.layout = it->second;
 	createinfo.createInfo.renderPass = renderPass;
 	createinfo.createInfo.stageCount = 2;
 	createinfo.UpdateAllArrays();
 	std::string pipelineNameInfo = "Create pipeline for ";
 	pipelineNameInfo += pipelineName;
 	
-	Check(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1,&createinfo.createInfo, nullptr, &entry.pipeline), pipelineNameInfo.c_str());
-
+	Check(vkCreateGraphicsPipelines(_device, nullptr, 1,&createinfo.createInfo, nullptr, &pipeline), pipelineNameInfo.c_str());
+	_pipelines.emplace(pipelineName, pipeline);
+	entry.pipeline = pipelineName;
+	entry.layout = pipelineLayoutName;
 	_pipelineEntrys[pipelineName] = entry;
 
 	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
+
+}
+
+void vulkan::GraphicPipeline::createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout)
+{
+	VkPipelineLayout pipelineLayout;
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 1; // Optional
+	pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
+	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+	std::string debugName = "Create " + name + "Pipeline Layout";
+	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout), debugName.c_str());
+	_pipelineLayouts.emplace(name, pipelineLayout);
 
 }
 
@@ -1314,9 +1351,26 @@ void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, Vk
 
 }
 
-void vulkan::VulkanResouce::ConstructVulkanRenderObject()
+vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager) : 
+	_BufferManager(bufferManager), _assetMnanger(assetManager)
 {
+
+}
+
+vulkan::VulkanResouceManager::~VulkanResouceManager()
+{
+}
+
+void vulkan::VulkanResouceManager::ConstructVulkanRenderObject()
+{
+	
 	//1.iterate the raw data sources
+	
+	for (const auto& x : _assetMnanger.getModelDatas()) {
+		VulkanResource::VulkanRenderObject object;
+		object.name = x.first;
+
+	}
 	//2.Use the data in raw datas to create the buffer for the vertex and index
 	//3.Get the image datas to create Textures for future use
 	//4. animate if any

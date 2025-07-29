@@ -209,8 +209,8 @@ namespace vulkan {
 
 	struct PipelineEntry
 	{
-		VkPipeline pipeline;
-		VkPipelineLayout layout;
+		std::string pipeline;
+		std::string layout;
 	};
 
     enum class QueueFamily
@@ -304,7 +304,6 @@ namespace vulkan {
 	namespace VulkanResource {
 		struct VulkanRenderObject {
 			std::string name;
-			ModelData data;
 			PipelineEntry pipleEntry;
 			std::vector<VkImage> textures;
 			VkBuffer		vertexBuffer;
@@ -324,7 +323,15 @@ namespace vulkan {
 
 	}
 	
-	
+	template<typename Map, typename Key>
+	const typename Map::mapped_type& findInMap(
+		Map& map, const Key& key, const std::string& errorMsg = "key not found") {
+		auto it = map.find(key);
+		if (it == map.end()) {
+			throw std::runtime_error(errorMsg);
+		}
+		return it->second;
+	}
 
 
 }

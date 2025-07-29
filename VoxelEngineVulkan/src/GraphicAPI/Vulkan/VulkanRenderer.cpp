@@ -8,29 +8,13 @@ std::vector<Vertex1> test_vertices = {
 	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f}},
 
 };
+std::vector<uint16_t> indices = {
+	0,1,2,2,3,0
+};
 bool vulkan::VulkanRenderer::Init()
 {
 	
-	_instance.reset(new vulkan::Instance(_window));
-	_surface.reset(new vulkan::Surface(*_instance));
-	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
-	SetPhysicalDevices();
-	SetUpDescriptorLayoutManager();
-	SetUpDescriptorPoolsManager();
-	CreateGraphicPipeline();
-
-	CreateFrameBuffer();
-	CreateCommandPools();
-	CreateCommandBuffer(QueueFamily::GRAPHIC);
-
-	SetUpBufferManager();
-	CreateSyncObjects();
-
-	createVertexBuffer();
-	CreateIndexBuffer();
-	CreateUniformBuffers();
-	ConfigureDescriptorSet();
-	
+	InitVulkan();
 	
 	return true;
 	 
@@ -52,7 +36,10 @@ void vulkan::VulkanRenderer::DrawFrame()
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
 	updateUniformBuffer(_currentFrame);
-	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,"Rectangle_Vulkan");
+	PipelineEntry entry;
+	entry.pipeline = "test_triangle_vulkan";
+	entry.layout = "default";
+	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex, entry);
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -131,6 +118,30 @@ void vulkan::VulkanRenderer::Cleanup()
 	_instance.reset();
 }
 
+bool vulkan::VulkanRenderer::InitVulkan()
+{
+	_instance.reset(new vulkan::Instance(_window));
+	_surface.reset(new vulkan::Surface(*_instance));
+	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
+	SetPhysicalDevices();
+	SetUpDescriptorLayoutManager();
+	SetUpDescriptorPoolsManager();
+	CreateGraphicPipeline();
+
+	CreateFrameBuffer();
+	CreateCommandPools();
+	CreateCommandBuffer(QueueFamily::GRAPHIC);
+
+	SetUpBufferManager();
+	CreateSyncObjects();
+
+	createVertexBuffer();
+	CreateIndexBuffer();
+	CreateUniformBuffers();
+	ConfigureDescriptorSet();
+	return true;
+}
+
 //Set up Devices
 void vulkan::VulkanRenderer::SetPhysicalDevices()
 {
@@ -197,7 +208,8 @@ void vulkan::VulkanRenderer::CreateGraphicPipeline()
 	config.bindings.push_back(uboLayoutBinding);
 	_descriptorLayouts->CreateDescriptorSetLayout(config);
 	//_graphicsPipline->CreateGraphicsPipeline("Triangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
-	_graphicsPipline->CreateGraphicsPipeline("Rectangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
+	_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
+	_graphicsPipline->CreateGraphicsPipeline("test_triangle_vulkan","default",_assetManager.getShaderByName("Rectangle_Vulkan"),_renderPass->GetRenderPass());
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,_descriptorLayouts->GetDescriptorSetLayout(config));
 	_descriptorPools->CreatePreFrameDescriptorSets(layouts);
 }
@@ -245,12 +257,9 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
 }
 
-void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, std::string pipeline_name)
+void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, PipelineEntry entry)
 {
-	if (!_graphicsPipline->GetGraphicsPipeline(pipeline_name).layout || !_graphicsPipline->GetGraphicsPipeline(pipeline_name).pipeline)
-	{
-		throw std::runtime_error("This pipeline is unaccessiable!");
-	}
+	
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0;
@@ -268,7 +277,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline(pipeline_name).pipeline);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline(entry.pipeline));
 	VkBuffer vertexBuffers[] = { _vertexBuffer }; 
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
@@ -290,7 +299,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		_graphicsPipline->GetGraphicsPipeline("Rectangle_Vulkan").layout,
+		_graphicsPipline->GetGraphicsPipelineLayout(entry.layout),
 		0, 1,
 		&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
 		0, nullptr);
@@ -334,18 +343,43 @@ void vulkan::VulkanRenderer::CreateIndexBuffer()
 	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-	void* data;
-	vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
-
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _indexBuffer, _indexBufferMemory);
-
-	CopyBuffer(stagingBuffer, _indexBuffer, bufferSize, QueueFamily::TRANSFER);
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		bufferSize,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		indices.data());
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		bufferSize,
+		&_indexBuffer,
+		&_indexBufferMemory);
+	_bufferManager->copyBuffer(stagingBuffer, _indexBuffer, bufferSize, QueueFamily::TRANSFER);
 	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
+}
+
+void vulkan::VulkanRenderer::createVertexBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(test_vertices[0]) * test_vertices.size();
+	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		bufferSize,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		test_vertices.data());
+	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		bufferSize,
+		&_vertexBuffer,
+		&_vertexBufferMemory);
+	_bufferManager->copyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
+	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
+
 }
 
 void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
@@ -417,51 +451,7 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 	
 }
 
-void vulkan::VulkanRenderer::createVertexBuffer()
-{
-	//auto it = _assetManager.getModelDatas().find("generator_LP");
-	//if (it == _assetManager.getModelDatas().end()) {
 
-	//	throw std::runtime_error("can't not create vertiex buffer");
-	//}
-	//
-	//VkDeviceSize bufferSize = sizeof(it->second.meshes[0].vertices[0]) * it->second.meshes[0].vertices.size();
-	VkDeviceSize bufferSize = sizeof(test_vertices[0]) * test_vertices.size();
-
-	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		bufferSize,
-		&stagingBuffer,
-		&stagingBufferMemory,
-		test_vertices.data());
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		bufferSize, 
-		&_vertexBuffer, 
-		&_vertexBufferMemory);
-	//CreateBuffer(bufferSize,VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-	//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	//	stagingBuffer, stagingBufferMemory);
-
-	//void* data;
-	//
-	//vkMapMemory(_devices->Handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
-
-	//memcpy(data, test_vertices.data(), (size_t)bufferSize);
-	//vkUnmapMemory(_devices->Handle(), stagingBufferMemory);
-	//CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-	//	VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-	//	_vertexBuffer, _vertexBufferMemory);
-	//CopyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
-	_bufferManager->copyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
-	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
-	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
-
-}
 
 void vulkan::VulkanRenderer::CreateUniformBuffers()
 {
