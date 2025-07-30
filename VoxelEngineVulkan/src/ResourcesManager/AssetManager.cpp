@@ -8,11 +8,12 @@ asset::AssetManager::~AssetManager(){
 
 const asset::shader& asset::AssetManager::getShaderByName(std::string name) const
 {
-	auto it = _shadersManager->GetShaderAssets().find(name);
-	if (it == _shadersManager->GetShaderAssets().end()) {
-		throw std::runtime_error("unable find the shader :" + name);
-	}
-	return it->second;
+	return utils::findInMap(_shadersManager->GetShaderAssets(), name);
+}
+
+const ModelData& asset::AssetManager::getModelDataByName(std::string name) const
+{
+	return utils::findInMap(_modelManager->GetModeDatas(), name);
 }
 
 bool asset::AssetManager::Init(){

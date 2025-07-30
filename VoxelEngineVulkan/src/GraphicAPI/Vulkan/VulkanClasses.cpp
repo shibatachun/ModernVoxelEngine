@@ -867,14 +867,14 @@ void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
 
 VkPipeline vulkan::GraphicPipeline::GetGraphicsPipeline(std::string pipelineName)
 {
-	return findInMap(_pipelines, pipelineName);
+	return utils::findInMap(_pipelines, pipelineName);
 }
 
 
 
 VkPipelineLayout vulkan::GraphicPipeline::GetGraphicsPipelineLayout(std::string piplineLayoutName)
 {
-	return findInMap(_pipelineLayouts, piplineLayoutName);
+	return utils::findInMap(_pipelineLayouts, piplineLayoutName);
 }
 
 vulkan::GraphicPipeline::~GraphicPipeline()
@@ -1225,6 +1225,48 @@ vulkan::BufferManager::~BufferManager()
 {
 }
 
+void vulkan::BufferManager::CreateIndexBuffer1(std::vector<uint32_t>& indiceData, VkBuffer& buffer, VkDeviceMemory& memory)
+{
+	VkDeviceSize bufferSize = sizeof(indiceData[0]) * indiceData.size();
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		bufferSize,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		indiceData.data());
+	createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		bufferSize,
+		&buffer,
+		&memory);
+	copyBuffer(stagingBuffer, buffer, bufferSize, QueueFamily::TRANSFER);
+	vkDestroyBuffer(device.Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
+}
+
+void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory)
+{
+	VkDeviceSize bufferSize = sizeof(vertexData[0]) * vertexData.size();
+	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		bufferSize,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		vertexData.data());
+	createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		bufferSize,
+		&buffer,
+		&memory);
+	copyBuffer(stagingBuffer, buffer, bufferSize, QueueFamily::TRANSFER);
+	vkDestroyBuffer(device.Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
+}
 void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data)
 {
 	VkBufferCreateInfo bufferInfo{};
@@ -1325,6 +1367,12 @@ uint32_t vulkan::BufferManager::findMemoryType(uint32_t typeBits, VkMemoryProper
 
 }
 
+void vulkan::BufferManager::DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory)
+{
+	vkFreeMemory(device.Handle(), memory, nullptr);
+	vkDestroyBuffer(device.Handle(), buffer, nullptr);
+}
+
 void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free)
 {
 	if (commandBuffer == VK_NULL_HANDLE) {
@@ -1359,7 +1407,38 @@ vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager,
 
 vulkan::VulkanResouceManager::~VulkanResouceManager()
 {
+	for (auto& x : _renderObjects) {
+		_BufferManager.DestroyBuffer(x.second.indiceBuffer, x.second.indicememory);
+		_BufferManager.DestroyBuffer(x.second.vertexBuffer, x.second.vertexmemory);
+	}
 }
+
+void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,  VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name)
+{
+	ModelData modeldata = _assetMnanger.getModelDataByName(raw_model_name);
+	VulkanRenderObject renderObject;
+
+	renderObject.name = name;
+	for (auto& x : modeldata.meshes) {
+		_BufferManager.CreateVertexBuffer1(x.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+		_BufferManager.CreateIndexBuffer1(x.indices, renderObject.indiceBuffer, renderObject.indicememory);
+		renderObject.indiceCounts.push_back(x.indices.size());
+	}
+
+	renderObject.pipeline = pipeline;
+	renderObject.Pipelinelayout = layout;
+	
+	
+	
+	_renderObjects[name] = renderObject;
+}
+
+const vulkan::VulkanRenderObject& vulkan::VulkanResouceManager::GetRenderObject(std::string name)
+{
+	return utils::findInMap(_renderObjects, name);
+}
+
+
 
 void vulkan::VulkanResouceManager::ConstructVulkanRenderObject()
 {
@@ -1367,7 +1446,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject()
 	//1.iterate the raw data sources
 	
 	for (const auto& x : _assetMnanger.getModelDatas()) {
-		VulkanResource::VulkanRenderObject object;
+		VulkanRenderObject object;
 		object.name = x.first;
 
 	}

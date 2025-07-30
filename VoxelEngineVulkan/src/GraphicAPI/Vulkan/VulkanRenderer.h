@@ -39,6 +39,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;
 		std::unique_ptr<class vulkan::DescriptorPoolManager>	_descriptorPools;
 		std::unique_ptr<class vulkan::BufferManager>			_bufferManager;
+		std::unique_ptr<class vulkan::VulkanResouceManager>		_resouceManager;
 		
 
 		
@@ -65,14 +66,16 @@ namespace vulkan
 		bool InitVulkan();
 		void SetPhysicalDevices();
 		void SetSwapChain();
-		void CreateGraphicPipeline();
+		void SetUpGraphicPipelineManager();
 		void SetUpDescriptorLayoutManager();
 		void SetUpDescriptorPoolsManager();
-		void CreateFrameBuffer();
+		void SetUpCommandPools();
 		void SetUpBufferManager();
-		void CreateCommandPools();
+		void SetUpVulkanResouceManager();
+		void CreateFrameBuffer();
+
+		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
 		void CreateCommandBuffer(QueueFamily family);
-		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex,  PipelineEntry entry);
 		void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void CreateIndexBuffer();
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);

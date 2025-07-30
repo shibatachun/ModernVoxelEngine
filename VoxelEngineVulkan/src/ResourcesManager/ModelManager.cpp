@@ -134,7 +134,7 @@ void asset::ModelManager::loadTestExample()
 	}
 
 		
-	_model.emplace("test data", data);
+	_model.emplace("test_data", data);
 
 }
 

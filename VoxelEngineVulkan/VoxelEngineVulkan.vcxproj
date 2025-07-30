@@ -163,6 +163,7 @@
     <ClInclude Include="src\GraphicAPI\IRenderer.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanCommon.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\utils\CommonUtileTemplate.h" />
     <ClInclude Include="src\utils\GlmUtils.h" />
     <ClInclude Include="src\utils\Math.h" />
     <ClInclude Include="src\utils\Pool.h" />

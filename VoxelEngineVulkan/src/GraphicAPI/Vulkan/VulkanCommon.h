@@ -20,15 +20,7 @@ public: \
 private: \
 	VulkanHandleType name{};\
 
-#include <vector>
-#include <memory>
-#include <iostream>
-#include <stdexcept>
-#include <set>
-#include <string>
-#include <array>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+
 #include <chrono>
 
 
@@ -36,6 +28,7 @@ private: \
 #include "../../ResourcesManager/AssetManager.h"
 #include "../../utils/minilog.h"
 #include "../../utils/Pool.h"
+#include "../../utils/Utils.h"
 
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -301,15 +294,21 @@ namespace vulkan {
 
 	void getPipelineVertexInputState(const std::vector<VertexComponent> components,  graphicsPipelineCreateInfoPack& createinfo);
 
-	namespace VulkanResource {
-		struct VulkanRenderObject {
-			std::string name;
-			PipelineEntry pipleEntry;
-			std::vector<VkImage> textures;
-			VkBuffer		vertexBuffer;
-			VkDeviceMemory	memory;
+	struct VulkanRenderObject {
+		std::string name;
+		VkPipeline pipeline;
+		VkPipelineLayout Pipelinelayout;
+		std::vector<VkImage> textures;
+		VkBuffer		vertexBuffer;
+		VkDeviceMemory	vertexmemory;
 
-		};
+		VkBuffer		indiceBuffer;
+		VkDeviceMemory	indicememory;
+
+		std::vector<uint32_t>		indiceCounts;
+	};
+	namespace VulkanResource {
+	
 
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device);
 
@@ -323,15 +322,7 @@ namespace vulkan {
 
 	}
 	
-	template<typename Map, typename Key>
-	const typename Map::mapped_type& findInMap(
-		Map& map, const Key& key, const std::string& errorMsg = "key not found") {
-		auto it = map.find(key);
-		if (it == map.end()) {
-			throw std::runtime_error(errorMsg);
-		}
-		return it->second;
-	}
+
 
 
 }

@@ -36,10 +36,13 @@ void vulkan::VulkanRenderer::DrawFrame()
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
 	updateUniformBuffer(_currentFrame);
+	///////
 	PipelineEntry entry;
 	entry.pipeline = "test_triangle_vulkan";
 	entry.layout = "default";
-	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex, entry);
+	VulkanRenderObject it = _resouceManager->GetRenderObject("test");
+	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,it);
+	/////
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -85,7 +88,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 
 void vulkan::VulkanRenderer::Cleanup()
 {
-
+	
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
 
@@ -96,12 +99,14 @@ void vulkan::VulkanRenderer::Cleanup()
 	_descriptorPools.reset();
 	_descriptorLayouts.reset();
 
+	_resouceManager.reset();
 	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
 
 	vkDestroyBuffer(_devices->Handle(), _vertexBuffer, nullptr);
 	vkFreeMemory(_devices->Handle(), _vertexBufferMemory, nullptr);
 
+	
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(_devices->Handle(), _renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphores[i], nullptr);
@@ -126,13 +131,14 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	SetPhysicalDevices();
 	SetUpDescriptorLayoutManager();
 	SetUpDescriptorPoolsManager();
-	CreateGraphicPipeline();
+	SetUpGraphicPipelineManager();
+	SetUpCommandPools();
+	SetUpBufferManager();
+	SetUpVulkanResouceManager();
 
 	CreateFrameBuffer();
-	CreateCommandPools();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 
-	SetUpBufferManager();
 	CreateSyncObjects();
 
 	createVertexBuffer();
@@ -194,7 +200,7 @@ void vulkan::VulkanRenderer::SetSwapChain()
 }
 
 //Create Pipeline
-void vulkan::VulkanRenderer::CreateGraphicPipeline()
+void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 {
 	_renderPass.reset(new vulkan::RenderPass(*_swapchain));
 	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchain,*_renderPass));
@@ -226,7 +232,6 @@ void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
 	_descriptorPools.reset(new DescriptorPoolManager(*_devices));
 }
 
-
 void vulkan::VulkanRenderer::CreateFrameBuffer()
 {
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
@@ -238,7 +243,13 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 	_bufferManager.reset(new BufferManager(*_devices, *_commandPools));
 }
 
-void vulkan::VulkanRenderer::CreateCommandPools()
+void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
+{
+	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager, _assetManager));
+	_resouceManager->ConstructVulkanRenderObject("test", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"), _graphicsPipline->GetGraphicsPipelineLayout("default"), "test_data");
+}
+
+void vulkan::VulkanRenderer::SetUpCommandPools()
 {
 	if (!_commandPools)
 	{
@@ -257,7 +268,7 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
 }
 
-void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, PipelineEntry entry)
+void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object)
 {
 	
 	VkCommandBufferBeginInfo beginInfo{};
@@ -277,11 +288,12 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipline->GetGraphicsPipeline(entry.pipeline));
-	VkBuffer vertexBuffers[] = { _vertexBuffer }; 
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.pipeline);
+	VkBuffer vertexBuffers[] = { object.vertexBuffer }; 
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(commandBuffer, object.indiceBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 
 	VkViewport viewport{};
@@ -299,13 +311,13 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		_graphicsPipline->GetGraphicsPipelineLayout(entry.layout),
+		object.Pipelinelayout,
 		0, 1,
 		&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
 		0, nullptr);
 
 	//vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, object.indiceCounts[0], 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -450,7 +462,6 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
 	
 }
-
 
 
 void vulkan::VulkanRenderer::CreateUniformBuffers()

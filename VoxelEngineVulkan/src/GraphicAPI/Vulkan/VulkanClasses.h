@@ -308,9 +308,12 @@ namespace vulkan {
 			VkBuffer *buffer, 
 			VkDeviceMemory *memory, 
 			void *data = nullptr);
+		void CreateIndexBuffer1(std::vector<uint32_t>& indiceData, VkBuffer& buffer, VkDeviceMemory& memory);
+		void CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
 		VkCommandBuffer createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin = false);
 		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
+		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue,  VkCommandPool pool,  bool free);
 	private:
 		const Device& device;
@@ -324,15 +327,17 @@ namespace vulkan {
 		public:
 			VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
-			void ConstructVulkanRenderObject(std::string name, PipelineEntry* pieline);
+			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name);
+			const VulkanRenderObject& GetRenderObject(std::string name);
 		private:
 
-		std::unordered_map<std::string, vulkan::VulkanResource::VulkanRenderObject>			_renderObjects;
-		BufferManager&																		_BufferManager;
-		const asset::AssetManager&															_assetMnanger;
+			std::unordered_map<std::string, VulkanRenderObject>									_renderObjects;
+			BufferManager&																		_BufferManager;
+			const asset::AssetManager&															_assetMnanger;
 		
-
-		void ConstructVulkanRenderObject();
+		private:
+		
+			void ConstructVulkanRenderObject();
 	};
 }
 	

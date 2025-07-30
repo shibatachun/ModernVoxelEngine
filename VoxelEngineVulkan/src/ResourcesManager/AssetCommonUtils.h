@@ -1,12 +1,6 @@
 #pragma once
 
-#include <fstream>
-#include <vector>
-#include <iostream>
-#include <map>
-#include <unordered_map>
-#include <filesystem>
-#include <string>
+
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
