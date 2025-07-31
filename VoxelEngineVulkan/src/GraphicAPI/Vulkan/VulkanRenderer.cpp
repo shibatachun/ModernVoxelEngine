@@ -141,8 +141,8 @@ bool vulkan::VulkanRenderer::InitVulkan()
 
 	CreateSyncObjects();
 
-	createVertexBuffer();
-	CreateIndexBuffer();
+	//createVertexBuffer();
+	//CreateIndexBuffer();
 	CreateUniformBuffers();
 	ConfigureDescriptorSet();
 	return true;
@@ -326,105 +326,105 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 
 }
 
-void vulkan::VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
-{
-	VkBufferCreateInfo bufferInfo{};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = size;
-	bufferInfo.usage = usage;
-	bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
-	bufferInfo.queueFamilyIndexCount = 2;
-	uint32_t families[] = { _devices->GraphicsFamilyIndex(), _devices->TransferFamilyIndex() };
-	bufferInfo.pQueueFamilyIndices = families;
-	Check(vkCreateBuffer(_devices->Handle(), &bufferInfo, nullptr, &buffer), "Create buffer!");
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(_devices->Handle(), buffer, &memRequirements);
+//void vulkan::VulkanRenderer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+//{
+//	VkBufferCreateInfo bufferInfo{};
+//	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	bufferInfo.size = size;
+//	bufferInfo.usage = usage;
+//	bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
+//	bufferInfo.queueFamilyIndexCount = 2;
+//	uint32_t families[] = { _devices->GraphicsFamilyIndex(), _devices->TransferFamilyIndex() };
+//	bufferInfo.pQueueFamilyIndices = families;
+//	Check(vkCreateBuffer(_devices->Handle(), &bufferInfo, nullptr, &buffer), "Create buffer!");
+//	VkMemoryRequirements memRequirements;
+//	vkGetBufferMemoryRequirements(_devices->Handle(), buffer, &memRequirements);
+//
+//	VkMemoryAllocateInfo allocInfo{};
+//	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+//	allocInfo.allocationSize = memRequirements.size;
+//	allocInfo.memoryTypeIndex = vulkan::VulkanResource::findMemoryType(memRequirements.memoryTypeBits, properties,_devices->PhysicalDevice());
+//
+//	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &bufferMemory), "AllocateMemory!");
+//
+//	vkBindBufferMemory(_devices->Handle(), buffer, bufferMemory, 0);
+//}
 
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = vulkan::VulkanResource::findMemoryType(memRequirements.memoryTypeBits, properties,_devices->PhysicalDevice());
+//void vulkan::VulkanRenderer::CreateIndexBuffer()
+//{
+//	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+//	VkBuffer stagingBuffer;
+//	VkDeviceMemory stagingBufferMemory;
+//	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//		bufferSize,
+//		&stagingBuffer,
+//		&stagingBufferMemory,
+//		indices.data());
+//	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+//		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+//		bufferSize,
+//		&_indexBuffer,
+//		&_indexBufferMemory);
+//	_bufferManager->copyBuffer(stagingBuffer, _indexBuffer, bufferSize, QueueFamily::TRANSFER);
+//	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
+//	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
+//}
 
-	Check(vkAllocateMemory(_devices->Handle(), &allocInfo, nullptr, &bufferMemory), "AllocateMemory!");
+//void vulkan::VulkanRenderer::createVertexBuffer()
+//{
+//	VkDeviceSize bufferSize = sizeof(test_vertices[0]) * test_vertices.size();
+//	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
+//	VkBuffer stagingBuffer;
+//	VkDeviceMemory stagingBufferMemory;
+//	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+//		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+//		bufferSize,
+//		&stagingBuffer,
+//		&stagingBufferMemory,
+//		test_vertices.data());
+//	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+//		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+//		bufferSize,
+//		&_vertexBuffer,
+//		&_vertexBufferMemory);
+//	_bufferManager->copyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
+//	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
+//	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
+//
+//}
 
-	vkBindBufferMemory(_devices->Handle(), buffer, bufferMemory, 0);
-}
-
-void vulkan::VulkanRenderer::CreateIndexBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		bufferSize,
-		&stagingBuffer,
-		&stagingBufferMemory,
-		indices.data());
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		bufferSize,
-		&_indexBuffer,
-		&_indexBufferMemory);
-	_bufferManager->copyBuffer(stagingBuffer, _indexBuffer, bufferSize, QueueFamily::TRANSFER);
-	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
-	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
-}
-
-void vulkan::VulkanRenderer::createVertexBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(test_vertices[0]) * test_vertices.size();
-	//创建一个临时缓冲区，用于直接传输顶点数据至GPU
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		bufferSize,
-		&stagingBuffer,
-		&stagingBufferMemory,
-		test_vertices.data());
-	_bufferManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		bufferSize,
-		&_vertexBuffer,
-		&_vertexBufferMemory);
-	_bufferManager->copyBuffer(stagingBuffer, _vertexBuffer, bufferSize, QueueFamily::TRANSFER);
-	vkDestroyBuffer(_devices->Handle(), stagingBuffer, nullptr);
-	vkFreeMemory(_devices->Handle(), stagingBufferMemory, nullptr);
-
-}
-
-void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
-{
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = _commandPools->GetCommandPool(family);
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(_devices->Handle(), &allocInfo, &commandBuffer);
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-	VkBufferCopy copyRegion{};
-	copyRegion.srcOffset = 0;
-	copyRegion.dstOffset = 0;
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-	vkEndCommandBuffer(commandBuffer);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-	vkQueueSubmit(_devices->TransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(_devices->TransferQueue());
-	_commandPools->FreeCommandBuffer(family,1, commandBuffer);
-
-}
+//void vulkan::VulkanRenderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
+//{
+//	VkCommandBufferAllocateInfo allocInfo{};
+//	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+//	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+//	allocInfo.commandPool = _commandPools->GetCommandPool(family);
+//	allocInfo.commandBufferCount = 1;
+//
+//	VkCommandBuffer commandBuffer;
+//	vkAllocateCommandBuffers(_devices->Handle(), &allocInfo, &commandBuffer);
+//	VkCommandBufferBeginInfo beginInfo{};
+//	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+//	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+//	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+//
+//	VkBufferCopy copyRegion{};
+//	copyRegion.srcOffset = 0;
+//	copyRegion.dstOffset = 0;
+//	copyRegion.size = size;
+//	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+//	vkEndCommandBuffer(commandBuffer);
+//
+//	VkSubmitInfo submitInfo{};
+//	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+//	submitInfo.commandBufferCount = 1;
+//	submitInfo.pCommandBuffers = &commandBuffer;
+//	vkQueueSubmit(_devices->TransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+//	vkQueueWaitIdle(_devices->TransferQueue());
+//	_commandPools->FreeCommandBuffer(family,1, commandBuffer);
+//
+//}
 
 void vulkan::VulkanRenderer::CreateSyncObjects()
 {
@@ -474,9 +474,12 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-			_uniformBuffers[i], _uniformBuffersMemory[i]);
+		_bufferManager->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize,
+			&_uniformBuffers[i], &_uniformBuffersMemory[i]);
+		//CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		//	_uniformBuffers[i], _uniformBuffersMemory[i]);
 
 		vkMapMemory(_devices->Handle(), _uniformBuffersMemory[i], 0, bufferSize, 0, &_uniformBuffersMapped[i]);
 	}

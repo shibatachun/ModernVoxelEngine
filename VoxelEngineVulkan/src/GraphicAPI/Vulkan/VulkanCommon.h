@@ -307,6 +307,17 @@ namespace vulkan {
 
 		std::vector<uint32_t>		indiceCounts;
 	};
+
+	struct VulkanTexture {
+		VkSampler sampler{ VK_NULL_HANDLE };
+		VkImage image{ VK_NULL_HANDLE };
+		VkImageLayout imageLayout;
+		VkDeviceMemory deviceMemory{ VK_NULL_HANDLE };
+		VkImageView view{ VK_NULL_HANDLE };
+		uint32_t width{ 0 };
+		uint32_t height{ 0 };
+		uint32_t mipLevels{ 0 };
+	};
 	namespace VulkanResource {
 	
 

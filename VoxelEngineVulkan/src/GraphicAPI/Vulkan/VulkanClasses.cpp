@@ -1267,6 +1267,26 @@ void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex1>& vertexData
 	vkDestroyBuffer(device.Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
 }
+void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, unsigned char* pixel, VkImage& image, VkDeviceMemory& memory)
+{
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	VkDeviceSize image_size = image_data.texWidth * image_data.texHeight * 4;
+	createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		image_size,
+		&stagingBuffer,
+		&stagingBufferMemory,
+		pixel);
+	createImage(image_data.texWidth, image_data.texHeight,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		&image,
+		&memory);
+
+}
+
 void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data)
 {
 	VkBufferCreateInfo bufferInfo{};
@@ -1311,6 +1331,69 @@ void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemory
 	Check(vkBindBufferMemory(device.Handle(), *buffer, *memory, 0), "Bind Memory");
 }
 
+void vulkan::BufferManager::createImage(uint32_t width, 
+	uint32_t height, VkFormat format, VkImageTiling tiling, 
+	VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory)
+{
+	VkImageCreateInfo imageInfo{};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = format;
+	imageInfo.tiling = tiling;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = usage;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	Check(vkCreateImage(device.Handle(), &imageInfo, nullptr,image), "create vk image");
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(device.Handle(), *image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+	Check(vkAllocateMemory(device.Handle(), &allocInfo, nullptr, imageMemory), "allocate image memory");
+
+	vkBindImageMemory(device.Handle(), *image, *imageMemory, 0);
+	
+
+}
+
+void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(QueueFamily::TRANSFER), 1, true);
+	VkImageMemoryBarrier barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+	barrier.srcQueueFamilyIndex = device.TransferFamilyIndex();
+	barrier.dstQueueFamilyIndex = device.GraphicsFamilyIndex();
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = 0;
+	vkCmdPipelineBarrier(
+		cmdBuffer,
+		0, 0,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &barrier
+	);
+	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(QueueFamily::TRANSFER), true);
+
+}
+
 void vulkan::BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family)
 {
 	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
@@ -1321,6 +1404,10 @@ void vulkan::BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, V
 	vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, 1, & copyRegion);
 	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(family), true);
 
+}
+
+void vulkan::BufferManager::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, QueueFamily family)
+{
 }
 
 VkCommandBuffer vulkan::BufferManager::createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin)

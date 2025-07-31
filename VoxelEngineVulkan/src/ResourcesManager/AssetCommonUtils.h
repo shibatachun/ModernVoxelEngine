@@ -13,7 +13,6 @@
 #include "../utils/Utils.h"
 #include "DataFormat.h"
 
-#include "../utils/stb_image.h"
 
 
 namespace asset

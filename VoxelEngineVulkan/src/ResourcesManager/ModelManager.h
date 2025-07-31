@@ -13,12 +13,14 @@ public:
 	const std::unordered_map<std::string, ModelData>& GetModeDatas() { return _model; };
 private:
 	void processNode(aiNode* node, const aiScene* scene);
-	void loadImage(std::string filename);
+	void loadImage(std::string filename, std::string path);
+	void freeImage(unsigned char* pixel);
 	void loadTestExample();
 	
 	
 private:
 	std::unordered_map<std::string, ModelData>						_model;
+	std::unordered_map<std::string, Image>							_ImageFile;
 	/*std::unordered_map<FileInfo, */
 
 };

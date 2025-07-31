@@ -1,5 +1,6 @@
 #include "ModelManager.h"
-
+#define STB_IMAGE_IMPLEMENTATION
+#include "../utils/stb_image.h"
 asset::ModelManager::ModelManager()
 {
 	loadModel("res/models/generator_LP.fbx");
@@ -98,9 +99,19 @@ void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 {
 }
 
-void asset::ModelManager::loadImage(std::string filename)
+void asset::ModelManager::loadImage(std::string filename, std::string path)
 {
-	//TODO:遍历texture文件夹，加载图片
+	Image image;
+	int texWidth, texHeight, texChannels;
+	image.pixel = stbi_load(path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
+	_ImageFile.emplace(filename, image);
+
+	
+}
+
+void asset::ModelManager::freeImage(unsigned char* pixel)
+{
+	stbi_image_free(pixel);
 }
 
 void asset::ModelManager::loadTestExample()
