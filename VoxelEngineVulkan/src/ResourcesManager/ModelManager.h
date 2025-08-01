@@ -11,16 +11,22 @@ public:
 	~ModelManager();
 	void loadModel(const char* filename);
 	const std::unordered_map<std::string, ModelData>& GetModeDatas() { return _model; };
+	const std::unordered_map<std::string, Image>& GetImageDatas() { return _ImageFile; };
+	const void freeImage(unsigned char* pixel);
 private:
 	void processNode(aiNode* node, const aiScene* scene);
+	void loadAllImage();
+	void loadAllModel();
 	void loadImage(std::string filename, std::string path);
-	void freeImage(unsigned char* pixel);
 	void loadTestExample();
 	
 	
 private:
 	std::unordered_map<std::string, ModelData>						_model;
 	std::unordered_map<std::string, Image>							_ImageFile;
+
+	std::unordered_map<std::string, FileInfo>						_modelFilesInfo;
+	std::unordered_map<std::string, FileInfo>						_imageFilesInfo;
 	/*std::unordered_map<FileInfo, */
 
 };

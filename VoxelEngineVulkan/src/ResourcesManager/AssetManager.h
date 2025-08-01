@@ -11,8 +11,13 @@ namespace asset {
 		~AssetManager();
 		const std::unordered_map<std::string, asset::shader>& getShaderAssets() const { return _shadersManager->GetShaderAssets(); };
 		const std::unordered_map<std::string, ModelData>& getModelDatas() const { return _modelManager->GetModeDatas(); };
+		const std::unordered_map<std::string, Image>& getImageDatas() { return _modelManager->GetImageDatas(); };
+		
 		const asset::shader& getShaderByName (std::string) const;
 		const ModelData& getModelDataByName(std::string) const;
+		const ModelData& getRequireModelData(std::string);
+		const Image& getImageDataByName(std::string) const;
+		const Image& getRequrieImageData(std::string) const;
 		
 
 	private:

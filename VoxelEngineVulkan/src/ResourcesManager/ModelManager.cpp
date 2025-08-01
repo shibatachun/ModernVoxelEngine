@@ -3,7 +3,10 @@
 #include "../utils/stb_image.h"
 asset::ModelManager::ModelManager()
 {
+	loadAllModel();
+	loadAllImage();
 	loadModel("res/models/generator_LP.fbx");
+	loadImage("test","text_texture.jpg");
 	loadTestExample();
 }
 
@@ -99,17 +102,33 @@ void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 {
 }
 
-void asset::ModelManager::loadImage(std::string filename, std::string path)
+void asset::ModelManager::loadAllImage()
 {
-	Image image;
-	int texWidth, texHeight, texChannels;
-	image.pixel = stbi_load(path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
-	_ImageFile.emplace(filename, image);
-
+	for (auto& x : IterateDirectory("res/textures", { "jpg" })) {
+		_imageFilesInfo.emplace(x.GetFileNameWithExtension(), x);
+	}
 	
 }
 
-void asset::ModelManager::freeImage(unsigned char* pixel)
+void asset::ModelManager::loadAllModel()
+{
+	for (auto& x : IterateDirectory("res/models", { "obj","fbx","gltf" })) {
+		_modelFilesInfo.emplace(x.name, x);
+	}
+}
+
+void asset::ModelManager::loadImage(std::string filename, std::string path)
+{
+
+	auto& file = utils::findInMap(_imageFilesInfo, path);
+	Image image;
+	int texWidth, texHeight, texChannels;
+	image.pixel = stbi_load(file.path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
+	_ImageFile.emplace(filename, image);
+	
+}
+
+const void asset::ModelManager::freeImage(unsigned char* pixel)
 {
 	stbi_image_free(pixel);
 }

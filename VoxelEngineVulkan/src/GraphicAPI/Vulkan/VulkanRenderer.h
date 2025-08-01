@@ -76,12 +76,8 @@ namespace vulkan
 
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
 		void CreateCommandBuffer(QueueFamily family);
-		//void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-		//void CreateIndexBuffer();
-		//void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
 		void CreateSyncObjects();
 		void recreateSwapChain();
-		//void createVertexBuffer();
 		void CreateUniformBuffers();
 		void ConfigureDescriptorSet();
 		void updateUniformBuffer(uint32_t currentImage);

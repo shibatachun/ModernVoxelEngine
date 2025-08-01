@@ -5,12 +5,12 @@ struct FileInfo {
     std::string name;
     std::string ext;
     std::string dir;
-    //std::string GetFileNameWithExtension() {
-    //    if (ext.length() > 0) {
-    //        return name + "." + ext;
-    //    }
-    //    else {
-    //        return name;
-    //    }
-    //}
+    std::string GetFileNameWithExtension() {
+        if (ext.length() > 0) {
+            return name + "." + ext;
+        }
+        else {
+            return name;
+        }
+    }
 };

@@ -308,19 +308,29 @@ namespace vulkan {
 			VkBuffer *buffer, 
 			VkDeviceMemory *memory, 
 			void *data = nullptr);
+		void createImageBuffer(uint32_t width, uint32_t height, 
+			VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, 
+			VkMemoryPropertyFlags properties, 
+			VkImage* image, 
+			VkDeviceMemory* imageMemory);
+		
 		void CreateIndexBuffer1(std::vector<uint32_t>& indiceData, VkBuffer& buffer, VkDeviceMemory& memory);
 		void CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory);
-		void CreateVulkanImageBuffer(Image image_data, unsigned char* pixel, VkImage& image, VkDeviceMemory& memory);
+		void CreateVulkanImageBuffer(Image image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory);
 
-		void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory);
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family);
+
 		
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
 		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, QueueFamily family);
+
 		VkCommandBuffer createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin = false);
-		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
-		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue,  VkCommandPool pool,  bool free);
+
+		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
+
+		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
+		void DestroyVkImage(VkImage image, VkDeviceMemory memory);
 
 
 	private:
@@ -335,7 +345,7 @@ namespace vulkan {
 		public:
 			VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
-			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name);
+			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name, std::vector<std::string> textureFiles);
 			const VulkanRenderObject& GetRenderObject(std::string name);
 		private:
 

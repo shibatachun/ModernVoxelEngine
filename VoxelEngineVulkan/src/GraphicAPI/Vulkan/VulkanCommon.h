@@ -294,20 +294,6 @@ namespace vulkan {
 
 	void getPipelineVertexInputState(const std::vector<VertexComponent> components,  graphicsPipelineCreateInfoPack& createinfo);
 
-	struct VulkanRenderObject {
-		std::string name;
-		VkPipeline pipeline;
-		VkPipelineLayout Pipelinelayout;
-		std::vector<VkImage> textures;
-		VkBuffer		vertexBuffer;
-		VkDeviceMemory	vertexmemory;
-
-		VkBuffer		indiceBuffer;
-		VkDeviceMemory	indicememory;
-
-		std::vector<uint32_t>		indiceCounts;
-	};
-
 	struct VulkanTexture {
 		VkSampler sampler{ VK_NULL_HANDLE };
 		VkImage image{ VK_NULL_HANDLE };
@@ -318,6 +304,21 @@ namespace vulkan {
 		uint32_t height{ 0 };
 		uint32_t mipLevels{ 0 };
 	};
+	struct VulkanRenderObject {
+		std::string name;
+		VkPipeline pipeline;
+		VkPipelineLayout Pipelinelayout;
+		std::vector<VulkanTexture> textures;
+		VkBuffer		vertexBuffer;
+		VkDeviceMemory	vertexmemory;
+
+		VkBuffer		indiceBuffer;
+		VkDeviceMemory	indicememory;
+
+		std::vector<uint32_t>		indiceCounts;
+	};
+
+
 	namespace VulkanResource {
 	
 

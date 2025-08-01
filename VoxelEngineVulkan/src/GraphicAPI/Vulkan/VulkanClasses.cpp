@@ -1267,7 +1267,8 @@ void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex1>& vertexData
 	vkDestroyBuffer(device.Handle(), stagingBuffer, nullptr);
 	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
 }
-void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, unsigned char* pixel, VkImage& image, VkDeviceMemory& memory)
+
+void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1277,13 +1278,23 @@ void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, unsigned c
 		image_size,
 		&stagingBuffer,
 		&stagingBufferMemory,
-		pixel);
-	createImage(image_data.texWidth, image_data.texHeight,
+		image_data.pixel);
+	createImageBuffer(image_data.texWidth, image_data.texHeight,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		&image,
 		&memory);
+	image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, QueueFamily::TRANSFER);
+	image_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight), QueueFamily::TRANSFER);
+
+	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, QueueFamily::GRAPHIC);
+	image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkDestroyBuffer(device.Handle(), stagingBuffer, nullptr);
+	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
 
 }
 
@@ -1331,7 +1342,7 @@ void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemory
 	Check(vkBindBufferMemory(device.Handle(), *buffer, *memory, 0), "Bind Memory");
 }
 
-void vulkan::BufferManager::createImage(uint32_t width, 
+void vulkan::BufferManager::createImageBuffer(uint32_t width,
 	uint32_t height, VkFormat format, VkImageTiling tiling, 
 	VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory)
 {
@@ -1361,36 +1372,63 @@ void vulkan::BufferManager::createImage(uint32_t width,
 	Check(vkAllocateMemory(device.Handle(), &allocInfo, nullptr, imageMemory), "allocate image memory");
 
 	vkBindImageMemory(device.Handle(), *image, *imageMemory, 0);
+
+
 	
 
 }
 
-void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family)
 {
-	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(QueueFamily::TRANSFER), 1, true);
+	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
 	VkImageMemoryBarrier barrier{};
+	VkPipelineStageFlags sourceStage;
+	VkPipelineStageFlagBits destinationStage;
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.oldLayout = oldLayout;
 	barrier.newLayout = newLayout;
-	barrier.srcQueueFamilyIndex = device.TransferFamilyIndex();
-	barrier.dstQueueFamilyIndex = device.GraphicsFamilyIndex();
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
-	barrier.srcAccessMask = 0;
-	barrier.dstAccessMask = 0;
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else
+	{
+		throw std::invalid_argument("unsupported layout transition");
+	};
 	vkCmdPipelineBarrier(
 		cmdBuffer,
-		0, 0,
+		sourceStage, destinationStage,
 		0,
 		0, nullptr,
 		0, nullptr,
 		1, &barrier
 	);
-	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(QueueFamily::TRANSFER), true);
+	if (family == QueueFamily::GRAPHIC) {
+		flushCommandBuffer(cmdBuffer, device.GraphicsQueue(), commandPools.GetCommandPool(family), true);
+	}
+	else
+	{
+		flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(family), true);
+
+	}
 
 }
 
@@ -1408,6 +1446,23 @@ void vulkan::BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, V
 
 void vulkan::BufferManager::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, QueueFamily family)
 {
+	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight = 0;
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+
+	region.imageOffset = { 0,0,0 };
+	region.imageExtent = {
+		width,
+		height,
+		1
+	};
+	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(family), true);
 }
 
 VkCommandBuffer vulkan::BufferManager::createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin)
@@ -1460,6 +1515,12 @@ void vulkan::BufferManager::DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory
 	vkDestroyBuffer(device.Handle(), buffer, nullptr);
 }
 
+void vulkan::BufferManager::DestroyVkImage(VkImage image, VkDeviceMemory memory)
+{
+	vkDestroyImage(device.Handle(), image, nullptr);
+	vkFreeMemory(device.Handle(), memory, nullptr);
+}
+
 void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free)
 {
 	if (commandBuffer == VK_NULL_HANDLE) {
@@ -1475,6 +1536,7 @@ void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, Vk
 	fenceCreateInfo.flags = 0;
 	VkFence fence;
 	Check(vkCreateFence(device.Handle(), &fenceCreateInfo, nullptr, &fence), "Create fence for flush command buffer ");
+	Check(vkQueueWaitIdle(queue), "wait queue idle");
 	Check(vkQueueSubmit(queue, 1, &submitInfo, fence), "Submit to queue");
 	Check(vkWaitForFences(device.Handle(), 1, &fence, VK_TRUE, 100000000000), "Wait for finished excuting commandbuffer");
 	vkDestroyFence(device.Handle(), fence, nullptr);
@@ -1497,10 +1559,17 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 	for (auto& x : _renderObjects) {
 		_BufferManager.DestroyBuffer(x.second.indiceBuffer, x.second.indicememory);
 		_BufferManager.DestroyBuffer(x.second.vertexBuffer, x.second.vertexmemory);
+		for (auto& x : x.second.textures) {
+			_BufferManager.DestroyVkImage(x.image, x.deviceMemory);
+		}
 	}
 }
 
-void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,  VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name)
+void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
+	std::string name,  
+	VkPipeline pipeline, 
+	VkPipelineLayout layout, std::string raw_model_name, 
+	std::vector<std::string> textureFiles)
 {
 	ModelData modeldata = _assetMnanger.getModelDataByName(raw_model_name);
 	VulkanRenderObject renderObject;
@@ -1515,6 +1584,13 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	renderObject.pipeline = pipeline;
 	renderObject.Pipelinelayout = layout;
 	
+	for (const auto& x : textureFiles) {
+		const Image&	image = _assetMnanger.getImageDataByName(x);
+		VulkanTexture texture;
+		texture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
+		renderObject.textures.push_back(texture);
+	}
 	
 	
 	_renderObjects[name] = renderObject;
