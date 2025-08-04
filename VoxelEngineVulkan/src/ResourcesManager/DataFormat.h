@@ -6,9 +6,9 @@
 //¶¥µãÊý¾Ý
 struct Vertex1 {
     glm::vec3 pos{};
-    glm::vec3 normal{};
-    glm::vec2 uv{};
     glm::vec4 color{};
+    glm::vec2 uv{};
+    glm::vec3 normal{};
     glm::vec4 joint0{};
     glm::vec4 weight0{};
     glm::vec3 tangent{};

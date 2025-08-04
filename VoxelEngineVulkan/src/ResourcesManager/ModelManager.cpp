@@ -1,6 +1,7 @@
 #include "ModelManager.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include "../utils/stb_image.h"
+#include <stb_image.h>
+
 asset::ModelManager::ModelManager()
 {
 	loadAllModel();
@@ -51,10 +52,11 @@ void asset::ModelManager::loadModel(const char* filename)
 			meshData.vertices[j] = (Vertex1{
 				//位置
 				.pos = glm::vec3(assimpMesh->mVertices[j].x, assimpMesh->mVertices[j].y, assimpMesh->mVertices[j].z),
-				//N向量
-				.normal = glm::vec3(assimpMesh->mNormals[j].x, assimpMesh->mNormals[j].y, assimpMesh->mNormals[j].z),
+		
 				//UV坐标
 				.uv = assimpMesh->HasTextureCoords(0) ? glm::vec2(assimpMesh->mTextureCoords[0][j].x, assimpMesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
+				//N向量
+				.normal = glm::vec3(assimpMesh->mNormals[j].x, assimpMesh->mNormals[j].y, assimpMesh->mNormals[j].z),
 				//Tangent
 				.tangent = assimpMesh->HasTangentsAndBitangents() ? glm::vec3(assimpMesh->mTangents[j].x, assimpMesh->mTangents[j].y, assimpMesh->mTangents[j].z) : glm::vec3(0.0f) }
 				);
@@ -140,11 +142,10 @@ void asset::ModelManager::loadTestExample()
 	data.meshes.resize(data.meshCount);
 	MeshData& meshData = data.meshes[0];
 	std::vector<Vertex1> test_vertices = {
-	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}},
-	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}},
-	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}},
-	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f}},
-
+	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}, .uv = {1.0f, 0.0f}},
+	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}, .uv = {0.0f,0.0f}},
+	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}, .uv = {0.0f,1.0f}},
+	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f},	.uv = {1.0f, 1.0f}},
 	};
 	std::vector<uint16_t> indices = {
 		0,1,2,2,3,0

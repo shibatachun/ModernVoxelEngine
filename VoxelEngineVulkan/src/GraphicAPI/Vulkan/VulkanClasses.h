@@ -133,6 +133,7 @@ namespace vulkan {
 		const DebugUtils& DebugUtils() const { return _debugUtils; }
 		void WaitIdle() const;
 		VkPhysicalDeviceMemoryProperties GetPhyDeviceMemProperty() const { return _memProperties; };
+		VkPhysicalDeviceProperties2 GetPhyDeviceProperty() const { return _physicalDeviceProperties2; };
 	private:
 		VULKAN_HANDLE(VkDevice, _device)
 		const VkPhysicalDevice							_physicalDevice;
@@ -328,11 +329,21 @@ namespace vulkan {
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue,  VkCommandPool pool,  bool free);
 
 		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
+		VkImageView CreateImageView(VkImage image, VkFormat format);
+		void CreateTextureSampler(VkSampler& sampler);
 
 		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
 		void DestroyVkImage(VkImage image, VkDeviceMemory memory);
+		void DestroyVkImageView(VkImageView imageview);
+		void DestroySampler(VkSampler sampler);
 
-
+		////test functions;
+		void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		VkCommandBuffer beginSingleTimeCommands();
+		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+		void copyBuffer1(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		void transitionImageLayout1(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+		void copyBufferToImage1(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 	private:
 		const Device& device;
 		CommandPoolManager& commandPools;
@@ -347,6 +358,7 @@ namespace vulkan {
 			~VulkanResouceManager();
 			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name, std::vector<std::string> textureFiles);
 			const VulkanRenderObject& GetRenderObject(std::string name);
+			const std::unordered_map<std::string, VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
 		private:
 
 			std::unordered_map<std::string, VulkanRenderObject>									_renderObjects;
@@ -356,6 +368,7 @@ namespace vulkan {
 		private:
 		
 			void ConstructVulkanRenderObject();
+			void CreateTextureImageView(VkImageView& imageview, VkImage image);
 	};
 }
 	

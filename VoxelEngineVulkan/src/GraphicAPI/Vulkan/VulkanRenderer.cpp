@@ -28,8 +28,10 @@ void vulkan::VulkanRenderer::DrawFrame()
 	updateUniformBuffer(_currentFrame);
 	///////
 
-	VulkanRenderObject it = _resouceManager->GetRenderObject("test");
-	recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,it);
+	for (const auto& x : _renderObjects) {
+
+		recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,x);
+	}
 	/////
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -130,11 +132,10 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 
 	CreateSyncObjects();
-
-	//createVertexBuffer();
-	//CreateIndexBuffer();
 	CreateUniformBuffers();
-	ConfigureDescriptorSet();
+
+	PrepareRenderObject();
+	
 	return true;
 }
 
@@ -201,7 +202,17 @@ void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 	uboLayoutBinding.descriptorCount = 1;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	uboLayoutBinding.pImmutableSamplers = nullptr;
+
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	
 	config.bindings.push_back(uboLayoutBinding);
+	config.bindings.push_back(samplerLayoutBinding);
+	config.UpdateAllArray();
 	_descriptorLayouts->CreateDescriptorSetLayout(config);
 	//_graphicsPipline->CreateGraphicsPipeline("Triangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
 	_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
@@ -382,7 +393,7 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 	}
 } 
 
-void vulkan::VulkanRenderer::ConfigureDescriptorSet()
+void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
@@ -390,17 +401,44 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet()
 		bufferInfo.buffer = _uniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
-		VkWriteDescriptorSet descriptorWrite{};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-		descriptorWrite.pImageInfo = nullptr;
-		descriptorWrite.pTexelBufferView = nullptr;
-		vkUpdateDescriptorSets(_devices->Handle(),1, &descriptorWrite, 0, nullptr);
+
+		/*std::vector<VkDescriptorImageInfo> imageInfos;
+		imageInfos.reserve(object.textures.size());
+		for (auto& x : object.textures) {
+			VkDescriptorImageInfo imageinfo;
+			imageinfo.imageLayout = x.imageLayout;
+			imageinfo.imageView = x.view;
+			imageinfo.sampler = x.sampler;
+			imageInfos.push_back(imageinfo);
+		}*/
+		VkDescriptorImageInfo imageinfo;
+		imageinfo.imageLayout = object.textures[0].imageLayout;
+		imageinfo.imageView = object.textures[0].view;
+		imageinfo.sampler = object.textures[0].sampler;
+	
+		std::vector<VkWriteDescriptorSet> descriptorWrites;
+		VkWriteDescriptorSet descriptorWrit1{};
+		descriptorWrit1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrit1.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
+		descriptorWrit1.dstBinding = 0;
+		descriptorWrit1.dstArrayElement = 0;
+		descriptorWrit1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrit1.descriptorCount = 1;
+		descriptorWrit1.pBufferInfo = &bufferInfo;
+		descriptorWrit1.pImageInfo = nullptr;
+		descriptorWrit1.pTexelBufferView = nullptr;
+		VkWriteDescriptorSet descriptorWrit2{};
+		descriptorWrit2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrit2.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
+		descriptorWrit2.dstBinding = 1;
+		descriptorWrit2.dstArrayElement = 0;
+		descriptorWrit2.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrit2.descriptorCount = object.textures.size();
+		descriptorWrit2.pImageInfo = &imageinfo;
+		descriptorWrites.push_back(descriptorWrit1);
+		descriptorWrites.push_back(descriptorWrit2);
+
+		vkUpdateDescriptorSets(_devices->Handle(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
@@ -426,6 +464,14 @@ bool vulkan::VulkanRenderer::isMinimized() const
 	glfwGetFramebufferSize(_window, &width, &height);
 
 	return width==0 && height==0;
+}
+
+void vulkan::VulkanRenderer::PrepareRenderObject()
+{
+	for (const auto& x : _resouceManager->GetRenderObjects()) {
+		ConfigureDescriptorSet(x.second);
+		_renderObjects.push_back(x.second);
+	}
 }
 
 vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(presentmode), _assetManager(assetManager)

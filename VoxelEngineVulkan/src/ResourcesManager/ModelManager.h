@@ -1,6 +1,6 @@
 #pragma once
 #include "AssetCommonUtils.h"
-#define STB_IMAGE_IMPLEMENTATION
+
 namespace asset {
 
 

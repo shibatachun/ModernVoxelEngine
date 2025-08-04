@@ -155,6 +155,7 @@ namespace vulkan {
 
 	struct LayoutConfig {
 		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		uint32_t bindingCounts;
 		// 如果还有 push constant ranges，也可以放在这里：
 		// std::vector<VkPushConstantRange> pushConstants;
 
@@ -173,6 +174,9 @@ namespace vulkan {
 			}
 			// 同理比较 pushConstants…
 			return true;
+		}
+		void UpdateAllArray() {
+			bindingCounts = bindings.size();
 		}
 	};
 

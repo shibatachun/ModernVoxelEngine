@@ -26,8 +26,8 @@ void TitleFps(std::string windowTitle, GLFWwindow* pWindow)
 
 }
 int main() {
-	uint32_t width = 1280;
-	uint32_t height = 800;
+	uint32_t width = 1920;
+	uint32_t height = 1080;
 	GLFWwindow* window = initWindow("GLFW example", width, height);
 	API api = API::VULKAN;
 	auto& app = Application::getInstance(window);

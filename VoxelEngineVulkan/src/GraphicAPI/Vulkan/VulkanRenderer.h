@@ -61,6 +61,7 @@ namespace vulkan
 		
 		uint32_t												_currentFrame = 0;
 		
+		std::vector<VulkanRenderObject>							_renderObjects;
 		
 	private:
 		bool InitVulkan();
@@ -72,16 +73,18 @@ namespace vulkan
 		void SetUpCommandPools();
 		void SetUpBufferManager();
 		void SetUpVulkanResouceManager();
-		void CreateFrameBuffer();
 
+
+		void CreateFrameBuffer();
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
 		void CreateCommandBuffer(QueueFamily family);
 		void CreateSyncObjects();
 		void recreateSwapChain();
 		void CreateUniformBuffers();
-		void ConfigureDescriptorSet();
+		void ConfigureDescriptorSet(VulkanRenderObject object);
 		void updateUniformBuffer(uint32_t currentImage);
 		bool isMinimized() const;
+		void PrepareRenderObject();
 
 
 
