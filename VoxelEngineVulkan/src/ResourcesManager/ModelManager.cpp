@@ -169,4 +169,9 @@ void asset::ModelManager::loadTestExample()
 
 }
 
+void asset::ModelManager::loadgltf()
+{
+
+}
+
 

@@ -19,6 +19,7 @@ private:
 	void loadAllModel();
 	void loadImage(std::string filename, std::string path);
 	void loadTestExample();
+	void loadgltf();
 	
 	
 private:

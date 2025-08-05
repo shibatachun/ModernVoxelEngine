@@ -49,11 +49,6 @@ namespace vulkan
 		std::vector<VkSemaphore>								_renderFinishedSemaphores;
 		std::vector<VkFence>									_inFlightFences;
 
-		
-		VkBuffer												_vertexBuffer;
-		VkDeviceMemory											_vertexBufferMemory;
-		VkBuffer												_indexBuffer;
-		VkDeviceMemory											_indexBufferMemory;
 
 		std::vector<VkBuffer>									_uniformBuffers;
 		std::vector<VkDeviceMemory>								_uniformBuffersMemory;

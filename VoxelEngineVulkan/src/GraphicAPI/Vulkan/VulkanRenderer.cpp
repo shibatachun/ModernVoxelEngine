@@ -90,13 +90,7 @@ void vulkan::VulkanRenderer::Cleanup()
 	_descriptorLayouts.reset();
 
 	_resouceManager.reset();
-	vkDestroyBuffer(_devices->Handle(), _indexBuffer, nullptr);
-	vkFreeMemory(_devices->Handle(), _indexBufferMemory, nullptr);
 
-	vkDestroyBuffer(_devices->Handle(), _vertexBuffer, nullptr);
-	vkFreeMemory(_devices->Handle(), _vertexBufferMemory, nullptr);
-
-	
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(_devices->Handle(), _renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(_devices->Handle(), _imageAvailableSemaphores[i], nullptr);

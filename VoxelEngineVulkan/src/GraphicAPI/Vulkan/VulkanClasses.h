@@ -338,12 +338,12 @@ namespace vulkan {
 		void DestroySampler(VkSampler sampler);
 
 		////test functions;
-		void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+		/*void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		VkCommandBuffer beginSingleTimeCommands();
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 		void copyBuffer1(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 		void transitionImageLayout1(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-		void copyBufferToImage1(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+		void copyBufferToImage1(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);*/
 	private:
 		const Device& device;
 		CommandPoolManager& commandPools;
