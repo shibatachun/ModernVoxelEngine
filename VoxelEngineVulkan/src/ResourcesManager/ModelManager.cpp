@@ -146,9 +146,14 @@ void asset::ModelManager::loadTestExample()
 	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}, .uv = {0.0f,0.0f}},
 	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}, .uv = {0.0f,1.0f}},
 	{.pos = {-0.5f, 0.5f, 0.0f},	.color = {1.0f,1.0f,1.0f,1.0f},	.uv = {1.0f, 1.0f}},
+
+	{.pos = {-0.5f, -0.5f, -0.5f},	.color = {1.0f,0.0f,0.0f,1.0f}, .uv = {1.0f, 0.0f}},
+	{.pos = {0.5f, -0.5f, -0.5f},	.color = {0.0f,1.0f,0.0f,0.0f}, .uv = {0.0f,0.0f}},
+	{.pos = {0.5f, 0.5f, -0.5f},		.color = {0.0f,0.0f,1.0f,1.0f}, .uv = {0.0f,1.0f}},
+	{.pos = {-0.5f, 0.5f, -0.5f},	.color = {1.0f,1.0f,1.0f,1.0f},	.uv = {1.0f, 1.0f}},
 	};
 	std::vector<uint16_t> indices = {
-		0,1,2,2,3,0
+		0,1,2,2,3,0,4,5,6,6,7,4
 	};
 	//push back用于完整的对象，如果容器内的构造的
 	meshData.vertexCount = test_vertices.size();

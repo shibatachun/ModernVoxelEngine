@@ -115,11 +115,12 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	_surface.reset(new vulkan::Surface(*_instance));
 	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
 	SetPhysicalDevices();
+	SetUpCommandPools();
+	SetUpBufferManager();
+	SetSwapChain();
 	SetUpDescriptorLayoutManager();
 	SetUpDescriptorPoolsManager();
 	SetUpGraphicPipelineManager();
-	SetUpCommandPools();
-	SetUpBufferManager();
 	SetUpVulkanResouceManager();
 
 	CreateFrameBuffer();
@@ -166,7 +167,7 @@ void vulkan::VulkanRenderer::SetPhysicalDevices()
 	vkGetPhysicalDeviceProperties(_physicalDevice, &props);
 	std::cout << "Using physical device : " << props.deviceName << std::endl;
 	_devices.reset(new vulkan::Device(_physicalDevice, *_surface, requeredExtensions, nullptr));
-	SetSwapChain();
+
 
 
 }
@@ -179,7 +180,7 @@ void vulkan::VulkanRenderer::SetSwapChain()
 		glfwWaitEvents();
 	}
 
-	_swapchain.reset(new vulkan::SwapChain(*_devices, _presentMode));
+	_swapchain.reset(new vulkan::SwapChain(*_devices,*_bufferManager, _presentMode));
 
 
 }
@@ -291,9 +292,15 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.framebuffer =_swapchain->GetSwapChainBuffer()[imageIndex];
 	renderPassInfo.renderArea.offset = { 0,0 };
 	renderPassInfo.renderArea.extent = _swapchain->GetSwapchainExtent();
+	std::vector<VkClearValue> clearValues{};
+
 	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f,1.0f}} };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	VkClearValue depthStencil{};
+	depthStencil.depthStencil = { 1.0f, 0 };
+	clearValues.push_back(clearColor);
+	clearValues.push_back(depthStencil);
+	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.pipeline);
@@ -366,6 +373,7 @@ void vulkan::VulkanRenderer::recreateSwapChain()
 	_devices->WaitIdle();
 	_swapchain->CleanUpSwapChain();
 	_swapchain->CreateSwapChain(_presentMode);
+	_swapchain->CreateDepthResources();
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
 	
 }

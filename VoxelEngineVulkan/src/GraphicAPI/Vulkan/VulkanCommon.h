@@ -290,6 +290,9 @@ namespace vulkan {
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
+
+	
+
 	VkVertexInputBindingDescription inputBindingDescription(uint32_t binding);
 	
 	VkVertexInputAttributeDescription inputAttributeDescription(uint32_t binding, uint32_t location, VertexComponent component);
