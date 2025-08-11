@@ -8,7 +8,11 @@ asset::ModelManager::ModelManager()
 	loadAllImage();
 	loadModel("res/models/generator_LP.fbx");
 	loadImage("test","text_texture.jpg");
-	loadTestExample();
+	loadImage("viking", "viking_room.png");
+	//loadTestExample();
+	loadobj("res/models/viking_room.obj");
+	loadgltf("res/models/sponza/sponza.gltf");
+	//CollectTexturePaths("res/models/sponza/sponza.gltf");
 }
 
 asset::ModelManager::~ModelManager()
@@ -106,7 +110,9 @@ void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 
 void asset::ModelManager::loadAllImage()
 {
-	for (auto& x : IterateDirectory("res/textures", { "jpg" })) {
+	std::vector<FileInfo> allTextureFiles;
+	IterateAllDirectories("res/textures", { "png","jpg","ktx" }, allTextureFiles);
+	for (auto& x : allTextureFiles) {
 		_imageFilesInfo.emplace(x.GetFileNameWithExtension(), x);
 	}
 	
@@ -114,7 +120,7 @@ void asset::ModelManager::loadAllImage()
 
 void asset::ModelManager::loadAllModel()
 {
-	for (auto& x : IterateDirectory("res/models", { "obj","fbx","gltf" })) {
+	for (auto& x : IterateDirectory("res/models", { "obj","fbx","gltf"})) {
 		_modelFilesInfo.emplace(x.name, x);
 	}
 }
@@ -124,7 +130,6 @@ void asset::ModelManager::loadImage(std::string filename, std::string path)
 
 	auto& file = utils::findInMap(_imageFilesInfo, path);
 	Image image;
-	int texWidth, texHeight, texChannels;
 	image.pixel = stbi_load(file.path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
 	_ImageFile.emplace(filename, image);
 	
@@ -156,8 +161,8 @@ void asset::ModelManager::loadTestExample()
 		0,1,2,2,3,0,4,5,6,6,7,4
 	};
 	//push back用于完整的对象，如果容器内的构造的
-	meshData.vertexCount = test_vertices.size();
-	meshData.indexCount = indices.size();
+	meshData.vertexCount = static_cast<uint32_t>(test_vertices.size());
+	meshData.indexCount = static_cast<uint32_t>(indices.size());
 	//什么时候用reserve，在后面要用push_back加入元素可以减去多次预分配内存使用时间，用reserve事先获得需要的内存，但是reserve也不混直接[i]复制，因为元素的数量没变，需要用resize
 	meshData.vertices.reserve(meshData.vertexCount);
 	meshData.indices.reserve(meshData.indexCount);
@@ -174,8 +179,172 @@ void asset::ModelManager::loadTestExample()
 
 }
 
-void asset::ModelManager::loadgltf()
+void asset::ModelManager::loadobj(std::string filePath)
 {
+	ModelData data;
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(filePath, 
+		aiProcess_Triangulate |            // 和 tinyobj 的自动三角化等价
+		aiProcess_JoinIdenticalVertices |  // 合并完全相同的顶点
+		aiProcess_GenSmoothNormals |       // 如无法线则生成
+		aiProcess_CalcTangentSpace |       // 如需要切线
+		aiProcess_ImproveCacheLocality |
+		aiProcess_FlipUVs |
+		aiProcess_SortByPType);
+	if (!scene) {
+		std::cout << "LoadAndExportCustomFormat() failed to loaded model" << filePath << "\n";
+		std::cerr << "Assimp Error: " << importer.GetErrorString() << "\n";
+		return;
+	}
+	data.meshCount = scene->mNumMeshes;
+	data.meshes.resize(data.meshCount);
+	
+	for (int i = 0; i < scene->mNumMeshes; i++) {
+		MeshData& meshData = data.meshes[i];
+		meshData.vertexCount = scene->mMeshes[i]->mNumVertices;
+		meshData.indexCount = scene->mMeshes[i]->mNumFaces * 3;
+		meshData.name = scene->mMeshes[i]->mName.C_Str();
+		meshData.vertices.resize(meshData.vertexCount);
+		meshData.indices.resize(meshData.indexCount);
+		meshData.name = meshData.name.substr(0, meshData.name.find('.'));
+
+	}
+	for (int i = 0; i < scene->mNumMeshes; i++) {
+		MeshData& meshdata = data.meshes[i];
+		const aiMesh* mesh = scene->mMeshes[i];
+		for (int j = 0; j < mesh->mNumVertices; j++) {
+			meshdata.vertices[j] = Vertex1{
+			.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y,mesh->mVertices[j].z),
+			.color = glm::vec4(1.0f, 1.0f, 1.0f,1.0f),
+			.uv = mesh->HasTextureCoords(0) ? glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
+			};
+		}
+		for (unsigned int j = 0; j < mesh->mNumFaces; j++) {
+			const aiFace& face = mesh->mFaces[j];
+			unsigned int baseIndex = j * 3;
+			meshdata.indices[baseIndex] = face.mIndices[0];
+			meshdata.indices[baseIndex + 1] = face.mIndices[1];
+			meshdata.indices[baseIndex + 2] = face.mIndices[2];
+
+		}
+	}
+	_model.emplace("viking_room", data);
+
+
+}
+
+std::vector<TexturePath> asset::ModelManager::CollectTexturePaths(std::string gltfPath) {
+	Assimp::Importer imp;
+	const aiScene* scene = imp.ReadFile(
+		gltfPath,
+		aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
+
+	if (!scene) {
+		std::cerr << "Assimp error: " << imp.GetErrorString() << "\n";
+		return {};
+	}
+
+	// glTF2 常用贴图类型（注意：LIGHTMAP 在 assimp 里对应 glTF 的 occlusion）
+	static const aiTextureType kTypes[] = {
+		aiTextureType_BASE_COLOR,
+		aiTextureType_NORMALS,
+		aiTextureType_METALNESS,
+		aiTextureType_DIFFUSE_ROUGHNESS,
+		aiTextureType_LIGHTMAP,   // occlusion
+		aiTextureType_EMISSIVE,
+		// 兜底（有些资源/旧版会落到这些槽位）
+		aiTextureType_DIFFUSE,
+		aiTextureType_SPECULAR
+	};
+
+	std::vector<TexturePath> out;
+	std::unordered_set<std::string> dedup; // 去重
+
+	const auto baseDir = std::filesystem::absolute(gltfPath).parent_path();
+
+	for (unsigned mi = 0; mi < scene->mNumMaterials; ++mi) {
+		aiMaterial* m = scene->mMaterials[mi];
+		for (aiTextureType tt : kTypes) {
+			const unsigned cnt = m->GetTextureCount(tt);
+			for (unsigned ti = 0; ti < cnt; ++ti) {
+				aiString p;
+				m->GetTexture(tt, ti, &p);
+				const char* s = p.C_Str();
+				if (!s || !*s) continue;
+				if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
+
+				std::filesystem::path abs = baseDir / s;
+				abs = abs.lexically_normal();
+
+				if (dedup.insert(abs.string()).second) {
+					out.push_back({ abs.string(), tt, mi, ti });
+				}
+			}
+		}
+	}
+	return out;
+
+}
+
+void asset::ModelManager::loadgltf(std::string filename)
+{                     
+	ModelData data;
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(filename,
+		aiProcess_Triangulate |            // 和 tinyobj 的自动三角化等价
+		aiProcess_JoinIdenticalVertices |  // 合并完全相同的顶点
+		aiProcess_GenSmoothNormals |       // 如无法线则生成
+		aiProcess_CalcTangentSpace |       // 如需要切线
+		aiProcess_ImproveCacheLocality |
+		aiProcess_FlipUVs |
+		aiProcess_SortByPType);
+
+	if (!scene) {
+		std::cout << "LoadAndExportCustomFormat() failed to loaded model" << filename << "\n";
+		std::cerr << "Assimp Error: " << importer.GetErrorString() << "\n";
+		return;
+	}
+
+	// glTF2 常用贴图类型（注意：LIGHTMAP 在 assimp 里对应 glTF 的 occlusion）
+	static const aiTextureType kTypes[] = {
+		aiTextureType_BASE_COLOR,
+		aiTextureType_NORMALS,
+		aiTextureType_METALNESS,
+		aiTextureType_DIFFUSE_ROUGHNESS,
+		aiTextureType_LIGHTMAP,   // occlusion
+		aiTextureType_EMISSIVE,
+		// 兜底（有些资源/旧版会落到这些槽位）
+		aiTextureType_DIFFUSE,
+		aiTextureType_SPECULAR
+	};
+
+	std::unordered_set<std::string> dedup_textures;
+	data.meshCount = scene->mNumMeshes;
+	data.materialCount = scene->mNumMaterials;
+	for (int i = 0; i < data.materialCount; i++) {
+		aiMaterial* material = scene->mMaterials[i];
+		for (aiTextureType texture_type: kTypes) {
+			const unsigned cnt = material->GetTextureCount(texture_type);
+			for (unsigned ti = 0; ti < cnt; ++ti) {
+				aiString p;
+				material->GetTexture(texture_type, ti, &p);
+				const char* s = p.C_Str();
+				if (!s || !*s) continue;
+				if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
+
+				dedup_textures.insert(s);
+				
+			}
+		}
+	}
+	for (const auto& texture_name : dedup_textures) {
+		utils::findInMap(_imageFilesInfo,texture_name);
+	}
+	
+
+
+
+
 
 }
 

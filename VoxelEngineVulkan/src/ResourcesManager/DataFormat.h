@@ -29,18 +29,6 @@ struct MeshData {
     glm::mat4 localTransform = glm::mat4(1.0f);
     glm::mat4 inverseBindTransform = glm::mat4(1.0f);
 };
-
-//模型文件
-struct ModelData {
-    std::string name;
-    uint32_t meshCount;
-    uint64_t timestamp;
-    std::vector<MeshData> meshes;
-    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
-    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
-};
-
-
 struct Image {
     std::string name;
     unsigned char* pixel;
@@ -48,3 +36,22 @@ struct Image {
     int texHeight;
     int texChannels;
 };
+//模型数据
+struct ModelData {
+    std::string name;
+    uint32_t meshCount;
+    uint32_t materialCount;
+    uint64_t timestamp;
+    std::vector<MeshData> meshes;
+    std::vector<Image> images;
+    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
+};
+
+struct TexturePath {
+    std::string path;          // 绝对路径
+    aiTextureType type;        // 哪一类贴图
+    unsigned materialIndex;    // 属于哪个材质
+    unsigned textureIndex;     // 该材质里的第几个
+};
+

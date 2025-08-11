@@ -104,6 +104,31 @@ namespace asset
         }
         return fileInfoList;
     }
+    inline void IterateAllDirectories(const std::string& directory, std::vector<std::string> extensions, std::vector<FileInfo>& fileinfos) {
+
+        if (!std::filesystem::exists(directory)) throw std::runtime_error("Not a validate directory");
+
+        for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+            if (!std::filesystem::is_regular_file(entry)) {
+                if (std::filesystem::is_directory(entry)) {
+                    IterateAllDirectories(entry.path().string(), extensions, fileinfos);
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            FileInfo fileInfo = { GetFullPath(entry), GetFileNameWithoutExtension(entry), GetFileExtension(entry), directory };
+
+            if (extensions.empty() || std::find(extensions.begin(), extensions.end(), fileInfo.ext) != extensions.end()) {
+                fileinfos.push_back(fileInfo);
+            }
+            
+
+        }
+    }
 
     inline std::string GetFilename(const std::string& filepath) {
         std::string result = filepath.substr(filepath.rfind("/") + 1);

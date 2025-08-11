@@ -4,8 +4,10 @@
 namespace asset {
 
 
+
 class ModelManager
 {
+
 public:
 	ModelManager();
 	~ModelManager();
@@ -19,8 +21,9 @@ private:
 	void loadAllModel();
 	void loadImage(std::string filename, std::string path);
 	void loadTestExample();
-	void loadgltf();
-	
+	void loadobj(std::string filePath);
+	void loadgltf(std::string filename);
+	std::vector<TexturePath> CollectTexturePaths(std::string gltfPath);
 	
 private:
 	std::unordered_map<std::string, ModelData>						_model;

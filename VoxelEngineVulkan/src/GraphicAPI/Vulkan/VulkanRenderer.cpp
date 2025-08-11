@@ -247,9 +247,9 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
 	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager, _assetManager));
-	_resouceManager->ConstructVulkanRenderObject("test", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
+	_resouceManager->ConstructVulkanRenderObject("viking", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
 		_graphicsPipline->GetGraphicsPipelineLayout("default"), 
-		"test_data", { "test" });
+		"viking_room", { "viking" });
 }
  
 
@@ -435,7 +435,7 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 		descriptorWrit2.dstBinding = 1;
 		descriptorWrit2.dstArrayElement = 0;
 		descriptorWrit2.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrit2.descriptorCount = object.textures.size();
+		descriptorWrit2.descriptorCount = static_cast<uint32_t>(object.textures.size());
 		descriptorWrit2.pImageInfo = &imageinfo;
 		descriptorWrites.push_back(descriptorWrit1);
 		descriptorWrites.push_back(descriptorWrit2);
