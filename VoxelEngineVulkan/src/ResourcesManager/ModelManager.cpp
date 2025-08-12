@@ -7,8 +7,8 @@ asset::ModelManager::ModelManager()
 	loadAllModel();
 	loadAllImage();
 	loadModel("res/models/generator_LP.fbx");
-	loadImage("test","text_texture.jpg");
-	loadImage("viking", "viking_room.png");
+	loadImage("test","res/textures/text_texture.jpg");
+	loadImage("viking", "res/textures/viking_room.png");
 	//loadTestExample();
 	loadobj("res/models/viking_room.obj");
 	loadgltf("res/models/sponza/sponza.gltf");
@@ -125,13 +125,44 @@ void asset::ModelManager::loadAllModel()
 	}
 }
 
-void asset::ModelManager::loadImage(std::string filename, std::string path)
+void asset::ModelManager::loadImage(std::string filename, std::string path, bool isktx)
 {
 
-	auto& file = utils::findInMap(_imageFilesInfo, path);
 	Image image;
-	image.pixel = stbi_load(file.path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
-	_ImageFile.emplace(filename, image);
+
+	if (isktx) {
+		ktxTexture* kt;
+		ktxResult result = KTX_SUCCESS;
+		result = ktxTexture_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &kt);
+		assert(result == KTX_SUCCESS);
+		image.texWidth = kt->baseWidth;
+		image.texHeight = kt->baseHeight;
+		image.mipLevels = kt->numLevels;
+		image.subresource.resize(image.mipLevels);
+		image.pixel = ktxTexture_GetData(kt);
+		image.size = ktxTexture_GetDataSize(kt);
+		
+		image.format = FromVk(ktxTexture_GetVkFormat(kt));
+
+		for (uint32_t i = 0; i < image.mipLevels; i++) {
+			ktx_size_t offset;
+			KTX_error_code result = ktxTexture_GetImageOffset(kt, i, 0, 0, &offset);
+			assert(result == KTX_SUCCESS);
+			SubResource& subResouces = image.subresource[i];
+			subResouces.offset = offset;
+			subResouces.depth = 1;
+			subResouces.width = std::max(1u, kt->baseWidth >> i);
+			subResouces.height = std::max(1u, kt->baseHeight >> i);
+			subResouces.layer = 0;
+		}
+		_ImageFile.emplace(filename, image);
+		
+	}
+	else{
+
+		image.pixel = stbi_load(path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
+		_ImageFile.emplace(filename, image);
+	}
 	
 }
 
@@ -338,7 +369,14 @@ void asset::ModelManager::loadgltf(std::string filename)
 		}
 	}
 	for (const auto& texture_name : dedup_textures) {
-		utils::findInMap(_imageFilesInfo,texture_name);
+		//在目录下所有的texture file中储存对应的信息
+		bool isktx = false;
+		auto& tx = utils::findInMap(_imageFilesInfo,texture_name);
+		if (tx.ext == "ktx") {
+			isktx = true;
+		}
+		//加载image
+		loadImage(tx.name,tx.path,isktx);
 	}
 	
 

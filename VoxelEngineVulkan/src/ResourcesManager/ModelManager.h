@@ -1,6 +1,7 @@
 #pragma once
 #include "AssetCommonUtils.h"
 
+
 namespace asset {
 
 
@@ -19,7 +20,7 @@ private:
 	void processNode(aiNode* node, const aiScene* scene);
 	void loadAllImage();
 	void loadAllModel();
-	void loadImage(std::string filename, std::string path);
+	void loadImage(std::string filename, std::string path, bool isktx = false);
 	void loadTestExample();
 	void loadobj(std::string filePath);
 	void loadgltf(std::string filename);

@@ -8,6 +8,10 @@
 #include <assimp/version.h>
 #include <assimp/Importer.hpp>
 
+//ktx
+#include <ktx.h>
+#include <ktxvulkan.h>
+
 #include "../utils/TypeDefine.h"
 #include "../utils/minilog.h"
 #include "../utils/Utils.h"

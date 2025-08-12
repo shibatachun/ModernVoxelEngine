@@ -247,9 +247,7 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
 	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager, _assetManager));
-	_resouceManager->ConstructVulkanRenderObject("viking", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
-		_graphicsPipline->GetGraphicsPipelineLayout("default"), 
-		"viking_room", { "viking" });
+
 }
  
 
@@ -470,6 +468,10 @@ bool vulkan::VulkanRenderer::isMinimized() const
 
 void vulkan::VulkanRenderer::PrepareRenderObject()
 {
+	_resouceManager->ConstructVulkanRenderObject("viking", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
+		_graphicsPipline->GetGraphicsPipelineLayout("default"),
+		"viking_room", { "viking" });
+
 	for (const auto& x : _resouceManager->GetRenderObjects()) {
 		ConfigureDescriptorSet(x.second);
 		_renderObjects.push_back(x.second);
