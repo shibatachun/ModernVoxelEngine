@@ -16,6 +16,8 @@ struct Vertex1 {
     
 };
 
+struct Node;
+
 //用来存储网格数据的数据结构
 struct MeshData {
     std::string name;
@@ -63,6 +65,7 @@ struct SubResource {
     uint32_t rowPitch;
     uint32_t slicePitch;
 };
+
 struct Image {
     std::string name;
     unsigned char* pixel;
@@ -77,6 +80,22 @@ struct Image {
 
 };
 
+struct Material {
+    enum AlphaMode{ ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND};
+    AlphaMode alphaMode = ALPHAMODE_OPAQUE;
+    float alphaCutoff = 1.0f;
+    float matallicFactor = 1.0f;
+    float roughnessFactor = 1.0f;
+    float baseColorFactor = 1.0f;
+    std::string baseColorTexture ;
+    std::string matallicRoughnessTexture;
+    std::string normalTexture;
+    std::string occlusionTexture;
+    std::string emissiveTexture;
+    std::string specularGlossinessTexture;
+    std::string diffuseTexture;
+
+};
 inline TextureFormat FromVk(VkFormat f) {
     switch (f) {                          
     case VK_FORMAT_R8G8B8A8_UNORM:  return TextureFormat::RGBA8_UNORM;
@@ -105,17 +124,7 @@ inline TextureFormat FromVk(VkFormat f) {
     }
     return TextureFormat::UNKNOWN;
 }
-//模型数据
-struct ModelData {
-    std::string name;
-    uint32_t meshCount;
-    uint32_t materialCount;
-    uint64_t timestamp;
-    std::vector<MeshData> meshes;
-    std::vector<Image> images;
-    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
-    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
-};
+
 
 struct TexturePath {
     std::string path;          // 绝对路径
@@ -123,4 +132,42 @@ struct TexturePath {
     unsigned materialIndex;    // 属于哪个材质
     unsigned textureIndex;     // 该材质里的第几个
 };
+//Skin 蒙皮？
+struct Skin {
+    std::string name;
+    Node* skeletonRoot = nullptr;
+    std::vector<glm::mat4> inverseBindMatrices;
+    std::vector<Node*> joints;
+};
 
+//node 节点
+struct Node {
+    Node* parent;
+    uint32_t index;
+    std::vector<Node*> children;
+    glm::mat4 matrix;
+    std::string name;
+    MeshData* mesh;
+    Skin* skin;
+    int32_t skinIndex = -1;
+    glm::vec3 translation{};
+    glm::vec3 scale{ 1.0f };
+    glm::quat rotation{};
+    glm::mat4 localMatrix();
+    glm::mat4 getMatrix();
+    void update();
+    ~Node();
+};
+
+//模型数据
+struct ModelData {
+    std::string name;
+    uint32_t meshCount;
+    uint32_t materialCount;
+    uint64_t timestamp;
+    std::vector<MeshData> meshes;
+    std::vector<std::string> images;
+    std::vector<Material> materials;
+    glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
+};

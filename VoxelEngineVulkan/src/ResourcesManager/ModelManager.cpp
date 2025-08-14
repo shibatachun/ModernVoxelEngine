@@ -141,7 +141,8 @@ void asset::ModelManager::loadImage(std::string filename, std::string path, bool
 		image.subresource.resize(image.mipLevels);
 		image.pixel = ktxTexture_GetData(kt);
 		image.size = ktxTexture_GetDataSize(kt);
-		
+		image.isKtx = true;
+		image.name = filename;
 		image.format = FromVk(ktxTexture_GetVkFormat(kt));
 
 		for (uint32_t i = 0; i < image.mipLevels; i++) {
@@ -344,36 +345,90 @@ void asset::ModelManager::loadgltf(std::string filename)
 		aiTextureType_DIFFUSE_ROUGHNESS,
 		aiTextureType_LIGHTMAP,   // occlusion
 		aiTextureType_EMISSIVE,
-		// 兜底（有些资源/旧版会落到这些槽位）
-		aiTextureType_DIFFUSE,
-		aiTextureType_SPECULAR
+		aiTextureType_AMBIENT_OCCLUSION,
+		aiTextureType_GLTF_METALLIC_ROUGHNESS,
+		
 	};
 
 	std::unordered_set<std::string> dedup_textures;
 	data.meshCount = scene->mNumMeshes;
 	data.materialCount = scene->mNumMaterials;
+	data.materials.resize(data.materialCount);
 	for (int i = 0; i < data.materialCount; i++) {
 		aiMaterial* material = scene->mMaterials[i];
-		for (aiTextureType texture_type: kTypes) {
-			const unsigned cnt = material->GetTextureCount(texture_type);
-			for (unsigned ti = 0; ti < cnt; ++ti) {
-				aiString p;
-				material->GetTexture(texture_type, ti, &p);
-				const char* s = p.C_Str();
-				if (!s || !*s) continue;
-				if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
+		Material& mat = data.materials[i];
+		float f;
+		//获得Base color factor
+		if (material->Get(AI_MATKEY_BASE_COLOR, f) == AI_SUCCESS) mat.baseColorFactor = f;
+		//获得Roughness factor
+		if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, f) == AI_SUCCESS) mat.roughnessFactor = f;
+		//获得Metallic factor
+		if (material->Get(AI_MATKEY_METALLIC_FACTOR, f) == AI_SUCCESS) mat.matallicFactor = f;
 
-				dedup_textures.insert(s);
-				
+		{
+			aiString s;
+			if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, s) == AI_SUCCESS) {
+				if (s.C_Str() == "BLEND") {
+					mat.alphaMode = Material::ALPHAMODE_BLEND;
+				}
+				if (s.C_Str() == "MASK") {
+					mat.alphaMode = Material::ALPHAMODE_MASK;
+				}
 			}
 		}
+		material->Get(AI_MATKEY_GLTF_ALPHACUTOFF, mat.alphaCutoff);
+
+		for (aiTextureType texture_type: kTypes) {
+	
+			aiString p;
+			//TODO，这里可以获取更多的信息
+			if (material->GetTexture(texture_type, 0, &p) != AI_SUCCESS) {
+				continue;
+			}
+			
+			const char* s = p.C_Str();
+			
+			if (!s || !*s) continue;
+			if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
+
+			switch (texture_type)
+			{
+			case	aiTextureType_BASE_COLOR:
+				mat.baseColorTexture = std::string(s);
+				break;
+			case	aiTextureType_NORMALS:
+				mat.normalTexture = std::string(s);
+				break;
+			case	aiTextureType_GLTF_METALLIC_ROUGHNESS:
+				mat.matallicRoughnessTexture = std::string(s);
+				break;
+			case	aiTextureType_DIFFUSE:
+				mat.diffuseTexture = std::string(s);
+				break;	
+			case	aiTextureType_EMISSIVE:
+				mat.emissiveTexture = std::string(s);
+				break;
+			case	aiTextureType_SPECULAR:
+				mat.specularGlossinessTexture = std::string(s);
+				break;
+			case	aiTextureType_AMBIENT_OCCLUSION:
+				mat.occlusionTexture = std::string(s);
+			default:
+				break;
+			}
+			dedup_textures.insert(s);
+				
+			
+		}
 	}
+
 	for (const auto& texture_name : dedup_textures) {
 		//在目录下所有的texture file中储存对应的信息
 		bool isktx = false;
 		auto& tx = utils::findInMap(_imageFilesInfo,texture_name);
 		if (tx.ext == "ktx") {
 			isktx = true;
+
 		}
 		//加载image
 		loadImage(tx.name,tx.path,isktx);

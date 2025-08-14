@@ -7,6 +7,7 @@
 #include <assimp/cimport.h>
 #include <assimp/version.h>
 #include <assimp/Importer.hpp>
+#include <assimp/GltfMaterial.h>
 
 //ktx
 #include <ktx.h>

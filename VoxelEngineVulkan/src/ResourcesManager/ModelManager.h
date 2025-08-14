@@ -24,6 +24,7 @@ private:
 	void loadTestExample();
 	void loadobj(std::string filePath);
 	void loadgltf(std::string filename);
+	void loadNode();
 	std::vector<TexturePath> CollectTexturePaths(std::string gltfPath);
 	
 private:
