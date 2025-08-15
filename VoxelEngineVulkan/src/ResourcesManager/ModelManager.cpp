@@ -11,6 +11,7 @@ asset::ModelManager::ModelManager()
 	loadImage("viking", "res/textures/viking_room.png");
 	//loadTestExample();
 	loadobj("res/models/viking_room.obj");
+	//loadgltf("res/models/Zzz/zzz_alice/alice.pmx");
 	loadgltf("res/models/sponza/sponza.gltf");
 	//CollectTexturePaths("res/models/sponza/sponza.gltf");
 }
@@ -145,7 +146,7 @@ void asset::ModelManager::loadImage(std::string filename, std::string path, bool
 		image.name = filename;
 		image.format = FromVk(ktxTexture_GetVkFormat(kt));
 
-		for (uint32_t i = 0; i < image.mipLevels; i++) {
+		for (int i = 0; i < image.mipLevels; i++) {
 			ktx_size_t offset;
 			KTX_error_code result = ktxTexture_GetImageOffset(kt, i, 0, 0, &offset);
 			assert(result == KTX_SUCCESS);
@@ -231,7 +232,7 @@ void asset::ModelManager::loadobj(std::string filePath)
 	data.meshCount = scene->mNumMeshes;
 	data.meshes.resize(data.meshCount);
 	
-	for (int i = 0; i < scene->mNumMeshes; i++) {
+	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
 		MeshData& meshData = data.meshes[i];
 		meshData.vertexCount = scene->mMeshes[i]->mNumVertices;
 		meshData.indexCount = scene->mMeshes[i]->mNumFaces * 3;
@@ -241,10 +242,10 @@ void asset::ModelManager::loadobj(std::string filePath)
 		meshData.name = meshData.name.substr(0, meshData.name.find('.'));
 
 	}
-	for (int i = 0; i < scene->mNumMeshes; i++) {
+	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
 		MeshData& meshdata = data.meshes[i];
 		const aiMesh* mesh = scene->mMeshes[i];
-		for (int j = 0; j < mesh->mNumVertices; j++) {
+		for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
 			meshdata.vertices[j] = Vertex1{
 			.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y,mesh->mVertices[j].z),
 			.color = glm::vec4(1.0f, 1.0f, 1.0f,1.0f),
@@ -265,58 +266,6 @@ void asset::ModelManager::loadobj(std::string filePath)
 
 }
 
-std::vector<TexturePath> asset::ModelManager::CollectTexturePaths(std::string gltfPath) {
-	Assimp::Importer imp;
-	const aiScene* scene = imp.ReadFile(
-		gltfPath,
-		aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
-
-	if (!scene) {
-		std::cerr << "Assimp error: " << imp.GetErrorString() << "\n";
-		return {};
-	}
-
-	// glTF2 常用贴图类型（注意：LIGHTMAP 在 assimp 里对应 glTF 的 occlusion）
-	static const aiTextureType kTypes[] = {
-		aiTextureType_BASE_COLOR,
-		aiTextureType_NORMALS,
-		aiTextureType_METALNESS,
-		aiTextureType_DIFFUSE_ROUGHNESS,
-		aiTextureType_LIGHTMAP,   // occlusion
-		aiTextureType_EMISSIVE,
-		// 兜底（有些资源/旧版会落到这些槽位）
-		aiTextureType_DIFFUSE,
-		aiTextureType_SPECULAR
-	};
-
-	std::vector<TexturePath> out;
-	std::unordered_set<std::string> dedup; // 去重
-
-	const auto baseDir = std::filesystem::absolute(gltfPath).parent_path();
-
-	for (unsigned mi = 0; mi < scene->mNumMaterials; ++mi) {
-		aiMaterial* m = scene->mMaterials[mi];
-		for (aiTextureType tt : kTypes) {
-			const unsigned cnt = m->GetTextureCount(tt);
-			for (unsigned ti = 0; ti < cnt; ++ti) {
-				aiString p;
-				m->GetTexture(tt, ti, &p);
-				const char* s = p.C_Str();
-				if (!s || !*s) continue;
-				if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
-
-				std::filesystem::path abs = baseDir / s;
-				abs = abs.lexically_normal();
-
-				if (dedup.insert(abs.string()).second) {
-					out.push_back({ abs.string(), tt, mi, ti });
-				}
-			}
-		}
-	}
-	return out;
-
-}
 
 void asset::ModelManager::loadgltf(std::string filename)
 {                     
@@ -352,18 +301,34 @@ void asset::ModelManager::loadgltf(std::string filename)
 
 	std::unordered_set<std::string> dedup_textures;
 	data.meshCount = scene->mNumMeshes;
+	data.meshes.resize(data.meshCount);
+	for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
+		const aiMesh* meshdata = scene->mMeshes[i];
+		MeshData& mesh = data.meshes[i];
+		mesh.aabbMin = glm::vec3(std::numeric_limits<float>::max());
+		mesh.aabbMax = glm::vec3(-std::numeric_limits<float>::max());
+		mesh.vertexCount = meshdata->mNumVertices;
+		mesh.indexCount = meshdata->mNumFaces * 3;
+		mesh.vertices.reserve(mesh.vertexCount);
+		mesh.indices.reserve(mesh.indexCount);
+		
+	}
+	loadNode(scene->mRootNode,)
 	data.materialCount = scene->mNumMaterials;
 	data.materials.resize(data.materialCount);
-	for (int i = 0; i < data.materialCount; i++) {
+	for (uint32_t i = 0; i < data.materialCount; i++) {
 		aiMaterial* material = scene->mMaterials[i];
 		Material& mat = data.materials[i];
-		float f;
+		aiColor4D base = { 1,1,1,1 };
+		float roughness = 1.0f;
+		float metallic = 1.0f;
 		//获得Base color factor
-		if (material->Get(AI_MATKEY_BASE_COLOR, f) == AI_SUCCESS) mat.baseColorFactor = f;
+		if (material->Get(AI_MATKEY_BASE_COLOR, base) == AI_SUCCESS) mat.baseColorFactor = {base.r, base.g, base.b, base.a};
 		//获得Roughness factor
-		if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, f) == AI_SUCCESS) mat.roughnessFactor = f;
+		if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS) mat.roughnessFactor = roughness;
 		//获得Metallic factor
-		if (material->Get(AI_MATKEY_METALLIC_FACTOR, f) == AI_SUCCESS) mat.matallicFactor = f;
+		if (material->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS) mat.matallicFactor = metallic = 1.0f;
+		;
 
 		{
 			aiString s;
@@ -439,6 +404,11 @@ void asset::ModelManager::loadgltf(std::string filename)
 
 
 
+}
+
+void asset::ModelManager::loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer)
+{
+	
 }
 
 

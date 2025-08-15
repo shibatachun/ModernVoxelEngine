@@ -1,7 +1,9 @@
 #include "../utils/GlmUtils.h"
 #include <vector>
 #include <map>
-
+//ktx
+#include <ktx.h>
+#include <ktxvulkan.h>
 
 //顶点数据
 struct Vertex1 {
@@ -86,7 +88,7 @@ struct Material {
     float alphaCutoff = 1.0f;
     float matallicFactor = 1.0f;
     float roughnessFactor = 1.0f;
-    float baseColorFactor = 1.0f;
+    glm::vec4 baseColorFactor{};
     std::string baseColorTexture ;
     std::string matallicRoughnessTexture;
     std::string normalTexture;
@@ -96,6 +98,8 @@ struct Material {
     std::string diffuseTexture;
 
 };
+
+
 inline TextureFormat FromVk(VkFormat f) {
     switch (f) {                          
     case VK_FORMAT_R8G8B8A8_UNORM:  return TextureFormat::RGBA8_UNORM;
@@ -126,12 +130,7 @@ inline TextureFormat FromVk(VkFormat f) {
 }
 
 
-struct TexturePath {
-    std::string path;          // 绝对路径
-    aiTextureType type;        // 哪一类贴图
-    unsigned materialIndex;    // 属于哪个材质
-    unsigned textureIndex;     // 该材质里的第几个
-};
+
 //Skin 蒙皮？
 struct Skin {
     std::string name;

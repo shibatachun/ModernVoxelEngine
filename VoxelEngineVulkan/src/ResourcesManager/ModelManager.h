@@ -24,9 +24,8 @@ private:
 	void loadTestExample();
 	void loadobj(std::string filePath);
 	void loadgltf(std::string filename);
-	void loadNode();
-	std::vector<TexturePath> CollectTexturePaths(std::string gltfPath);
-	
+	void loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer);
+
 private:
 	std::unordered_map<std::string, ModelData>						_model;
 	std::unordered_map<std::string, Image>							_ImageFile;

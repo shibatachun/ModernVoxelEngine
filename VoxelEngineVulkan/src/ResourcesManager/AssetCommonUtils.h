@@ -9,9 +9,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/GltfMaterial.h>
 
-//ktx
-#include <ktx.h>
-#include <ktxvulkan.h>
+
+
+
 
 #include "../utils/TypeDefine.h"
 #include "../utils/minilog.h"

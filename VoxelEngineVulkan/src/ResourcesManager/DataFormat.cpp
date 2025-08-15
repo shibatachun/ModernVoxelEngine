@@ -13,4 +13,5 @@ glm::mat4 Node::getMatrix()
         m = p->localMatrix() * m;
         p = p->parent;
     }
+    return m;
 }
