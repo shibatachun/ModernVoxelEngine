@@ -26,6 +26,15 @@ private:
 	void loadgltf(std::string filename);
 	void loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer);
 
+	//test function
+	void loadgltf_test(std::string filename);
+	void loadImage_test(tinygltf::Model& gltfModel, ModelData& model);
+	void loadMaterial_test(tinygltf::Model& gltfMode, ModelData& model);
+	void loadNode_test(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& tingymodel, ModelData& model, float globalscale);
+	bool loadImageDataFunc(tinygltf::Image* image, const int imageIndex, std::string* error, std::string* warning, int req_width, int req_height, const unsigned char* bytes, int size, void* userData);
+	bool loadImageDataFuncEmpty(tinygltf::Image* image, const int imageIndex, std::string* error, std::string* warning, int req_width, int req_height, const unsigned char* bytes, int size, void* userData);
+
+
 private:
 	std::unordered_map<std::string, ModelData>						_model;
 	std::unordered_map<std::string, Image>							_ImageFile;

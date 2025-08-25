@@ -1,6 +1,9 @@
-#include "ModelManager.h"
+#define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+
+#include "ModelManager.h"
+
 
 asset::ModelManager::ModelManager()
 {
@@ -12,7 +15,8 @@ asset::ModelManager::ModelManager()
 	//loadTestExample();
 	loadobj("res/models/viking_room.obj");
 	//loadgltf("res/models/Zzz/zzz_alice/alice.pmx");
-	loadgltf("res/models/sponza/sponza.gltf");
+	//loadgltf("res/models/sponza/sponza.gltf");
+	loadgltf_test("res/models/sponza/sponza.gltf");
 	//CollectTexturePaths("res/models/sponza/sponza.gltf");
 }
 
@@ -266,7 +270,6 @@ void asset::ModelManager::loadobj(std::string filePath)
 
 }
 
-
 void asset::ModelManager::loadgltf(std::string filename)
 {                     
 	ModelData data;
@@ -313,7 +316,7 @@ void asset::ModelManager::loadgltf(std::string filename)
 		mesh.indices.reserve(mesh.indexCount);
 		
 	}
-	loadNode(scene->mRootNode,)
+	
 	data.materialCount = scene->mNumMaterials;
 	data.materials.resize(data.materialCount);
 	for (uint32_t i = 0; i < data.materialCount; i++) {
@@ -409,6 +412,178 @@ void asset::ModelManager::loadgltf(std::string filename)
 void asset::ModelManager::loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer)
 {
 	
+}
+
+ 
+//Tutorial test functions
+void asset::ModelManager::loadgltf_test(std::string filename)
+{
+	ModelData model;
+	tinygltf::Model gltfModel;
+	tinygltf::TinyGLTF gltfContext;
+	gltfContext.SetImageLoader(tinygltf::LoadImageData, nullptr);
+	std::string error, warning;
+	bool fileLoaded = gltfContext.LoadASCIIFromFile(&gltfModel, &error, &warning, filename);
+	if (fileLoaded) {
+		
+		loadImage_test(gltfModel, model);
+		loadMaterial_test(gltfModel, model);
+		const tinygltf::Scene& scene = gltfModel.scenes[gltfModel.defaultScene > -1 ? gltfModel.defaultScene : 0];
+		for (size_t i = 0; i < scene.nodes.size(); i++) {
+			const tinygltf::Node node = gltfModel.nodes[scene.nodes[i]];
+			
+		}
+	}
+}
+
+void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& model)
+{
+	for (tinygltf::Image& image : gltfModel.images) {
+		Image texture_image; 
+		std::string path = utils::findInMap(_imageFilesInfo, image.uri).path;
+		model.images.push_back(image.uri);
+		ktxTexture* ktxTexture;
+		ktxResult result = KTX_SUCCESS;
+		if (!FileExists(path)) {
+			throw std::runtime_error("Could not load texture from " + path + "\n\nMake sure the assets submodule has been checked out and is up-to-date.");
+		}
+		result = ktxTexture_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktxTexture);
+		assert(result == KTX_SUCCESS);
+		texture_image.texWidth = ktxTexture->baseWidth;
+		texture_image.texHeight = ktxTexture->baseHeight;
+		texture_image.mipLevels = ktxTexture->numLevels;
+
+		texture_image.pixel = ktxTexture_GetData(ktxTexture);
+		texture_image.size = ktxTexture_GetDataSize(ktxTexture);
+		texture_image.format = FromVk(ktxTexture_GetVkFormat(ktxTexture));
+		texture_image.subresource.resize(texture_image.mipLevels);
+		for (uint32_t i = 0; i < texture_image.mipLevels; i++) {
+			ktx_size_t offset;
+			KTX_error_code result = ktxTexture_GetImageOffset(ktxTexture, i, 0, 0, &offset);
+			assert(result == KTX_SUCCESS);
+			SubResource& sub = texture_image.subresource[i];
+			sub.mip = i;
+			sub.width = std::max(1u, ktxTexture->baseWidth >> i);
+			sub.height = std::max(1u, ktxTexture->baseHeight >> i);
+			sub.depth = 1;
+			sub.offset = offset;
+			sub.layer = 0;
+
+		}
+		_ImageFile.emplace(image.uri, texture_image);
+
+	}
+
+}
+
+void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData& model)
+{
+
+	for (tinygltf::Material& mat : gltfMode.materials) {
+		Material material;
+		if (mat.values.find("baseColorTexture") != mat.values.end()) {
+			material.baseColorTexture = gltfMode.images.at(gltfMode.textures[mat.values["baseColorTexture"].TextureIndex()].source).uri;
+			
+		}
+		if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
+			material.matallicRoughnessTexture = gltfMode.images.at(gltfMode.textures[mat.values["metallicRoughnessTexture"].TextureIndex()].source).uri;
+		}
+		if (mat.values.find("roughnessFactor") != mat.values.end()) {
+			material.roughnessFactor = static_cast<float>(mat.values["roughnessFactor"].Factor());
+		}
+		if (mat.values.find("metallicFactor") != mat.values.end()) {
+			material.matallicFactor = static_cast<float>(mat.values["metallicFactor"].Factor());
+		}
+		if (mat.values.find("baseColorFactor") != mat.values.end()) {
+			material.baseColorFactor = glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
+		}
+		if (mat.additionalValues.find("normalTexture") != mat.additionalValues.end()) {
+			material.normalTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["normalTexture"].TextureIndex()].source).uri;
+		}
+		else {
+			//material.normalTexture = &emptyTexture;
+		}
+		if (mat.additionalValues.find("emissiveTexture") != mat.additionalValues.end()) {
+			material.emissiveTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["emissiveTexture"].TextureIndex()].source).uri;
+		}
+		if (mat.additionalValues.find("occlusionTexture") != mat.additionalValues.end()) {
+			material.occlusionTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["occlusionTexture"].TextureIndex()].source).uri;
+		}
+		if (mat.additionalValues.find("alphaMode") != mat.additionalValues.end()) {
+			tinygltf::Parameter param = mat.additionalValues["alphaMode"];
+			if (param.string_value == "BLEND") {
+				material.alphaMode = Material::ALPHAMODE_BLEND;
+			}
+			if (param.string_value == "MASK") {
+				material.alphaMode = Material::ALPHAMODE_MASK;
+			}
+		}
+		if (mat.additionalValues.find("alphaCutoff") != mat.additionalValues.end()) {
+			material.alphaCutoff = static_cast<float>(mat.additionalValues["alphaCutoff"].Factor());
+		}
+
+		model.materials.push_back(material);
+	}
+
+
+}
+
+void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& tingymodel, ModelData& model, float globalscale)
+{
+	Node* newNode = new Node{};
+	newNode->index = nodeIndex;
+	newNode->parent = parent;
+	newNode->name = node.name;
+	newNode->skinIndex = node.skin;
+	newNode->matrix = glm::mat4(1.0f);
+
+	glm::vec3 translation = glm::vec3(0.f);
+	if (node.translation.size() == 3) {
+		translation = glm::make_vec3(node.translation.data());
+		newNode->translation = translation;
+	}
+	glm::mat4 rotation = glm::mat4(1.0f);
+	if (node.rotation.size() == 4) {
+		glm::quat q = glm::make_quat(node.rotation.data());
+		newNode->rotation = glm::mat4(q);
+	}
+	glm::vec3 scale = glm::vec3(1.0f);
+	if (node.scale.size() == 3) {
+		scale = glm::make_vec3(node.scale.data());
+		newNode->scale = scale;
+	}
+	if (node.matrix.size() == 16) {
+		newNode->matrix = glm::make_mat4x4(node.matrix.data());
+		if (globalscale != 1.0f) {
+			newNode->matrix = glm::scale(newNode->matrix, glm::vec3(globalscale));
+		}
+	}
+	if (node.children.size() > 0) {
+		for (auto i = 0; i < node.children.size(); i++) {
+			loadNode_test(newNode, tingymodel.nodes[node.children[i]], node.children[i], tingymodel, model, globalscale);
+		}
+	}
+
+	if (node.mesh > -1) {
+
+	}
+}
+
+bool asset::ModelManager::loadImageDataFunc(tinygltf::Image* image, const int imageIndex, std::string* error, std::string* warning, int req_width, int req_height, const unsigned char* bytes, int size, void* userData)
+{
+	// KTX files will be handled by our own code
+	if (image->uri.find_last_of(".") != std::string::npos) {
+		if (image->uri.substr(image->uri.find_last_of(".") + 1) == "ktx") {
+			return true;
+		}
+	}
+	return tinygltf::LoadImageData(image, imageIndex, error, warning, req_width, req_height, bytes, size, userData);
+	
+}
+
+bool asset::ModelManager::loadImageDataFuncEmpty(tinygltf::Image* image, const int imageIndex, std::string* error, std::string* warning, int req_width, int req_height, const unsigned char* bytes, int size, void* userData)
+{
+	return true;
 }
 
 

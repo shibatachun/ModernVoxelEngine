@@ -9,7 +9,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/GltfMaterial.h>
 
-
+//tinygltf loader
+#include "../utils/tiny_gltf.h";
 
 
 
@@ -52,8 +53,8 @@ namespace asset
     }
 
     inline bool FileExists(const std::string_view name) {
-        struct stat buffer;
-        return (stat(name.data(), &buffer) == 0);
+        std::error_code ec;
+        return std::filesystem::exists(std::filesystem::path(name), ec);
     }
 
     inline bool RenameFile(const std::string& oldFilePath, const std::string& newFilePath) {
