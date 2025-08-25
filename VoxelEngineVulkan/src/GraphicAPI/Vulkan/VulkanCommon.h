@@ -31,7 +31,7 @@ private: \
 #include "../../utils/Utils.h"
 
 
-constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
 
 namespace vulkan {
 
@@ -184,7 +184,6 @@ namespace vulkan {
 		seed ^= v + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
 	}
 
-	
 	struct LayoutConfigHash {
 		std::size_t operator()(LayoutConfig const& cfg) const noexcept {
 			std::size_t h = 0;
@@ -290,8 +289,6 @@ namespace vulkan {
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
-
-	
 
 	VkVertexInputBindingDescription inputBindingDescription(uint32_t binding);
 	

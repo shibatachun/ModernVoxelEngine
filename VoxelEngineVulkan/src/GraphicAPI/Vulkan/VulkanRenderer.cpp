@@ -17,7 +17,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(_devices->Handle(), _swapchain->Handle(), UINT64_MAX, _imageAvailableSemaphores[_currentFrame], VK_NULL_HANDLE, &imageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		recreateSwapChain();
+		RecreateSwapChain();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR){
@@ -25,12 +25,12 @@ void vulkan::VulkanRenderer::DrawFrame()
 	}
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
-	updateUniformBuffer(_currentFrame);
+	UpdateUniformBuffer(_currentFrame);
 	///////
 
 	for (const auto& x : _renderObjects) {
 
-		recordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,x);
+		RecordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,x);
 	}
 	/////
 	VkSubmitInfo submitInfo{};
@@ -65,7 +65,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	vkDeviceWaitIdle(_devices->Handle());
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || _framebufferResized){
 		_framebufferResized = false;
-		recreateSwapChain();
+		RecreateSwapChain();
 	}
 	else if (result != VK_SUCCESS){
 		throw std::runtime_error("failed to present swap chain Image!");
@@ -175,7 +175,7 @@ void vulkan::VulkanRenderer::SetPhysicalDevices()
 //Set up SwapChain
 void vulkan::VulkanRenderer::SetSwapChain()
 {
-	while (isMinimized())
+	while (IsMinimized())
 	{
 		glfwWaitEvents();
 	}
@@ -208,10 +208,13 @@ void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 	config.bindings.push_back(uboLayoutBinding);
 	config.bindings.push_back(samplerLayoutBinding);
 	config.UpdateAllArray();
+
 	_descriptorLayouts->CreateDescriptorSetLayout(config);
-	//_graphicsPipline->CreateGraphicsPipeline("Triangle_Vulkan", _renderPass->GetRenderPass(), _descriptorLayouts->GetDescriptorSetLayout(config));
+
 	_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
+
 	_graphicsPipline->CreateGraphicsPipeline("test_triangle_vulkan","default",_assetManager.getShaderByName("Rectangle_Vulkan"),_renderPass->GetRenderPass());
+
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,_descriptorLayouts->GetDescriptorSetLayout(config));
 	_descriptorPools->CreatePreFrameDescriptorSets(layouts);
 }
@@ -249,7 +252,28 @@ void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager, _assetManager));
 
 }
- 
+
+//Set up Sync Objects
+void vulkan::VulkanRenderer::CreateSyncObjects()
+{
+	_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_imageAvailableSemaphores[i]), "Create Image avaiable Semaphore");
+		Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_renderFinishedSemaphores[i]), "Create render finish Semaphore");
+		Check(vkCreateFence(_devices->Handle(), &fenceInfo, nullptr, &_inFlightFences[i]), "Create fence");
+	}
+
+}
 
 
 
@@ -274,7 +298,7 @@ void vulkan::VulkanRenderer::CreateCommandBuffer(QueueFamily family)
 	Check(vkAllocateCommandBuffers(_devices->Handle(), &allocaInfo, _commandBuffers.data()), "Allocate Command buffer!");
 }
 
-void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object)
+void vulkan::VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object)
 {
 	
 	VkCommandBufferBeginInfo beginInfo{};
@@ -338,28 +362,7 @@ void vulkan::VulkanRenderer::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 
 }
 
-void vulkan::VulkanRenderer::CreateSyncObjects()
-{
-	_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-	VkSemaphoreCreateInfo semaphoreInfo{};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkFenceCreateInfo fenceInfo{};
-	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-	{
-		Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_imageAvailableSemaphores[i]), "Create Image avaiable Semaphore");
-		Check(vkCreateSemaphore(_devices->Handle(), &semaphoreInfo, nullptr, &_renderFinishedSemaphores[i]), "Create render finish Semaphore");
-		Check(vkCreateFence(_devices->Handle(), &fenceInfo, nullptr, &_inFlightFences[i]), "Create fence");
-	}
-
-}
-
-void vulkan::VulkanRenderer::recreateSwapChain()
+void vulkan::VulkanRenderer::RecreateSwapChain()
 {
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(_window, &width, &height);
@@ -442,7 +445,7 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 	}
 }
 
-void vulkan::VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
+void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 	
@@ -458,7 +461,7 @@ void vulkan::VulkanRenderer::updateUniformBuffer(uint32_t currentImage)
 	memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-bool vulkan::VulkanRenderer::isMinimized() const
+bool vulkan::VulkanRenderer::IsMinimized() const
 {
 	int width, height;
 	glfwGetFramebufferSize(_window, &width, &height);
@@ -478,6 +481,7 @@ void vulkan::VulkanRenderer::PrepareRenderObject()
 	}
 }
 
+//Constructor
 vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(presentmode), _assetManager(assetManager)
 {
 	if (!Init())

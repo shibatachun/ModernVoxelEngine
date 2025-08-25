@@ -5,10 +5,6 @@
 
 namespace vulkan
 {
-
-	
-
-
 	class VulkanRenderer : public IRenderer
 	{
 	public:
@@ -21,7 +17,6 @@ namespace vulkan
 		
 	public:
 		bool													_framebufferResized = false;
-
 	private:
 		const VkPresentModeKHR									_presentMode;
 		GLFWwindow*												_window;
@@ -71,14 +66,14 @@ namespace vulkan
 
 
 		void CreateFrameBuffer();
-		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
+		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
 		void CreateCommandBuffer(QueueFamily family);
 		void CreateSyncObjects();
-		void recreateSwapChain();
+		void RecreateSwapChain();
 		void CreateUniformBuffers();
 		void ConfigureDescriptorSet(VulkanRenderObject object);
-		void updateUniformBuffer(uint32_t currentImage);
-		bool isMinimized() const;
+		void UpdateUniformBuffer(uint32_t currentImage);
+		bool IsMinimized() const;
 		void PrepareRenderObject();
 
 

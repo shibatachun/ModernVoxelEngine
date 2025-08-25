@@ -2,7 +2,6 @@
 #include "VulkanCommon.h"
 namespace vulkan {
 
-
 	class Instance final {
 	public:
 		VULKAN_NON_COPIABLE(Instance);
@@ -335,8 +334,6 @@ namespace vulkan {
 		const RenderPass&											_renderPass;
 	};
 
-
-
 	class DescriptorLayoutManager final {
 	public:
 		VULKAN_NON_COPIABLE(DescriptorLayoutManager)
@@ -368,7 +365,6 @@ namespace vulkan {
 
 	};
 		
-
 	class VulkanResouceManager final {
 
 		public:
