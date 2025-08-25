@@ -185,6 +185,18 @@ void vulkan::VulkanRenderer::SetSwapChain()
 
 }
 
+//Set up DescriptorLayoutManager
+void vulkan::VulkanRenderer::SetUpDescriptorLayoutManager()
+{
+	_descriptorLayouts.reset(new DescriptorLayoutManager(*_devices));
+}
+
+//Set up DescriptorPoolsManger
+void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
+{
+	_descriptorPools.reset(new DescriptorPoolManager(*_devices));
+}
+
 //Setup Pipeline manager
 void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 {
@@ -214,22 +226,12 @@ void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 	_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
 
 	_graphicsPipline->CreateGraphicsPipeline("test_triangle_vulkan","default",_assetManager.getShaderByName("Rectangle_Vulkan"),_renderPass->GetRenderPass());
+	
 
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,_descriptorLayouts->GetDescriptorSetLayout(config));
 	_descriptorPools->CreatePreFrameDescriptorSets(layouts);
 }
 
-//Set up DescriptorLayoutManager
-void vulkan::VulkanRenderer::SetUpDescriptorLayoutManager()
-{
-	_descriptorLayouts.reset(new DescriptorLayoutManager(*_devices));
-}
-
-//Set up DescriptorPoolsManger
-void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
-{
-	_descriptorPools.reset(new DescriptorPoolManager(*_devices));
-}
 
 //Set up Command Pool
 void vulkan::VulkanRenderer::SetUpCommandPools()

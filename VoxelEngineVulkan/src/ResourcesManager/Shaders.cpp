@@ -7,6 +7,7 @@ asset::ShadersManager::ShadersManager(std::string dir) :
 	_d3d_shaders(asset::IterateDirectory(dir, { "hlsl" })){
 	ConstructShader("Triangle_Vulkan", "triangle_vert", "triangle_frag");
 	ConstructShader("Rectangle_Vulkan", "rectangle_vert", "triangle_frag");
+	ConstructShader("SkySphere", "skysphere_vert", "skysphere_frag");
 }
 
 asset::ShadersManager::~ShadersManager(){
