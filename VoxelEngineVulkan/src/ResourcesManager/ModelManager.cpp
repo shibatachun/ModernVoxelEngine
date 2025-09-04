@@ -431,9 +431,11 @@ void asset::ModelManager::loadgltf_test(std::string filename)
 		const tinygltf::Scene& scene = gltfModel.scenes[gltfModel.defaultScene > -1 ? gltfModel.defaultScene : 0];
 		for (size_t i = 0; i < scene.nodes.size(); i++) {
 			const tinygltf::Node node = gltfModel.nodes[scene.nodes[i]];
+			loadNode_test(nullptr, node, scene.nodes[i], gltfModel, model, 1.0f);
 			
 		}
 	}
+	_model.emplace("sponza", model);
 }
 
 void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& model)
@@ -523,6 +525,7 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 		}
 
 		model.materials.push_back(material);
+		model.materialCount++;
 	}
 
 
@@ -566,7 +569,169 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 
 	if (node.mesh > -1) {
 		const tinygltf::Mesh mesh = tingymodel.meshes[node.mesh];
-		MeshData *newMesh = 
+		MeshData meshdata{};
+		meshdata.name = mesh.name;
+		for (size_t j = 0; j < mesh.primitives.size(); j++) {
+			const tinygltf::Primitive& primitive = mesh.primitives[j];
+			if (primitive.indices < 0) {
+				continue;
+			}
+			uint32_t indexStart = static_cast<uint32_t>(model.indiceSize);
+			uint32_t vertexStart = static_cast<uint32_t>(model.vertexSize);
+			uint32_t indexCount = 0;
+			uint32_t vertexCount = 0;
+			glm::vec3 posMin{};
+			glm::vec3 posMax{};
+			bool hasSkin = false;
+			//Vertex
+			{
+				const float* bufferPos = nullptr;
+				const float* bufferNormals = nullptr;
+				const float* bufferTexCoords = nullptr;
+				const float* bufferColors = nullptr;
+				const float* bufferTangents = nullptr;
+				uint32_t numColorComponents;
+				const uint16_t* bufferJoints = nullptr;
+				const float* bufferWeights = nullptr;
+
+				assert(primitive.attributes.find("POSITION") != primitive.attributes.end());
+
+				const tinygltf::Accessor& posAccessor = tingymodel.accessors[primitive.attributes.find("POSITION")->second];
+				const tinygltf::BufferView& posView = tingymodel.bufferViews[posAccessor.bufferView];
+				bufferPos = reinterpret_cast<const float*>(&(tingymodel.buffers[posView.buffer].data[posAccessor.byteOffset + posView.byteOffset]));
+				posMin = glm::vec3(posAccessor.minValues[0], posAccessor.minValues[1], posAccessor.minValues[2]);
+				posMax = glm::vec3(posAccessor.maxValues[0], posAccessor.maxValues[1], posAccessor.maxValues[2]);
+				meshdata.aabbMax = utils::math::VecMax(posMax, meshdata.aabbMax);
+				meshdata.aabbMin = utils::math::VecMin(posMin, meshdata.aabbMin);
+
+				if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
+					const tinygltf::Accessor &normAccessor = tingymodel.accessors[primitive.attributes.find("NORMAL")->second];
+					const tinygltf::BufferView &normView = tingymodel.bufferViews[normAccessor.bufferView];
+					bufferNormals = reinterpret_cast<const float *>(&(tingymodel.buffers[normView.buffer].data[normAccessor.byteOffset + normView.byteOffset]));
+				}
+
+				if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) {
+					const tinygltf::Accessor &uvAccessor = tingymodel.accessors[primitive.attributes.find("TEXCOORD_0")->second];
+					const tinygltf::BufferView &uvView = tingymodel.bufferViews[uvAccessor.bufferView];
+					bufferTexCoords = reinterpret_cast<const float *>(&(tingymodel.buffers[uvView.buffer].data[uvAccessor.byteOffset + uvView.byteOffset]));
+				}
+
+				if (primitive.attributes.find("COLOR_0") != primitive.attributes.end())
+				{
+					const tinygltf::Accessor& colorAccessor = tingymodel.accessors[primitive.attributes.find("COLOR_0")->second];
+					const tinygltf::BufferView& colorView = tingymodel.bufferViews[colorAccessor.bufferView];
+					// Color buffer are either of type vec3 or vec4
+					numColorComponents = colorAccessor.type == TINYGLTF_PARAMETER_TYPE_FLOAT_VEC3 ? 3 : 4;
+					bufferColors = reinterpret_cast<const float*>(&(tingymodel.buffers[colorView.buffer].data[colorAccessor.byteOffset + colorView.byteOffset]));
+				}
+
+				if (primitive.attributes.find("TANGENT") != primitive.attributes.end())
+				{
+					const tinygltf::Accessor &tangentAccessor = tingymodel.accessors[primitive.attributes.find("TANGENT")->second];
+					const tinygltf::BufferView &tangentView = tingymodel.bufferViews[tangentAccessor.bufferView];
+					bufferTangents = reinterpret_cast<const float *>(&(tingymodel.buffers[tangentView.buffer].data[tangentAccessor.byteOffset + tangentView.byteOffset]));
+				}
+
+				// Skinning
+				// Joints
+				if (primitive.attributes.find("JOINTS_0") != primitive.attributes.end()) {
+					const tinygltf::Accessor &jointAccessor = tingymodel.accessors[primitive.attributes.find("JOINTS_0")->second];
+					const tinygltf::BufferView &jointView = tingymodel.bufferViews[jointAccessor.bufferView];
+					bufferJoints = reinterpret_cast<const uint16_t *>(&(tingymodel.buffers[jointView.buffer].data[jointAccessor.byteOffset + jointView.byteOffset]));
+				}
+
+				if (primitive.attributes.find("WEIGHTS_0") != primitive.attributes.end()) {
+					const tinygltf::Accessor &uvAccessor = tingymodel.accessors[primitive.attributes.find("WEIGHTS_0")->second];
+					const tinygltf::BufferView &uvView = tingymodel.bufferViews[uvAccessor.bufferView];
+					bufferWeights = reinterpret_cast<const float *>(&(tingymodel.buffers[uvView.buffer].data[uvAccessor.byteOffset + uvView.byteOffset]));
+				}
+
+				hasSkin = (bufferJoints && bufferWeights);
+
+				vertexCount = static_cast<uint32_t>(posAccessor.count);
+
+				for (size_t v = 0; v < posAccessor.count; v++) {
+					Vertex1 vert{};
+					vert.pos = glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0f);
+					vert.normal = glm::normalize(glm::vec3(bufferNormals ? glm::make_vec3(&bufferNormals[v * 3]) : glm::vec3(0.0f)));
+					vert.uv = bufferTexCoords ? glm::make_vec2(&bufferTexCoords[v * 2]) : glm::vec3(0.0f);
+					if (bufferColors) {
+						switch (numColorComponents) {
+						case 3:
+							vert.color = glm::vec4(glm::make_vec3(&bufferColors[v * 3]), 1.0f);
+						case 4:
+							vert.color = glm::make_vec4(&bufferColors[v * 4]);
+						}
+					}
+					else
+					{
+						vert.color = glm::vec4(1.0f);
+					}
+					vert.tangent = bufferTangents ? glm::vec4(glm::make_vec4(&bufferTangents[v * 4])) : glm::vec4(0.0f);
+					vert.joint0 = hasSkin ? glm::vec4(glm::make_vec4(&bufferJoints[v * 4])) : glm::vec4(0.0f);
+					vert.weight0 = hasSkin ? glm::make_vec4(&bufferWeights[v * 4]) : glm::vec4(0.0f);
+					meshdata.vertices.push_back(vert);
+					model.vertexSize++;
+				}
+			}
+			//Indice
+			{
+				const tinygltf::Accessor& accessor = tingymodel.accessors[primitive.indices];
+				const tinygltf::BufferView& bufferView = tingymodel.bufferViews[accessor.bufferView];
+				const tinygltf::Buffer& buffer = tingymodel.buffers[bufferView.buffer];
+
+				indexCount = static_cast<uint32_t>(accessor.count);
+
+				switch (accessor.componentType)
+				{
+				case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
+					uint32_t* buf = new uint32_t[accessor.count];
+					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint32_t));
+					for (size_t index = 0; index < accessor.count; index++) {
+						meshdata.indices.push_back(buf[index] + vertexStart);
+					}
+					delete[] buf;
+					break;
+				}
+				case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+					uint16_t* buf = new uint16_t[accessor.count];
+					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint16_t));
+					for (size_t index = 0; index < accessor.count; index++) {
+						meshdata.indices.push_back(buf[index] + vertexStart);
+					}
+					delete[] buf;
+					break;
+				}
+				case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
+					uint8_t* buf = new uint8_t[accessor.count];
+					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint8_t));
+					for (size_t index = 0; index < accessor.count; index++) {
+						meshdata.indices.push_back(buf[index] + vertexStart);
+					}
+					delete[] buf;
+					break;
+				}
+				default:
+					std::cerr << "Index component type " << accessor.componentType << " not supported!" << std::endl;
+					return;
+				}
+				model.indiceSize += indexCount;
+				
+			}
+			Mesh meshoffset{};
+			meshoffset.indexOffset = indexStart;
+			meshoffset.indiceCount = indexCount;
+			meshoffset.vertexOffset = vertexStart;
+			meshoffset.vertexCount = vertexCount;
+			meshoffset.materialID = primitive.material > -1 ? primitive.material : model.materials.size()-1;
+			meshdata.meshes.push_back(meshoffset);
+
+			
+		}
+		model.meshes.push_back(meshdata);
+		model.aabbMax = utils::math::VecMax(meshdata.aabbMax, model.aabbMax);
+		model.aabbMin = utils::math::VecMin(meshdata.aabbMin, model.aabbMin);
+		model.meshCount++;
 	}
 }
 

@@ -20,11 +20,38 @@ struct Vertex1 {
 
 struct Node;
 
+constexpr const uint32_t kMaxLODs = 7;
+// All offsets are relative to the beginning of the data block (excluding headers with a Mesh list)
+struct Mesh final {
+    // Number of LODs in this mesh. Strictly less than MAX_LODS, last LOD offset is used as a marker only
+    uint32_t lodCount = 1;
+
+    // The total count of all previous vertices in this mesh file
+    uint32_t indexOffset = 0;
+
+    uint32_t vertexOffset = 0;
+
+    // Vertex count (for all LODs)
+    uint32_t vertexCount = 0;
+    
+    //
+    uint32_t indiceCount = 0;
+
+    // Offsets to LOD indices data. The last offset is used as a marker to calculate the size
+    uint32_t lodOffset[kMaxLODs + 1] = { 0 };
+
+    uint32_t materialID = 0;
+
+    inline uint32_t getLODIndicesCount(uint32_t lod) const { return lod < lodCount ? lodOffset[lod + 1] - lodOffset[lod] : 0; }
+
+    // Any additional information, such as mesh name, can be added here...
+};
 //用来存储网格数据的数据结构
 struct MeshData {
     std::string name;
     std::vector<Vertex1> vertices;
     std::vector<uint32_t> indices;
+    std::vector<Mesh> meshes;
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
     uint32_t vertexCount = 0;
@@ -184,9 +211,11 @@ struct Animation
 //模型数据
 struct ModelData {
     std::string name;
-    uint32_t meshCount;
-    uint32_t materialCount;
+    uint32_t meshCount =0;
+    uint32_t materialCount =0;
     uint64_t timestamp;
+    uint32_t vertexSize = 0;
+    uint32_t indiceSize = 0;
     std::vector<MeshData> meshes;
     std::vector<std::string> images;
     std::vector<Material> materials;
