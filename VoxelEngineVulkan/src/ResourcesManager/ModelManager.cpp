@@ -565,7 +565,8 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 	}
 
 	if (node.mesh > -1) {
-
+		const tinygltf::Mesh mesh = tingymodel.meshes[node.mesh];
+		MeshData *newMesh = 
 	}
 }
 
