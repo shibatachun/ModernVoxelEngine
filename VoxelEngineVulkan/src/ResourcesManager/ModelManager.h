@@ -12,7 +12,6 @@ class ModelManager
 public:
 	ModelManager();
 	~ModelManager();
-	void loadModel(const char* filename);
 	const std::unordered_map<std::string, ModelData>& GetModeDatas() { return _model; };
 	const std::unordered_map<std::string, Image>& GetImageDatas() { return _ImageFile; };
 	const void freeImage(unsigned char* pixel);
@@ -27,7 +26,7 @@ private:
 	void loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer);
 
 	//test function
-	void loadgltf_test(std::string filename);
+	void loadgltf_test(std::string filename, std::string path);
 	void loadImage_test(tinygltf::Model& gltfModel, ModelData& model);
 	void loadMaterial_test(tinygltf::Model& gltfMode, ModelData& model);
 	void loadNode_test(Node* parent, const tinygltf::Node& node, uint32_t nodeIndex, const tinygltf::Model& tingymodel, ModelData& model, float globalscale);

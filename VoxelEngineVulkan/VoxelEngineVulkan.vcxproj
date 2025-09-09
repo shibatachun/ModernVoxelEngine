@@ -151,6 +151,7 @@
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanInitalizer.h" />
     <ClInclude Include="src\ResourcesManager\DataFormat.h" />
     <ClInclude Include="src\ResourcesManager\ModelManager.h" />
     <ClInclude Include="res\models\testVertexData.h" />

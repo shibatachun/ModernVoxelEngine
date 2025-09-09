@@ -1893,10 +1893,13 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	VulkanRenderObject renderObject;
 
 	renderObject.name = name;
+	
 	for (auto& x : modeldata.meshes) {
-		_BufferManager.CreateVertexBuffer1(x.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
-		_BufferManager.CreateIndexBuffer1(x.indices, renderObject.indiceBuffer, renderObject.indicememory);
-		renderObject.indiceCounts.push_back(static_cast<uint32_t>(x.indices.size()));
+
+		//_BufferManager.CreateVertexBuffer1(x.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+		//_BufferManager.CreateIndexBuffer1(x.indices, renderObject.indiceBuffer, renderObject.indicememory);
+		//renderObject.indiceCounts.push_back(static_cast<uint32_t>(x.indices.size()));
+
 	}
 
 	renderObject.pipeline = pipeline;

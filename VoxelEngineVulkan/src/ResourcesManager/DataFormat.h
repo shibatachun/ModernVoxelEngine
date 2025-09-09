@@ -49,8 +49,6 @@ struct Mesh final {
 //用来存储网格数据的数据结构
 struct MeshData {
     std::string name;
-    std::vector<Vertex1> vertices;
-    std::vector<uint32_t> indices;
     std::vector<Mesh> meshes;
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
@@ -173,7 +171,7 @@ struct Node {
     std::vector<Node*> children;
     glm::mat4 matrix;
     std::string name;
-    MeshData* mesh;
+    int32_t meshID = -1;
     Skin* skin;
     int32_t skinIndex = -1;
     glm::vec3 translation{};
@@ -216,9 +214,12 @@ struct ModelData {
     uint64_t timestamp;
     uint32_t vertexSize = 0;
     uint32_t indiceSize = 0;
+    std::vector<Vertex1> vertices;
+    std::vector<uint32_t> indices;
     std::vector<MeshData> meshes;
     std::vector<std::string> images;
     std::vector<Material> materials;
+    std::vector<Node*> linearNodeHierarchy;
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
 };

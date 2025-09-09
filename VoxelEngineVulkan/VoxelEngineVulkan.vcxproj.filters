@@ -140,6 +140,9 @@
     <ClInclude Include="src\utils\CommonUtileTemplate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanInitalizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\triangle.vert" />

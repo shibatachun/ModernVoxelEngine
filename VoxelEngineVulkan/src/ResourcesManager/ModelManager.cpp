@@ -9,14 +9,15 @@ asset::ModelManager::ModelManager()
 {
 	loadAllModel();
 	loadAllImage();
-	loadModel("res/models/generator_LP.fbx");
 	loadImage("test","res/textures/text_texture.jpg");
 	loadImage("viking", "res/textures/viking_room.png");
 	//loadTestExample();
 	loadobj("res/models/viking_room.obj");
 	//loadgltf("res/models/Zzz/zzz_alice/alice.pmx");
 	//loadgltf("res/models/sponza/sponza.gltf");
-	loadgltf_test("res/models/sponza/sponza.gltf");
+	loadgltf_test("sponza","res/models/sponza/sponza.gltf");
+	loadgltf_test("sky","res/models/sphere.gltf");
+	loadImage("sky", "res/textures/skysphere_rgba.ktx", true);
 	//CollectTexturePaths("res/models/sponza/sponza.gltf");
 }
 
@@ -24,90 +25,7 @@ asset::ModelManager::~ModelManager()
 {
 }
 
-void asset::ModelManager::loadModel(const char* filename)
-{
-	ModelData modelData;
-	Assimp::Importer importer;
-	importer.SetPropertyBool(AI_CONFIG_PP_FD_REMOVE, true);
-	const aiScene* scene = importer.ReadFile(filename, aiProcess_Triangulate | 
-												aiProcess_JoinIdenticalVertices |
-												aiProcess_ImproveCacheLocality |
-												aiProcess_RemoveRedundantMaterials|
-												aiProcess_FlipUVs);
-	if (!scene) {
-		std::cout << "LoadAndExportCustomFormat() failed to loaded model" << filename << "\n";
-		std::cerr << "Assimp Error: " << importer.GetErrorString() << "\n";
-		return;
-	}
-	modelData.name = GetFileName(filename);
-	modelData.meshCount = scene->mNumMeshes;
-	modelData.meshes.resize(modelData.meshCount);
-	modelData.timestamp = GetLastModifiedTime(filename);
 
-	for (int i = 0; i < modelData.meshes.size(); i++) {
-		MeshData& meshData = modelData.meshes[i];
-		meshData.vertexCount = scene->mMeshes[i]->mNumVertices;
-		meshData.indexCount = scene->mMeshes[i]->mNumFaces * 3;
-		meshData.name = scene->mMeshes[i]->mName.C_Str();
-		meshData.vertices.resize(meshData.vertexCount);
-		meshData.indices.resize(meshData.indexCount);
-
-		meshData.name = meshData.name.substr(0, meshData.name.find('.'));
-	}
-	for (int i = 0; i < modelData.meshes.size(); i++) {
-		MeshData& meshData = modelData.meshes[i];
-		const aiMesh* assimpMesh = scene->mMeshes[i];
-		for (unsigned int j = 0; j < meshData.vertexCount; j++) {
-			meshData.vertices[j] = (Vertex1{
-				//位置
-				.pos = glm::vec3(assimpMesh->mVertices[j].x, assimpMesh->mVertices[j].y, assimpMesh->mVertices[j].z),
-		
-				//UV坐标
-				.uv = assimpMesh->HasTextureCoords(0) ? glm::vec2(assimpMesh->mTextureCoords[0][j].x, assimpMesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
-				//N向量
-				.normal = glm::vec3(assimpMesh->mNormals[j].x, assimpMesh->mNormals[j].y, assimpMesh->mNormals[j].z),
-				//Tangent
-				.tangent = assimpMesh->HasTangentsAndBitangents() ? glm::vec3(assimpMesh->mTangents[j].x, assimpMesh->mTangents[j].y, assimpMesh->mTangents[j].z) : glm::vec3(0.0f) }
-				);
-			meshData.aabbMin = utils::math::VecMin(meshData.vertices[j].pos, meshData.aabbMin);
-			meshData.aabbMax = utils::math::VecMax(meshData.vertices[j].pos, meshData.aabbMax);
-		}
-		for (unsigned int j = 0; j < assimpMesh->mNumFaces; j++) {
-			const aiFace& face = assimpMesh->mFaces[j];
-			unsigned int baseIndex = j * 3;
-			meshData.indices[baseIndex] = face.mIndices[0];
-			meshData.indices[baseIndex + 1] = face.mIndices[1];
-			meshData.indices[baseIndex + 2] = face.mIndices[2];
-
-		}
-		for (Vertex1& vertex : meshData.vertices)
-		{
-			vertex.normal = glm::normalize(vertex.normal);
-		}
-		// Generate Tangents
-		for (int i = 0; i < meshData.indices.size(); i += 3) {
-			Vertex1* vert0 = &meshData.vertices[meshData.indices[i]];
-			Vertex1* vert1 = &meshData.vertices[meshData.indices[i + 1]];
-			Vertex1* vert2 = &meshData.vertices[meshData.indices[i + 2]];
-			glm::vec3 deltaPos1 = vert1->pos - vert0->pos;
-			glm::vec3 deltaPos2 = vert2->pos - vert0->pos;
-			glm::vec2 deltaUV1 = vert1->uv - vert0->uv;
-			glm::vec2 deltaUV2 = vert2->uv - vert0->uv;
-			float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-			glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
-			glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
-			vert0->tangent = tangent;
-			vert1->tangent = tangent;
-			vert2->tangent = tangent;
-		}
-		modelData.aabbMin = utils::math::VecMin(modelData.aabbMin, meshData.aabbMin);
-		modelData.aabbMax = utils::math::VecMax(modelData.aabbMax, meshData.aabbMax);
-	}
-	importer.FreeScene();
-
-	_model.emplace(modelData.name, modelData);
-
-}
 
 void asset::ModelManager::processNode(aiNode* node, const aiScene* scene)
 {
@@ -201,14 +119,12 @@ void asset::ModelManager::loadTestExample()
 	meshData.vertexCount = static_cast<uint32_t>(test_vertices.size());
 	meshData.indexCount = static_cast<uint32_t>(indices.size());
 	//什么时候用reserve，在后面要用push_back加入元素可以减去多次预分配内存使用时间，用reserve事先获得需要的内存，但是reserve也不混直接[i]复制，因为元素的数量没变，需要用resize
-	meshData.vertices.reserve(meshData.vertexCount);
-	meshData.indices.reserve(meshData.indexCount);
 	//为什么用auto &, 因为直接拿引用避免一次拷贝，不拿的话会再auto x阶段又进行一次构造拷贝，push back又进行一次，会增加开销
 	for (const auto& x : test_vertices) {
-		meshData.vertices.push_back(x);
+		data.vertices.push_back(x);
 	}
 	for (auto x : indices) {
-		meshData.indices.push_back(x);
+		data.indices.push_back(x);
 	}
 
 		
@@ -241,28 +157,32 @@ void asset::ModelManager::loadobj(std::string filePath)
 		meshData.vertexCount = scene->mMeshes[i]->mNumVertices;
 		meshData.indexCount = scene->mMeshes[i]->mNumFaces * 3;
 		meshData.name = scene->mMeshes[i]->mName.C_Str();
-		meshData.vertices.resize(meshData.vertexCount);
-		meshData.indices.resize(meshData.indexCount);
 		meshData.name = meshData.name.substr(0, meshData.name.find('.'));
+		
+		data.vertexSize += meshData.vertexCount;
+		data.indiceSize += meshData.indexCount;
 
 	}
+	data.vertices.resize(data.vertexSize);
+	data.indices.resize(data.indiceSize);
+
 	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
 		MeshData& meshdata = data.meshes[i];
 		const aiMesh* mesh = scene->mMeshes[i];
 		for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
-			meshdata.vertices[j] = Vertex1{
-			.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y,mesh->mVertices[j].z),
-			.color = glm::vec4(1.0f, 1.0f, 1.0f,1.0f),
-			.uv = mesh->HasTextureCoords(0) ? glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y) : glm::vec2(0.0f,0.0f),
-			};
+			Vertex1 vert{};
+			vert.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z);
+			vert.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			vert.uv = mesh->HasTextureCoords(0) ? glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y) : glm::vec2(0.0f, 0.0f);
+			data.vertices.push_back(vert);
 		}
 		for (unsigned int j = 0; j < mesh->mNumFaces; j++) {
 			const aiFace& face = mesh->mFaces[j];
-			unsigned int baseIndex = j * 3;
-			meshdata.indices[baseIndex] = face.mIndices[0];
-			meshdata.indices[baseIndex + 1] = face.mIndices[1];
-			meshdata.indices[baseIndex + 2] = face.mIndices[2];
-
+		
+			data.indices.push_back(face.mIndices[0]);
+			data.indices.push_back(face.mIndices[1]);
+			data.indices.push_back(face.mIndices[2]);
+		
 		}
 	}
 	_model.emplace("viking_room", data);
@@ -312,8 +232,7 @@ void asset::ModelManager::loadgltf(std::string filename)
 		mesh.aabbMax = glm::vec3(-std::numeric_limits<float>::max());
 		mesh.vertexCount = meshdata->mNumVertices;
 		mesh.indexCount = meshdata->mNumFaces * 3;
-		mesh.vertices.reserve(mesh.vertexCount);
-		mesh.indices.reserve(mesh.indexCount);
+
 		
 	}
 	
@@ -416,14 +335,14 @@ void asset::ModelManager::loadNode(aiNode* scene, std::vector<Vertex1>& vertexbu
 
  
 //Tutorial test functions
-void asset::ModelManager::loadgltf_test(std::string filename)
+void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 {
 	ModelData model;
 	tinygltf::Model gltfModel;
 	tinygltf::TinyGLTF gltfContext;
 	gltfContext.SetImageLoader(tinygltf::LoadImageData, nullptr);
 	std::string error, warning;
-	bool fileLoaded = gltfContext.LoadASCIIFromFile(&gltfModel, &error, &warning, filename);
+	bool fileLoaded = gltfContext.LoadASCIIFromFile(&gltfModel, &error, &warning, path);
 	if (fileLoaded) {
 		
 		loadImage_test(gltfModel, model);
@@ -435,7 +354,27 @@ void asset::ModelManager::loadgltf_test(std::string filename)
 			
 		}
 	}
-	_model.emplace("sponza", model);
+	_model.emplace(filename, model);
+
+	for (Node* node : model.linearNodeHierarchy) {
+		if (node->meshID != -1) {
+			const glm::mat4 localMatrix = node->getMatrix();
+			MeshData& meshdata = model.meshes[node->meshID];
+			for (const Mesh& mashoffset : meshdata.meshes) {
+				for (uint32_t i = 0; i < mashoffset.vertexCount; i++) {
+					Vertex1& vertex = model.vertices[mashoffset.vertexOffset+i];
+					vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));
+					vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
+
+					vertex.pos.y *= -1.0f;
+					vertex.normal.y *= -1.0f;
+
+					vertex.color = model.materials[mashoffset.materialID].baseColorFactor * vertex.color;
+				}
+			}
+		}
+	}
+
 }
 
 void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& model)
@@ -570,14 +509,15 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 	if (node.mesh > -1) {
 		const tinygltf::Mesh mesh = tingymodel.meshes[node.mesh];
 		MeshData meshdata{};
+		meshdata.localTransform = newNode->getMatrix();
 		meshdata.name = mesh.name;
 		for (size_t j = 0; j < mesh.primitives.size(); j++) {
 			const tinygltf::Primitive& primitive = mesh.primitives[j];
 			if (primitive.indices < 0) {
 				continue;
 			}
-			uint32_t indexStart = static_cast<uint32_t>(model.indiceSize);
-			uint32_t vertexStart = static_cast<uint32_t>(model.vertexSize);
+			uint32_t indexStart = static_cast<uint32_t>(model.indices.size());
+			uint32_t vertexStart = static_cast<uint32_t>(model.vertices.size());
 			uint32_t indexCount = 0;
 			uint32_t vertexCount = 0;
 			glm::vec3 posMin{};
@@ -670,7 +610,7 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 					vert.tangent = bufferTangents ? glm::vec4(glm::make_vec4(&bufferTangents[v * 4])) : glm::vec4(0.0f);
 					vert.joint0 = hasSkin ? glm::vec4(glm::make_vec4(&bufferJoints[v * 4])) : glm::vec4(0.0f);
 					vert.weight0 = hasSkin ? glm::make_vec4(&bufferWeights[v * 4]) : glm::vec4(0.0f);
-					meshdata.vertices.push_back(vert);
+					model.vertices.push_back(vert);
 					model.vertexSize++;
 				}
 			}
@@ -688,7 +628,7 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 					uint32_t* buf = new uint32_t[accessor.count];
 					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint32_t));
 					for (size_t index = 0; index < accessor.count; index++) {
-						meshdata.indices.push_back(buf[index] + vertexStart);
+						model.indices.push_back(buf[index] + vertexStart);
 					}
 					delete[] buf;
 					break;
@@ -697,7 +637,7 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 					uint16_t* buf = new uint16_t[accessor.count];
 					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint16_t));
 					for (size_t index = 0; index < accessor.count; index++) {
-						meshdata.indices.push_back(buf[index] + vertexStart);
+						model.indices.push_back(buf[index] + vertexStart);
 					}
 					delete[] buf;
 					break;
@@ -706,7 +646,7 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 					uint8_t* buf = new uint8_t[accessor.count];
 					memcpy(buf, &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(uint8_t));
 					for (size_t index = 0; index < accessor.count; index++) {
-						meshdata.indices.push_back(buf[index] + vertexStart);
+						model.indices.push_back(buf[index] + vertexStart);
 					}
 					delete[] buf;
 					break;
@@ -732,6 +672,11 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 		model.aabbMax = utils::math::VecMax(meshdata.aabbMax, model.aabbMax);
 		model.aabbMin = utils::math::VecMin(meshdata.aabbMin, model.aabbMin);
 		model.meshCount++;
+		newNode->meshID = model.meshes.size() - 1;
+		if (parent != nullptr) {
+			parent->children.push_back(newNode);
+		}
+		model.linearNodeHierarchy.push_back(newNode);
 	}
 }
 
