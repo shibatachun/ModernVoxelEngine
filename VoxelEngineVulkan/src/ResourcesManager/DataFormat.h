@@ -25,7 +25,7 @@ constexpr const uint32_t kMaxLODs = 7;
 struct Mesh final {
     // Number of LODs in this mesh. Strictly less than MAX_LODS, last LOD offset is used as a marker only
     uint32_t lodCount = 1;
-
+    std::string name;
     // The total count of all previous vertices in this mesh file
     uint32_t indexOffset = 0;
 
@@ -216,7 +216,7 @@ struct ModelData {
     uint32_t indiceSize = 0;
     std::vector<Vertex1> vertices;
     std::vector<uint32_t> indices;
-    std::vector<MeshData> meshes;
+    std::vector<MeshData> meshdatas;
     std::vector<std::string> images;
     std::vector<Material> materials;
     std::vector<Node*> linearNodeHierarchy;

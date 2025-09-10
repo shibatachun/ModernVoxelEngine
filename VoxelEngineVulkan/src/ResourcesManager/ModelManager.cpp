@@ -99,8 +99,9 @@ void asset::ModelManager::loadTestExample()
 {
 	ModelData data;
 	data.meshCount = 1;
-	data.meshes.resize(data.meshCount);
-	MeshData& meshData = data.meshes[0];
+	MeshData meshData{};
+	meshData.meshes.resize(data.meshCount);
+	Mesh& mesh = meshData.meshes[0];
 	std::vector<Vertex1> test_vertices = {
 	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}, .uv = {1.0f, 0.0f}},
 	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}, .uv = {0.0f,0.0f}},
@@ -116,8 +117,8 @@ void asset::ModelManager::loadTestExample()
 		0,1,2,2,3,0,4,5,6,6,7,4
 	};
 	//push back用于完整的对象，如果容器内的构造的
-	meshData.vertexCount = static_cast<uint32_t>(test_vertices.size());
-	meshData.indexCount = static_cast<uint32_t>(indices.size());
+	mesh.vertexCount = static_cast<uint32_t>(test_vertices.size());
+	mesh.indiceCount = static_cast<uint32_t>(indices.size());
 	//什么时候用reserve，在后面要用push_back加入元素可以减去多次预分配内存使用时间，用reserve事先获得需要的内存，但是reserve也不混直接[i]复制，因为元素的数量没变，需要用resize
 	//为什么用auto &, 因为直接拿引用避免一次拷贝，不拿的话会再auto x阶段又进行一次构造拷贝，push back又进行一次，会增加开销
 	for (const auto& x : test_vertices) {
@@ -126,7 +127,7 @@ void asset::ModelManager::loadTestExample()
 	for (auto x : indices) {
 		data.indices.push_back(x);
 	}
-
+	data.meshdatas.push_back(meshData);
 		
 	_model.emplace("test_data", data);
 
@@ -150,24 +151,23 @@ void asset::ModelManager::loadobj(std::string filePath)
 		return;
 	}
 	data.meshCount = scene->mNumMeshes;
-	data.meshes.resize(data.meshCount);
+	MeshData meshdata{};
+	meshdata.meshes.resize(scene->mNumMeshes);
 	
 	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-		MeshData& meshData = data.meshes[i];
-		meshData.vertexCount = scene->mMeshes[i]->mNumVertices;
-		meshData.indexCount = scene->mMeshes[i]->mNumFaces * 3;
-		meshData.name = scene->mMeshes[i]->mName.C_Str();
-		meshData.name = meshData.name.substr(0, meshData.name.find('.'));
-		
-		data.vertexSize += meshData.vertexCount;
-		data.indiceSize += meshData.indexCount;
+		Mesh& mesh = meshdata.meshes[i];
+		mesh.vertexCount = scene->mMeshes[i]->mNumVertices;
+		mesh.indiceCount = scene->mMeshes[i]->mNumFaces * 3;
+		mesh.name = scene->mMeshes[i]->mName.C_Str();
 
+		data.vertexSize += mesh.vertexCount;
+		data.indiceSize += mesh.indiceCount;
 	}
-	data.vertices.resize(data.vertexSize);
-	data.indices.resize(data.indiceSize);
 
 	for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-		MeshData& meshdata = data.meshes[i];
+		uint32_t vertex_start = static_cast<uint32_t>(data.vertices.size());
+		uint32_t indice_start = static_cast<uint32_t>(data.indices.size());
+		Mesh& meshOffset = meshdata.meshes[i];
 		const aiMesh* mesh = scene->mMeshes[i];
 		for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
 			Vertex1 vert{};
@@ -179,152 +179,149 @@ void asset::ModelManager::loadobj(std::string filePath)
 		for (unsigned int j = 0; j < mesh->mNumFaces; j++) {
 			const aiFace& face = mesh->mFaces[j];
 		
-			data.indices.push_back(face.mIndices[0]);
-			data.indices.push_back(face.mIndices[1]);
-			data.indices.push_back(face.mIndices[2]);
-		
+			for (unsigned i = 0; i != mesh->mFaces[j].mNumIndices; i++) {
+				data.indices.push_back(mesh->mFaces[j].mIndices[i]);
+			}
 		}
+		meshOffset.vertexOffset = vertex_start;
+		meshOffset.indiceCount = indice_start;
 	}
+	assert(data.indices.size() == data.indiceSize && data.vertices.size() == data.vertexSize);
 	_model.emplace("viking_room", data);
 
 
 }
-
+//TODO
 void asset::ModelManager::loadgltf(std::string filename)
 {                     
-	ModelData data;
-	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(filename,
-		aiProcess_Triangulate |            // 和 tinyobj 的自动三角化等价
-		aiProcess_JoinIdenticalVertices |  // 合并完全相同的顶点
-		aiProcess_GenSmoothNormals |       // 如无法线则生成
-		aiProcess_CalcTangentSpace |       // 如需要切线
-		aiProcess_ImproveCacheLocality |
-		aiProcess_FlipUVs |
-		aiProcess_SortByPType);
+	//ModelData data;
+	//Assimp::Importer importer;
+	//const aiScene* scene = importer.ReadFile(filename,
+	//	aiProcess_Triangulate |            // 和 tinyobj 的自动三角化等价
+	//	aiProcess_JoinIdenticalVertices |  // 合并完全相同的顶点
+	//	aiProcess_GenSmoothNormals |       // 如无法线则生成
+	//	aiProcess_CalcTangentSpace |       // 如需要切线
+	//	aiProcess_ImproveCacheLocality |
+	//	aiProcess_FlipUVs |
+	//	aiProcess_SortByPType);
 
-	if (!scene) {
-		std::cout << "LoadAndExportCustomFormat() failed to loaded model" << filename << "\n";
-		std::cerr << "Assimp Error: " << importer.GetErrorString() << "\n";
-		return;
-	}
+	//if (!scene) {
+	//	std::cout << "LoadAndExportCustomFormat() failed to loaded model" << filename << "\n";
+	//	std::cerr << "Assimp Error: " << importer.GetErrorString() << "\n";
+	//	return;
+	//}
 
-	// glTF2 常用贴图类型（注意：LIGHTMAP 在 assimp 里对应 glTF 的 occlusion）
-	static const aiTextureType kTypes[] = {
-		aiTextureType_BASE_COLOR,
-		aiTextureType_NORMALS,
-		aiTextureType_METALNESS,
-		aiTextureType_DIFFUSE_ROUGHNESS,
-		aiTextureType_LIGHTMAP,   // occlusion
-		aiTextureType_EMISSIVE,
-		aiTextureType_AMBIENT_OCCLUSION,
-		aiTextureType_GLTF_METALLIC_ROUGHNESS,
-		
-	};
+	//// glTF2 常用贴图类型（注意：LIGHTMAP 在 assimp 里对应 glTF 的 occlusion）
+	//static const aiTextureType kTypes[] = {
+	//	aiTextureType_BASE_COLOR,
+	//	aiTextureType_NORMALS,
+	//	aiTextureType_METALNESS,
+	//	aiTextureType_DIFFUSE_ROUGHNESS,
+	//	aiTextureType_LIGHTMAP,   // occlusion
+	//	aiTextureType_EMISSIVE,
+	//	aiTextureType_AMBIENT_OCCLUSION,
+	//	aiTextureType_GLTF_METALLIC_ROUGHNESS,
+	//	
+	//};
 
-	std::unordered_set<std::string> dedup_textures;
-	data.meshCount = scene->mNumMeshes;
-	data.meshes.resize(data.meshCount);
-	for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
-		const aiMesh* meshdata = scene->mMeshes[i];
-		MeshData& mesh = data.meshes[i];
-		mesh.aabbMin = glm::vec3(std::numeric_limits<float>::max());
-		mesh.aabbMax = glm::vec3(-std::numeric_limits<float>::max());
-		mesh.vertexCount = meshdata->mNumVertices;
-		mesh.indexCount = meshdata->mNumFaces * 3;
+	//std::unordered_set<std::string> dedup_textures;
+	//data.meshCount = scene->mNumMeshes;
+	//data.meshes.resize(data.meshCount);
+	//for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
+	//	const aiMesh* meshdata = scene->mMeshes[i];
+	//	MeshData& mesh = data.meshes[i];
+	//	mesh.aabbMin = glm::vec3(std::numeric_limits<float>::max());
+	//	mesh.aabbMax = glm::vec3(-std::numeric_limits<float>::max());
+	//	mesh.vertexCount = meshdata->mNumVertices;
+	//	mesh.indexCount = meshdata->mNumFaces * 3;
 
-		
-	}
-	
-	data.materialCount = scene->mNumMaterials;
-	data.materials.resize(data.materialCount);
-	for (uint32_t i = 0; i < data.materialCount; i++) {
-		aiMaterial* material = scene->mMaterials[i];
-		Material& mat = data.materials[i];
-		aiColor4D base = { 1,1,1,1 };
-		float roughness = 1.0f;
-		float metallic = 1.0f;
-		//获得Base color factor
-		if (material->Get(AI_MATKEY_BASE_COLOR, base) == AI_SUCCESS) mat.baseColorFactor = {base.r, base.g, base.b, base.a};
-		//获得Roughness factor
-		if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS) mat.roughnessFactor = roughness;
-		//获得Metallic factor
-		if (material->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS) mat.matallicFactor = metallic = 1.0f;
-		;
+	//	
+	//}
+	//
+	//data.materialCount = scene->mNumMaterials;
+	//data.materials.resize(data.materialCount);
+	//for (uint32_t i = 0; i < data.materialCount; i++) {
+	//	aiMaterial* material = scene->mMaterials[i];
+	//	Material& mat = data.materials[i];
+	//	aiColor4D base = { 1,1,1,1 };
+	//	float roughness = 1.0f;
+	//	float metallic = 1.0f;
+	//	//获得Base color factor
+	//	if (material->Get(AI_MATKEY_BASE_COLOR, base) == AI_SUCCESS) mat.baseColorFactor = {base.r, base.g, base.b, base.a};
+	//	//获得Roughness factor
+	//	if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS) mat.roughnessFactor = roughness;
+	//	//获得Metallic factor
+	//	if (material->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS) mat.matallicFactor = metallic = 1.0f;
+	//	;
 
-		{
-			aiString s;
-			if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, s) == AI_SUCCESS) {
-				if (s.C_Str() == "BLEND") {
-					mat.alphaMode = Material::ALPHAMODE_BLEND;
-				}
-				if (s.C_Str() == "MASK") {
-					mat.alphaMode = Material::ALPHAMODE_MASK;
-				}
-			}
-		}
-		material->Get(AI_MATKEY_GLTF_ALPHACUTOFF, mat.alphaCutoff);
+	//	{
+	//		aiString s;
+	//		if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, s) == AI_SUCCESS) {
+	//			if (s.C_Str() == "BLEND") {
+	//				mat.alphaMode = Material::ALPHAMODE_BLEND;
+	//			}
+	//			if (s.C_Str() == "MASK") {
+	//				mat.alphaMode = Material::ALPHAMODE_MASK;
+	//			}
+	//		}
+	//	}
+	//	material->Get(AI_MATKEY_GLTF_ALPHACUTOFF, mat.alphaCutoff);
 
-		for (aiTextureType texture_type: kTypes) {
-	
-			aiString p;
-			//TODO，这里可以获取更多的信息
-			if (material->GetTexture(texture_type, 0, &p) != AI_SUCCESS) {
-				continue;
-			}
-			
-			const char* s = p.C_Str();
-			
-			if (!s || !*s) continue;
-			if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
+	//	for (aiTextureType texture_type: kTypes) {
+	//
+	//		aiString p;
+	//		//TODO，这里可以获取更多的信息
+	//		if (material->GetTexture(texture_type, 0, &p) != AI_SUCCESS) {
+	//			continue;
+	//		}
+	//		
+	//		const char* s = p.C_Str();
+	//		
+	//		if (!s || !*s) continue;
+	//		if (s[0] == '*') continue; // 内嵌纹理，既然你只要路径，这里直接跳过
 
-			switch (texture_type)
-			{
-			case	aiTextureType_BASE_COLOR:
-				mat.baseColorTexture = std::string(s);
-				break;
-			case	aiTextureType_NORMALS:
-				mat.normalTexture = std::string(s);
-				break;
-			case	aiTextureType_GLTF_METALLIC_ROUGHNESS:
-				mat.matallicRoughnessTexture = std::string(s);
-				break;
-			case	aiTextureType_DIFFUSE:
-				mat.diffuseTexture = std::string(s);
-				break;	
-			case	aiTextureType_EMISSIVE:
-				mat.emissiveTexture = std::string(s);
-				break;
-			case	aiTextureType_SPECULAR:
-				mat.specularGlossinessTexture = std::string(s);
-				break;
-			case	aiTextureType_AMBIENT_OCCLUSION:
-				mat.occlusionTexture = std::string(s);
-			default:
-				break;
-			}
-			dedup_textures.insert(s);
-				
-			
-		}
-	}
+	//		switch (texture_type)
+	//		{
+	//		case	aiTextureType_BASE_COLOR:
+	//			mat.baseColorTexture = std::string(s);
+	//			break;
+	//		case	aiTextureType_NORMALS:
+	//			mat.normalTexture = std::string(s);
+	//			break;
+	//		case	aiTextureType_GLTF_METALLIC_ROUGHNESS:
+	//			mat.matallicRoughnessTexture = std::string(s);
+	//			break;
+	//		case	aiTextureType_DIFFUSE:
+	//			mat.diffuseTexture = std::string(s);
+	//			break;	
+	//		case	aiTextureType_EMISSIVE:
+	//			mat.emissiveTexture = std::string(s);
+	//			break;
+	//		case	aiTextureType_SPECULAR:
+	//			mat.specularGlossinessTexture = std::string(s);
+	//			break;
+	//		case	aiTextureType_AMBIENT_OCCLUSION:
+	//			mat.occlusionTexture = std::string(s);
+	//		default:
+	//			break;
+	//		}
+	//		dedup_textures.insert(s);
+	//			
+	//		
+	//	}
+	//}
 
-	for (const auto& texture_name : dedup_textures) {
-		//在目录下所有的texture file中储存对应的信息
-		bool isktx = false;
-		auto& tx = utils::findInMap(_imageFilesInfo,texture_name);
-		if (tx.ext == "ktx") {
-			isktx = true;
+	//for (const auto& texture_name : dedup_textures) {
+	//	//在目录下所有的texture file中储存对应的信息
+	//	bool isktx = false;
+	//	auto& tx = utils::findInMap(_imageFilesInfo,texture_name);
+	//	if (tx.ext == "ktx") {
+	//		isktx = true;
 
-		}
-		//加载image
-		loadImage(tx.name,tx.path,isktx);
-	}
-	
-
-
-
-
+	//	}
+	//	//加载image
+	//	loadImage(tx.name,tx.path,isktx);
+	//}
 
 }
 
@@ -359,7 +356,7 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 	for (Node* node : model.linearNodeHierarchy) {
 		if (node->meshID != -1) {
 			const glm::mat4 localMatrix = node->getMatrix();
-			MeshData& meshdata = model.meshes[node->meshID];
+			MeshData& meshdata = model.meshdatas[node->meshID];
 			for (const Mesh& mashoffset : meshdata.meshes) {
 				for (uint32_t i = 0; i < mashoffset.vertexCount; i++) {
 					Vertex1& vertex = model.vertices[mashoffset.vertexOffset+i];
@@ -369,7 +366,7 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 					vertex.pos.y *= -1.0f;
 					vertex.normal.y *= -1.0f;
 
-					vertex.color = model.materials[mashoffset.materialID].baseColorFactor * vertex.color;
+					//vertex.color = model.materials[mashoffset.materialID].baseColorFactor * vertex.color;
 				}
 			}
 		}
@@ -506,6 +503,9 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 		}
 	}
 
+	//1.有不同的node,node有对应的mesh
+	//2.一个mesh有多个primitive
+	//3.一个primitive有很多vertex和indice
 	if (node.mesh > -1) {
 		const tinygltf::Mesh mesh = tingymodel.meshes[node.mesh];
 		MeshData meshdata{};
@@ -668,11 +668,11 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 
 			
 		}
-		model.meshes.push_back(meshdata);
+		model.meshdatas.push_back(meshdata);
 		model.aabbMax = utils::math::VecMax(meshdata.aabbMax, model.aabbMax);
 		model.aabbMin = utils::math::VecMin(meshdata.aabbMin, model.aabbMin);
 		model.meshCount++;
-		newNode->meshID = model.meshes.size() - 1;
+		newNode->meshID = model.meshdatas.size() - 1;
 		if (parent != nullptr) {
 			parent->children.push_back(newNode);
 		}

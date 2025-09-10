@@ -1894,14 +1894,15 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 
 	renderObject.name = name;
 	
-	for (auto& x : modeldata.meshes) {
+	for (auto& x : modeldata.meshdatas) {
 
-		//_BufferManager.CreateVertexBuffer1(x.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
-		//_BufferManager.CreateIndexBuffer1(x.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	
 		//renderObject.indiceCounts.push_back(static_cast<uint32_t>(x.indices.size()));
 
 	}
-
+	_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+	_BufferManager.CreateIndexBuffer1 (modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 	renderObject.pipeline = pipeline;
 	renderObject.Pipelinelayout = layout;
 	
