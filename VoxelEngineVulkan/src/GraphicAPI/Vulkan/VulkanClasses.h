@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanCommon.h"
+#include "VulkanInitalizer.h"
 namespace vulkan {
 
 	class Instance final {
@@ -301,11 +301,11 @@ namespace vulkan {
 
 	};
 
-	class GraphicPipeline final {
+	class GraphicPipelineManager final {
 	
 	public:
-		VULKAN_NON_COPIABLE(GraphicPipeline)
-		GraphicPipeline(
+		VULKAN_NON_COPIABLE(GraphicPipelineManager)
+		GraphicPipelineManager(
 			const std::unordered_map<std::string, asset::shader>& shaders, 
 			VkDevice device,
 			const  SwapChain& swapchain, 
@@ -315,7 +315,7 @@ namespace vulkan {
 		VkPipelineLayout GetGraphicsPipelineLayout(std::string piplineLayoutName);
 		void CreateGraphicsPipeline(std::string pipelineName, std::string pipelineLayoutName,  const asset::shader& shaders, VkRenderPass renderPass);
 		void createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout);
-		~GraphicPipeline();
+		~GraphicPipelineManager();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
 		void createPipelineCache();
@@ -354,6 +354,7 @@ namespace vulkan {
 		void CreateGlobalDescriptorPool();
 		void CreatePerFrameDescriptorPool();
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
+		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
 		std::vector<VkDescriptorSet> GetHardCodedDescriptorSet() { return _hardCodeDescriptorSet; };
 
 	private:
@@ -361,6 +362,7 @@ namespace vulkan {
 		std::vector<VkDescriptorPool>											_PerFramePool;
 		std::vector<VkDescriptorSet>											_hardCodeDescriptorSet;
 		std::unordered_map<VkDescriptorSetLayout, std::vector<VkDescriptorSet>> _descriptorSetCache;
+		std::unordered_map<std::string, VkDescriptorPool>						_test_pool;
 		const Device&															_device;
 
 	};
@@ -368,7 +370,11 @@ namespace vulkan {
 	class VulkanResouceManager final {
 
 		public:
-			VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager);
+			VulkanResouceManager(BufferManager& bufferManager, 
+				DescriptorPoolManager& descPoolManager, 
+				DescriptorLayoutManager& descLayoutManager, 
+				GraphicPipelineManager& graphicPipelineManager,
+				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
 			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name, std::vector<std::string> textureFiles);
 			const VulkanRenderObject& GetRenderObject(std::string name);
@@ -377,7 +383,11 @@ namespace vulkan {
 
 			std::unordered_map<std::string, VulkanRenderObject>									_renderObjects;
 			BufferManager&																		_BufferManager;
+			DescriptorPoolManager&																_descriptorPoolManager;
+			DescriptorLayoutManager&															_descriptorLayoutManager;
+			GraphicPipelineManager&																_graphicPipelineManager;
 			const asset::AssetManager&															_assetMnanger;
+
 		
 		private:
 		

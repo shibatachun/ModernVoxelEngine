@@ -28,7 +28,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::DebugUtilsMessenger>		_debugMessenger;
 		std::unique_ptr<class vulkan::Device>					_devices;
 		std::unique_ptr<class vulkan::SwapChain>				_swapchain;
-		std::unique_ptr<class vulkan::GraphicPipeline>			_graphicsPipline;
+		std::unique_ptr<class vulkan::GraphicPipelineManager>			_graphicsPipline;
 		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
 		std::unique_ptr<class vulkan::CommandPoolManager>		_commandPools;
 		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;

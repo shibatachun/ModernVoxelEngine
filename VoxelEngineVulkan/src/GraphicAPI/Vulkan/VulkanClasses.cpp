@@ -913,31 +913,31 @@ void vulkan::RenderPass::Destroy()
 
 /////////////////////////////////////////////////////////////////////////GRAPHIC PIPELINE//////////////////////////////////////////////////////////////
 
-vulkan::GraphicPipeline::GraphicPipeline(const std::unordered_map<std::string, asset::shader>& shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
+vulkan::GraphicPipelineManager::GraphicPipelineManager(const std::unordered_map<std::string, asset::shader>& shaders, VkDevice device, const SwapChain& swapchain, const RenderPass& renderpass)
 	: _shaders(shaders), _device(device), _swapChain(swapchain),_renderPass(renderpass)
 {
 	createPipelineCache();
 }
 
-void vulkan::GraphicPipeline::Destroy(std::string pipelineName)
+void vulkan::GraphicPipelineManager::Destroy(std::string pipelineName)
 {
 
 	
 }
 
-VkPipeline vulkan::GraphicPipeline::GetGraphicsPipeline(std::string pipelineName)
+VkPipeline vulkan::GraphicPipelineManager::GetGraphicsPipeline(std::string pipelineName)
 {
 	return utils::findInMap(_pipelines, pipelineName);
 }
 
 
 
-VkPipelineLayout vulkan::GraphicPipeline::GetGraphicsPipelineLayout(std::string piplineLayoutName)
+VkPipelineLayout vulkan::GraphicPipelineManager::GetGraphicsPipelineLayout(std::string piplineLayoutName)
 {
 	return utils::findInMap(_pipelineLayouts, piplineLayoutName);
 }
 
-vulkan::GraphicPipeline::~GraphicPipeline()
+vulkan::GraphicPipelineManager::~GraphicPipelineManager()
 {
 	for (auto& x : _pipelines) {
 		vkDestroyPipeline(_device, x.second, nullptr);
@@ -950,7 +950,7 @@ vulkan::GraphicPipeline::~GraphicPipeline()
 	
 }
 
-VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<char>& code)
+VkShaderModule vulkan::GraphicPipelineManager::CreateShaderModule(const std::vector<char>& code)
 {
 	
 	VkShaderModuleCreateInfo createInfo{};
@@ -963,7 +963,7 @@ VkShaderModule vulkan::GraphicPipeline::CreateShaderModule(const std::vector<cha
 	
 }
 
-void vulkan::GraphicPipeline::createPipelineCache()
+void vulkan::GraphicPipelineManager::createPipelineCache()
 {
 	VkPipelineCacheCreateInfo cacheInfo{};
 	cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -972,7 +972,7 @@ void vulkan::GraphicPipeline::createPipelineCache()
 	Check(vkCreatePipelineCache(_device, &cacheInfo, nullptr, &_pipelineCache), "Create Pipeline Cache!");
 }
 
-void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName,std::string pipelineLayoutName, const asset::shader& shaders, VkRenderPass renderPass)
+void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName,std::string pipelineLayoutName, const asset::shader& shaders, VkRenderPass renderPass)
 {
 	
 
@@ -1130,7 +1130,7 @@ void vulkan::GraphicPipeline::CreateGraphicsPipeline(std::string pipelineName,st
 
 }
 
-void vulkan::GraphicPipeline::createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout)
+void vulkan::GraphicPipelineManager::createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout)
 {
 	VkPipelineLayout pipelineLayout;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -1280,6 +1280,25 @@ void vulkan::DescriptorPoolManager::CreatePreFrameDescriptorSets(std::vector<VkD
 		Check(vkAllocateDescriptorSets(_device.Handle(), &allocInfo, _hardCodeDescriptorSet.data()), "Allocate Descriptor set");
 	}
 
+}
+
+void vulkan::DescriptorPoolManager::CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName)
+{
+	std::vector<VkDescriptorPoolSize> poolSize = {
+		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, uboCount},
+	};
+	//TODO:判断类型
+	if (imageCount > 0) {
+		poolSize.push_back({ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageCount });
+	}
+	VkDescriptorPool pool;
+	VkDescriptorPoolCreateInfo descriptorPoolCi{};
+	descriptorPoolCi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCi.poolSizeCount = static_cast<uint32_t>(poolSize.size());
+	descriptorPoolCi.pPoolSizes = poolSize.data();
+	descriptorPoolCi.maxSets = uboCount + imageCount;
+	Check(vkCreateDescriptorPool(_device.Handle(), &descriptorPoolCi, nullptr, &pool), "Create individual Pool");
+	_test_pool.emplace(objectName, pool);
 }
 
 vulkan::BufferManager::BufferManager(const Device& deivce, CommandPoolManager& commandPools) : device(deivce), commandPools(commandPools)
@@ -1864,10 +1883,19 @@ void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, Vk
 
 }
 
-vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager, const asset::AssetManager& assetManager) : 
-	_BufferManager(bufferManager), _assetMnanger(assetManager)
-{
 
+
+vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager, 
+	DescriptorPoolManager& descPoolManager, 
+	DescriptorLayoutManager& descLayoutManager, 
+	GraphicPipelineManager& graphicPipelineManager, 
+	const asset::AssetManager& assetManager):
+	_BufferManager(bufferManager),
+	_descriptorPoolManager(descPoolManager), 
+	_descriptorLayoutManager(descLayoutManager), 
+	_graphicPipelineManager(graphicPipelineManager),
+	_assetMnanger(assetManager)
+{
 }
 
 vulkan::VulkanResouceManager::~VulkanResouceManager()
@@ -1896,12 +1924,29 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	
 	for (auto& x : modeldata.meshdatas) {
 
-	
+		
 		//renderObject.indiceCounts.push_back(static_cast<uint32_t>(x.indices.size()));
 
 	}
-	_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
-	_BufferManager.CreateIndexBuffer1 (modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	//上传vertex indice buffer数据
+	{
+		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+		_BufferManager.CreateIndexBuffer1 (modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	}
+	//生成DescriptorPool
+	{
+		_descriptorPoolManager.CreatePoolForIndividualObject(modeldata.meshCount, modeldata.imageCount, name);
+	}
+	//生成layout
+	{
+		LayoutConfig config{};
+		config.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		_descriptorLayoutManager.CreateDescriptorSetLayout(config);
+		for (auto node : modeldata.linearNodeHierarchy) {
+
+		}
+	}
+
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 	renderObject.pipeline = pipeline;
 	renderObject.Pipelinelayout = layout;

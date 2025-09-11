@@ -351,7 +351,7 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 			
 		}
 	}
-	_model.emplace(filename, model);
+	
 
 	for (Node* node : model.linearNodeHierarchy) {
 		if (node->meshID != -1) {
@@ -371,6 +371,8 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 			}
 		}
 	}
+	
+	_model.emplace(filename, model);
 
 }
 
@@ -421,7 +423,7 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 		Material material;
 		if (mat.values.find("baseColorTexture") != mat.values.end()) {
 			material.baseColorTexture = gltfMode.images.at(gltfMode.textures[mat.values["baseColorTexture"].TextureIndex()].source).uri;
-			
+			model.imageCount++;
 		}
 		if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
 			material.matallicRoughnessTexture = gltfMode.images.at(gltfMode.textures[mat.values["metallicRoughnessTexture"].TextureIndex()].source).uri;
@@ -462,6 +464,7 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 
 		model.materials.push_back(material);
 		model.materialCount++;
+		
 	}
 
 
@@ -673,10 +676,12 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 		model.aabbMin = utils::math::VecMin(meshdata.aabbMin, model.aabbMin);
 		model.meshCount++;
 		newNode->meshID = model.meshdatas.size() - 1;
+		
 		if (parent != nullptr) {
 			parent->children.push_back(newNode);
 		}
 		model.linearNodeHierarchy.push_back(newNode);
+		
 	}
 }
 

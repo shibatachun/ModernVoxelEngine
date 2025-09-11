@@ -211,9 +211,11 @@ struct ModelData {
     std::string name;
     uint32_t meshCount =0;
     uint32_t materialCount =0;
+    uint32_t imageCount = 0;
     uint64_t timestamp;
     uint32_t vertexSize = 0;
     uint32_t indiceSize = 0;
+    
     std::vector<Vertex1> vertices;
     std::vector<uint32_t> indices;
     std::vector<MeshData> meshdatas;

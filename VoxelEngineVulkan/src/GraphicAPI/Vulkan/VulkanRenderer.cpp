@@ -201,7 +201,7 @@ void vulkan::VulkanRenderer::SetUpDescriptorPoolsManager()
 void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 {
 	_renderPass.reset(new vulkan::RenderPass(*_swapchain));
-	_graphicsPipline.reset(new vulkan::GraphicPipeline(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchain,*_renderPass));
+	_graphicsPipline.reset(new vulkan::GraphicPipelineManager(_assetManager.getShaderAssets(), _devices->Handle(),*_swapchain,*_renderPass));
 	LayoutConfig config;
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding = 0;
@@ -251,7 +251,7 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 //Set up Vulkan Resouce Manager
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
-	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager, _assetManager));
+	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, _assetManager));
 
 }
 
@@ -473,6 +473,7 @@ bool vulkan::VulkanRenderer::IsMinimized() const
 
 void vulkan::VulkanRenderer::PrepareRenderObject()
 {
+	
 	_resouceManager->ConstructVulkanRenderObject("viking", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
 		_graphicsPipline->GetGraphicsPipelineLayout("default"),
 		"viking_room", { "viking" });
