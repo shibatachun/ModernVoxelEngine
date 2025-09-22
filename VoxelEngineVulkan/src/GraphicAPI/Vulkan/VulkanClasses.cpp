@@ -1207,7 +1207,7 @@ vulkan::DescriptorLayoutManager::~DescriptorLayoutManager()
 	}
 }
 
-void vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig config)
+VkDescriptorSetLayout vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig config)
 {
 	auto it = _LayoutCache.find(config);
 	if (it == _LayoutCache.end()){
@@ -1217,6 +1217,7 @@ void vulkan::DescriptorLayoutManager::CreateDescriptorSetLayout(LayoutConfig con
 		layoutInfo.pBindings = config.bindings.data();
 		Check(vkCreateDescriptorSetLayout(_device.Handle(), &layoutInfo, nullptr, &_LayoutCache[config]),"Create DescriptorSetLayout");
 	}
+	return _LayoutCache[config];
 	
 }
 
@@ -1255,14 +1256,14 @@ void vulkan::DescriptorPoolManager::CreatePerFrameDescriptorPool()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		std::vector<VkDescriptorPoolSize> poolSizes = {
-			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20},
-			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20}
+			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000}
 		};
 		VkDescriptorPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 		poolInfo.pPoolSizes = poolSizes.data();
-		poolInfo.maxSets = 20;
+		poolInfo.maxSets = 1000;
 
 		Check(vkCreateDescriptorPool(_device.Handle(), &poolInfo, nullptr, &_PerFramePool[i]), "Create per frame descriptor pool");
 	}
@@ -1299,6 +1300,13 @@ void vulkan::DescriptorPoolManager::CreatePoolForIndividualObject(uint32_t uboCo
 	descriptorPoolCi.maxSets = uboCount + imageCount;
 	Check(vkCreateDescriptorPool(_device.Handle(), &descriptorPoolCi, nullptr, &pool), "Create individual Pool");
 	_test_pool.emplace(objectName, pool);
+}
+
+void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorSet& desSet,std::string name)
+{
+	VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_test_pool[name], &layout, 1);
+	Check(vkAllocateDescriptorSets(_device.Handle(), &allocInfo, &desSet), "Allocate Descriptor Set");
+
 }
 
 vulkan::BufferManager::BufferManager(const Device& deivce, CommandPoolManager& commandPools) : device(deivce), commandPools(commandPools)
@@ -1375,7 +1383,7 @@ void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, VkImageLay
 	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, QueueFamily::TRANSFER);
 	//transitionImageLayout1(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	image_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight), QueueFamily::TRANSFER);
+	copyBufferToImage(stagingBuffer, image, image_data.subresource,static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight), QueueFamily::TRANSFER);
 	//copyBufferToImage1(stagingBuffer, image, static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight));
 	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, QueueFamily::GRAPHIC);
 	//transitionImageLayout1(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -1556,31 +1564,33 @@ void vulkan::BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, V
 
 }
 
-void vulkan::BufferManager::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, QueueFamily family)
+void vulkan::BufferManager::copyBufferToImage(VkBuffer buffer, VkImage image, std::vector<SubResource> subResource, uint32_t width, uint32_t height, QueueFamily family)
 {
 	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
-	VkBufferImageCopy region{};
-	region.bufferOffset = 0;
-	region.bufferRowLength = 0;
-	region.bufferImageHeight = 0;
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
 
-	region.imageOffset = { 0,0,0 };
-	region.imageExtent = {
-		width,
-		height,
-		1
-	};
+	std::vector<VkBufferImageCopy> bufferCopyRegions;
+	for (uint32_t i = 0; i < subResource.size(); i++)
+	{
+		VkBufferImageCopy bufferCopyRegion = {};
+		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		bufferCopyRegion.imageSubresource.mipLevel = i;
+		bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+		bufferCopyRegion.imageSubresource.layerCount = 1;
+		bufferCopyRegion.imageExtent.width = std::max(1u, width >> i);
+		bufferCopyRegion.imageExtent.height = std::max(1u, height >> i);
+		bufferCopyRegion.imageExtent.depth = 1;
+		bufferCopyRegion.bufferOffset =	subResource[i].offset;
+
+		bufferCopyRegions.push_back(bufferCopyRegion);
+	}
+
 	vkCmdCopyBufferToImage(
 		cmdBuffer,
 		buffer,
 		image,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		1,
-		&region
+		static_cast<uint32_t>(bufferCopyRegions.size()),
+		bufferCopyRegions.data()
 	);
 	flushCommandBuffer(cmdBuffer, device.TransferQueue(), commandPools.GetCommandPool(family), true);
 }
@@ -1696,165 +1706,7 @@ void vulkan::BufferManager::DestroySampler(VkSampler sampler)
 {
 	vkDestroySampler(device.Handle(), sampler, nullptr);
 }
-//Test functions
-//void vulkan::BufferManager::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
-//{
-//	VkImageCreateInfo imageInfo{};
-//	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-//	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-//	imageInfo.extent.width = width;
-//	imageInfo.extent.height = height;
-//	imageInfo.extent.depth = 1;
-//	imageInfo.mipLevels = 1;
-//	imageInfo.arrayLayers = 1;
-//	imageInfo.format = format;
-//	imageInfo.tiling = tiling;
-//	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-//	imageInfo.usage = usage;
-//	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-//	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-//
-//	if (vkCreateImage(device.Handle(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
-//		throw std::runtime_error("failed to create image!");
-//	}
-//
-//	VkMemoryRequirements memRequirements;
-//	vkGetImageMemoryRequirements(device.Handle(), image, &memRequirements);
-//
-//	VkMemoryAllocateInfo allocInfo{};
-//	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-//	allocInfo.allocationSize = memRequirements.size;
-//	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-//
-//	if (vkAllocateMemory(device.Handle(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-//		throw std::runtime_error("failed to allocate image memory!");
-//	}
-//
-//	vkBindImageMemory(device.Handle(), image, imageMemory, 0);
-//}
-//
-//VkCommandBuffer vulkan::BufferManager::beginSingleTimeCommands()
-//{
-//	VkCommandBufferAllocateInfo allocInfo{};
-//	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-//	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-//	allocInfo.commandPool = commandPools.GetCommandPool(QueueFamily::GRAPHIC);
-//	allocInfo.commandBufferCount = 1;
-//
-//	VkCommandBuffer commandBuffer;
-//	vkAllocateCommandBuffers(device.Handle(), &allocInfo, &commandBuffer);
-//
-//	VkCommandBufferBeginInfo beginInfo{};
-//	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-//	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-//
-//	vkBeginCommandBuffer(commandBuffer, &beginInfo);
-//
-//	return commandBuffer;
-//}
-//
-//void vulkan::BufferManager::endSingleTimeCommands(VkCommandBuffer commandBuffer)
-//{
-//	vkEndCommandBuffer(commandBuffer);
-//
-//	VkSubmitInfo submitInfo{};
-//	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-//	submitInfo.commandBufferCount = 1;
-//	submitInfo.pCommandBuffers = &commandBuffer;
-//
-//	vkQueueSubmit(device.GraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-//	vkQueueWaitIdle(device.GraphicsQueue());
-//
-//	vkFreeCommandBuffers(device.Handle(), commandPools.GetCommandPool(QueueFamily::GRAPHIC), 1, &commandBuffer);
-//}
-//
-//void vulkan::BufferManager::copyBuffer1(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-//{
-//	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-//
-//	VkBufferCopy copyRegion{};
-//	copyRegion.size = size;
-//	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-//
-//	endSingleTimeCommands(commandBuffer);
-//}
-//
-//void vulkan::BufferManager::transitionImageLayout1(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
-//{
-//	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-//	VkImageMemoryBarrier barrier{};
-//	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-//	barrier.oldLayout = oldLayout;
-//	barrier.newLayout = newLayout;
-//	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-//	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-//	barrier.image = image;
-//	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-//	barrier.subresourceRange.baseMipLevel = 0;
-//	barrier.subresourceRange.levelCount = 1;
-//	barrier.subresourceRange.baseArrayLayer = 0;
-//	barrier.subresourceRange.layerCount = 1;
-//	VkPipelineStageFlags sourceStage;
-//	VkPipelineStageFlags destinationStage;
-//
-//	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-//		barrier.srcAccessMask = 0;
-//		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-//
-//		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-//		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-//	}
-//	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-//		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-//		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-//
-//		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-//		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-//	}
-//	else {
-//		throw std::invalid_argument("unsupported layout transition!");
-//	}
-//
-//	vkCmdPipelineBarrier(
-//		commandBuffer,
-//		sourceStage, destinationStage,
-//		0,
-//		0, nullptr,
-//		0, nullptr,
-//		1, &barrier
-//	);
-//	endSingleTimeCommands(commandBuffer);
-//}
-//
-//void vulkan::BufferManager::copyBufferToImage1(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
-//{
-//	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-//	VkBufferImageCopy region{};
-//	region.bufferOffset = 0;
-//	region.bufferRowLength = 0;
-//	region.bufferImageHeight = 0;
-//
-//	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-//	region.imageSubresource.mipLevel = 0;
-//	region.imageSubresource.baseArrayLayer = 0;
-//	region.imageSubresource.layerCount = 1;
-//
-//	region.imageOffset = { 0, 0, 0 };
-//	region.imageExtent = {
-//		width,
-//		height,
-//		1
-//	};
-//	vkCmdCopyBufferToImage(
-//		commandBuffer,
-//		buffer,
-//		image,
-//		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-//		1,
-//		&region
-//	);
-//	endSingleTimeCommands(commandBuffer);
-//}
+
 
 void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free)
 {
@@ -1922,35 +1774,6 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 
 	renderObject.name = name;
 	
-	for (auto& x : modeldata.meshdatas) {
-
-		
-		//renderObject.indiceCounts.push_back(static_cast<uint32_t>(x.indices.size()));
-
-	}
-	//上传vertex indice buffer数据
-	{
-		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
-		_BufferManager.CreateIndexBuffer1 (modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
-	}
-	//生成DescriptorPool
-	{
-		_descriptorPoolManager.CreatePoolForIndividualObject(modeldata.meshCount, modeldata.imageCount, name);
-	}
-	//生成layout
-	{
-		LayoutConfig config{};
-		config.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
-		_descriptorLayoutManager.CreateDescriptorSetLayout(config);
-		for (auto node : modeldata.linearNodeHierarchy) {
-
-		}
-	}
-
-	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
-	renderObject.pipeline = pipeline;
-	renderObject.Pipelinelayout = layout;
-	
 	for (const auto& x : textureFiles) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
@@ -1959,8 +1782,54 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
 		CreateTextureImageView(texture.view, texture.image);
 		_BufferManager.CreateTextureSampler(texture.sampler);
+		texture.updateDescriptor();
 		renderObject.textures.push_back(texture);
 	}
+
+
+	//上传vertex indice buffer数据
+	{
+		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+		_BufferManager.CreateIndexBuffer1 (modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	}
+	//生成DescriptorPool
+	{
+		_descriptorPoolManager.CreatePoolForIndividualObject(1, modeldata.imageCount+1, name);
+	}
+	//生成vertex shader的关于矩阵变换的layout
+	{
+		LayoutConfig configVertex{};
+		configVertex.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		renderObject.descriptorSetLayouts.matrices = _descriptorLayoutManager.CreateDescriptorSetLayout(configVertex);
+		for (auto node : modeldata.linearNodeHierarchy) {
+			prepareNodeDescriptor(node, _descriptorLayoutManager.GetDescriptorSetLayout(configVertex));
+		}
+	}
+	//生成fragment shader的关于material的layout
+	{
+		LayoutConfig configFragment{};
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0));
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1));
+		configFragment.UpdateAllArray();
+		renderObject.descriptorSetLayouts.textures = _descriptorLayoutManager.CreateDescriptorSetLayout(configFragment);
+
+	}
+	//设置vertex相关的descriptor Set
+	{
+		VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_descriptorPoolManager.GetIndividualDescriptorPool(name),&renderObject.descriptorSetLayouts.matrices,1);
+		
+	}
+
+	//设置fragment相关的descriptor Set
+	{
+
+	}
+
+	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
+	renderObject.pipeline = pipeline;
+	renderObject.Pipelinelayout = layout;
+	
+	
 	
 	
 	_renderObjects[name] = renderObject;
@@ -1990,9 +1859,18 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject()
 	//6 store it into read to render object
 }
 
+void vulkan::VulkanResouceManager::prepareNodeDescriptor(Node* node, VkDescriptorSetLayout descriptorSetLayout)
+{
+	if (node->meshID != -1) {
+
+	}
+}
+
 void vulkan::VulkanResouceManager::CreateTextureImageView(VkImageView& imageview, VkImage image)
 {
 	imageview = _BufferManager.CreateImageView(image, VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT);
 
 }
+
+
 

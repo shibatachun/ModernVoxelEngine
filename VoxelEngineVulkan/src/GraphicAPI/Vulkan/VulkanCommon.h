@@ -318,15 +318,28 @@ namespace vulkan {
 		VkImageLayout imageLayout;
 		VkDeviceMemory deviceMemory{ VK_NULL_HANDLE };
 		VkImageView view{ VK_NULL_HANDLE };
+		VkDescriptorImageInfo descriptor;
 		uint32_t width{ 0 };
 		uint32_t height{ 0 };
 		uint32_t mipLevels{ 0 };
+
+		void      updateDescriptor();
 	};
 
+	struct UniformBufferData {
+
+		
+	};
 	struct VulkanRenderObject {
 		std::string name;
 		VkPipeline pipeline;
 		VkPipelineLayout Pipelinelayout;
+		VkDescriptorSet descriptorSet{ VK_NULL_HANDLE };
+
+		struct DescriptorSetLayouts {
+			VkDescriptorSetLayout matrices{ VK_NULL_HANDLE };
+			VkDescriptorSetLayout textures{ VK_NULL_HANDLE };
+		} descriptorSetLayouts;
 		std::vector<VulkanTexture> textures;
 		VkBuffer		vertexBuffer;
 		VkDeviceMemory	vertexmemory;

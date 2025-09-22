@@ -134,6 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\utils\Camera.cpp" />
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanCommon.cpp" />
     <ClCompile Include="src\ResourcesManager\DataFormat.cpp" />
     <ClCompile Include="src\ResourcesManager\ModelManager.cpp" />
@@ -151,6 +152,7 @@
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\utils\Camera.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanInitalizer.h" />
     <ClInclude Include="src\ResourcesManager\DataFormat.h" />
     <ClInclude Include="src\ResourcesManager\ModelManager.h" />

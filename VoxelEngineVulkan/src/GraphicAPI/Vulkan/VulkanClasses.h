@@ -203,7 +203,7 @@ namespace vulkan {
 		bool hasStencilComponent(VkFormat format);
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
-		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, QueueFamily family);
+		void copyBufferToImage(VkBuffer buffer, VkImage image, std::vector<SubResource>,uint32_t width, uint32_t height, QueueFamily family);
 
 		VkCommandBuffer createInstantCommandBuffer(VkCommandBufferLevel level, VkCommandPool pool, uint32_t bufferCount, bool begin = false);
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free);
@@ -340,7 +340,7 @@ namespace vulkan {
 		DescriptorLayoutManager(const Device& deivce);
 		VkDescriptorSetLayout GetDescriptorSetLayout(LayoutConfig config) { return _LayoutCache[config]; };
 		~DescriptorLayoutManager();
-		void CreateDescriptorSetLayout(LayoutConfig config);
+		VkDescriptorSetLayout CreateDescriptorSetLayout(LayoutConfig config);
 	private:
 		std::unordered_map<LayoutConfig, VkDescriptorSetLayout, LayoutConfigHash>				_LayoutCache;
 		const Device&																			_device;
@@ -355,6 +355,11 @@ namespace vulkan {
 		void CreatePerFrameDescriptorPool();
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
+		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorSet& desSet, std::string name);
+		VkDescriptorPool GetIndividualDescriptorPool(std::string poolname)
+		{
+			return _test_pool[poolname];
+		}
 		std::vector<VkDescriptorSet> GetHardCodedDescriptorSet() { return _hardCodeDescriptorSet; };
 
 	private:
@@ -392,7 +397,9 @@ namespace vulkan {
 		private:
 		
 			void ConstructVulkanRenderObject();
+			void prepareNodeDescriptor(Node* node, VkDescriptorSetLayout descriptorSetLayout);
 			void CreateTextureImageView(VkImageView& imageview, VkImage image);
+	
 	};
 }
 	
