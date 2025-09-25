@@ -206,6 +206,8 @@ struct Animation
     float                         end = std::numeric_limits<float>::min();
     float                         currentTime = 0.0f;
 };
+
+
 //模型数据
 struct ModelData {
     std::string name;
@@ -222,6 +224,7 @@ struct ModelData {
     std::vector<std::string> images;
     std::vector<Material> materials;
     std::vector<Node*> linearNodeHierarchy;
+    std::vector<Node*> nodes;
     glm::vec3 aabbMin = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 aabbMax = glm::vec3(-std::numeric_limits<float>::max());
 };

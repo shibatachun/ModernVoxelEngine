@@ -17,6 +17,8 @@ namespace vulkan
 		
 	public:
 		bool													_framebufferResized = false;
+
+	
 	private:
 		const VkPresentModeKHR									_presentMode;
 		GLFWwindow*												_window;
@@ -28,7 +30,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::DebugUtilsMessenger>		_debugMessenger;
 		std::unique_ptr<class vulkan::Device>					_devices;
 		std::unique_ptr<class vulkan::SwapChain>				_swapchain;
-		std::unique_ptr<class vulkan::GraphicPipelineManager>			_graphicsPipline;
+		std::unique_ptr<class vulkan::GraphicPipelineManager>	_graphicsPipline;
 		std::unique_ptr<class vulkan::RenderPass>				_renderPass;
 		std::unique_ptr<class vulkan::CommandPoolManager>		_commandPools;
 		std::unique_ptr<class vulkan::DescriptorLayoutManager>	_descriptorLayouts;
@@ -49,8 +51,15 @@ namespace vulkan
 		std::vector<VkDeviceMemory>								_uniformBuffersMemory;
 		std::vector<void*>										_uniformBuffersMapped;
 		
+		std::vector<ShaderData>									_uniformData;
 		uint32_t												_currentFrame = 0;
 		
+		
+		VkDescriptorSetLayout descriptorSetLayoutImage = VK_NULL_HANDLE;
+		VkDescriptorSetLayout descriptorSetLayoutUbo = VK_NULL_HANDLE;
+		VkMemoryPropertyFlags memoryPropertyFlags = 0;
+
+
 		std::vector<VulkanRenderObject>							_renderObjects;
 		
 	private:

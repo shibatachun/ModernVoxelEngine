@@ -298,6 +298,7 @@ namespace vulkan {
 
 	void getPipelineVertexInputState(const std::vector<VertexComponent> components,  graphicsPipelineCreateInfoPack& createinfo);
 
+
 	inline VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(
 		VkDescriptorType type,
 		VkShaderStageFlags stageFlags,
@@ -312,6 +313,23 @@ namespace vulkan {
 		return setLayoutBinding;
 	}
 
+	struct VulkanMesh {
+		std::vector<Mesh> offset;
+		std::string name;
+		struct UniformBuffer {
+			VkBuffer buffer;
+			VkDeviceMemory memory;
+			VkDescriptorBufferInfo descriptor;
+			VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+			void* mapped;
+		} uniformBuffer;
+
+		struct UniformBlock {
+			glm::mat4 matrix;
+			glm::mat4 jointMatrix[64]{};
+			float jointcount{ 0 };
+		} uniformBlock;
+	};
 	struct VulkanTexture {
 		VkSampler sampler{ VK_NULL_HANDLE };
 		VkImage image{ VK_NULL_HANDLE };
@@ -326,9 +344,51 @@ namespace vulkan {
 		void      updateDescriptor();
 	};
 
-	struct UniformBufferData {
+	struct Buffer
+	{
+		VkDevice device;
+		VkBuffer buffer = VK_NULL_HANDLE;
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		VkDescriptorBufferInfo descriptor;
+		VkDeviceSize size = 0;
+		VkDeviceSize alignment = 0;
+		void* mapped = nullptr;
+		/** @brief Usage flags to be filled by external source at buffer creation (to query at some later point) */
+		VkBufferUsageFlags usageFlags;
+		/** @brief Memory property flags to be filled by external source at buffer creation (to query at some later point) */
+		VkMemoryPropertyFlags memoryPropertyFlags;
+		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+		void unmap();
+		VkResult bind(VkDeviceSize offset = 0);
+		void setupDescriptor(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+		void copyTo(void* data, VkDeviceSize size);
+		VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+		VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+		void destroy();
+	};
+	struct ShaderData {
+		Buffer buffer;
+		struct Values {
+			glm::mat4 projection;
+			glm::mat4 view;
+			glm::vec4 lightPos = glm::vec4(0.0f, 2.5f, 0.0f, 1.0f);
+			glm::vec4 viewPos;
+		} values;
+	};
 
-		
+	struct SceneNode {
+		SceneNode* parent = nullptr;
+		uint32_t index;
+		std::vector<SceneNode*>children;
+		glm::mat4 matrix;
+		std::string name;
+		std::vector<VulkanMesh> mesh;
+		Skin* skin;
+		int32_t skinIndex = -1;
+		glm::vec3 translation{};
+		glm::vec3 scale{ 1.0f };
+		glm::quat rotation{};
+
 	};
 	struct VulkanRenderObject {
 		std::string name;
@@ -340,6 +400,7 @@ namespace vulkan {
 			VkDescriptorSetLayout matrices{ VK_NULL_HANDLE };
 			VkDescriptorSetLayout textures{ VK_NULL_HANDLE };
 		} descriptorSetLayouts;
+		std::vector<SceneNode*> sceneGraph;
 		std::vector<VulkanTexture> textures;
 		VkBuffer		vertexBuffer;
 		VkDeviceMemory	vertexmemory;

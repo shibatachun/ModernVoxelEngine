@@ -209,9 +209,9 @@ namespace vulkan {
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, VkCommandPool pool, bool free);
 
 		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
-		void CreateTextureSampler(VkSampler& sampler);
+		void CreateTextureSampler(VkSampler& sampler, uint32_t mipLevels);
 
-		VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+		VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
 		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
 		void DestroyVkImage(VkImage image, VkDeviceMemory memory);
@@ -355,7 +355,9 @@ namespace vulkan {
 		void CreatePerFrameDescriptorPool();
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
-		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorSet& desSet, std::string name);
+		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, std::string name);
+		void AllocateImageDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, std::vector<uint32_t> bindings);
+		void PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout);
 		VkDescriptorPool GetIndividualDescriptorPool(std::string poolname)
 		{
 			return _test_pool[poolname];
@@ -399,6 +401,7 @@ namespace vulkan {
 			void ConstructVulkanRenderObject();
 			void prepareNodeDescriptor(Node* node, VkDescriptorSetLayout descriptorSetLayout);
 			void CreateTextureImageView(VkImageView& imageview, VkImage image);
+			void ConstructSceneNode(SceneNode* parent, Node* sourceNode, VulkanRenderObject& object, ModelData& modelData);
 	
 	};
 }

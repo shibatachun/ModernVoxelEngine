@@ -383,39 +383,32 @@ void vulkan::VulkanRenderer::RecreateSwapChain()
 
 void vulkan::VulkanRenderer::CreateUniformBuffers()
 {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-	_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+	
+	_uniformData.resize(MAX_FRAMES_IN_FLIGHT);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		_bufferManager->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, bufferSize,
-			&_uniformBuffers[i], &_uniformBuffersMemory[i]);
-		vkMapMemory(_devices->Handle(), _uniformBuffersMemory[i], 0, bufferSize, 0, &_uniformBuffersMapped[i]);
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, sizeof(_uniformData[i].values),
+			&_uniformData[i].buffer.buffer, &_uniformData[i].buffer.memory);
+		_uniformData[i].buffer.map();
 	}
 } 
 
 void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 {
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-	{
-		VkDescriptorBufferInfo bufferInfo{};
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+
+	}
+	for (auto& x : object.sceneGraph) {
+		_descriptorPools->PrepareNodeDescriptor(x, object.descriptorSetLayouts.matrices);
+	}
+
+		/*VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = _uniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
-		/*std::vector<VkDescriptorImageInfo> imageInfos;
-		imageInfos.reserve(object.textures.size());
-		for (auto& x : object.textures) {
-			VkDescriptorImageInfo imageinfo;
-			imageinfo.imageLayout = x.imageLayout;
-			imageinfo.imageView = x.view;
-			imageinfo.sampler = x.sampler;
-			imageInfos.push_back(imageinfo);
-		}*/
 		VkDescriptorImageInfo imageinfo;
 		imageinfo.imageLayout = object.textures[0].imageLayout;
 		imageinfo.imageView = object.textures[0].view;
@@ -443,8 +436,8 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 		descriptorWrites.push_back(descriptorWrit1);
 		descriptorWrites.push_back(descriptorWrit2);
 
-		vkUpdateDescriptorSets(_devices->Handle(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-	}
+		vkUpdateDescriptorSets(_devices->Handle(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);*/
+	
 }
 
 void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)

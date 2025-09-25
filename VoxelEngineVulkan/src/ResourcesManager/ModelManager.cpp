@@ -680,6 +680,10 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 		if (parent != nullptr) {
 			parent->children.push_back(newNode);
 		}
+		else
+		{
+			model.nodes.push_back(newNode);
+		}
 		model.linearNodeHierarchy.push_back(newNode);
 		
 	}

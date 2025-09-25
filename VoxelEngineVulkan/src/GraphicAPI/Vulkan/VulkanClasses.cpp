@@ -638,7 +638,7 @@ void vulkan::SwapChain::CreateSwapChain(VkPresentModeKHR presentationMode)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 		Check(vkCreateImageView(_device.Handle(), &createInfo, nullptr, &_imageViews[i]), "Create image view");*/
-		_imageViews[i] = _bufferManager.CreateImageView(_images[i],surfaceFormat.format,VK_IMAGE_ASPECT_COLOR_BIT);
+		_imageViews[i] = _bufferManager.CreateImageView(_images[i],surfaceFormat.format,VK_IMAGE_ASPECT_COLOR_BIT,0);
 	}
 
 	const auto& debugUtils = _device.DebugUtils();
@@ -814,7 +814,7 @@ void vulkan::SwapChain::CreateDepthResources()
 		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
 		&_depthImage, &_depthImageMemory);
-	_depthImageView = _bufferManager.CreateImageView(_depthImage, depthFormat,VK_IMAGE_ASPECT_DEPTH_BIT);
+	_depthImageView = _bufferManager.CreateImageView(_depthImage, depthFormat,VK_IMAGE_ASPECT_DEPTH_BIT,0);
 	_bufferManager.transitionImageLayout(_depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, QueueFamily::GRAPHIC);
 	
 }
@@ -1302,10 +1302,46 @@ void vulkan::DescriptorPoolManager::CreatePoolForIndividualObject(uint32_t uboCo
 	_test_pool.emplace(objectName, pool);
 }
 
-void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorSet& desSet,std::string name)
+void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout& layout,VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, std::string name)
 {
 	VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_test_pool[name], &layout, 1);
 	Check(vkAllocateDescriptorSets(_device.Handle(), &allocInfo, &desSet), "Allocate Descriptor Set");
+	VkWriteDescriptorSet writeDescriptorSet = initializers::writeDescriptorSet(desSet, type, binding, &desInfo);
+
+}
+
+void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, std::vector<uint32_t> bindings)
+{
+}
+
+void vulkan::DescriptorPoolManager::PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout)
+{
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		if (!node->mesh.empty()) {
+			for (auto& x : node->mesh) {
+				VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+				descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocInfo.descriptorPool = _PerFramePool[i];
+				descriptorSetAllocInfo.pSetLayouts = &descriptorSetlayout;
+				descriptorSetAllocInfo.descriptorSetCount = 1;
+				Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &x.uniformBuffer.descriptorSet), "Allocate descriptor set");
+
+				VkWriteDescriptorSet writeDescriptorSet{};
+				writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeDescriptorSet.descriptorCount = 1;
+				writeDescriptorSet.dstSet = x.uniformBuffer.descriptorSet;
+				writeDescriptorSet.dstBinding = 0;
+				writeDescriptorSet.pBufferInfo = &x.uniformBuffer.descriptor;
+
+				vkUpdateDescriptorSets(_device.Handle(), 1, &writeDescriptorSet, 0, nullptr);
+			}
+			
+		}
+		for (auto& child : node->children) {
+			PrepareNodeDescriptor(child, descriptorSetlayout);
+		}
+	}
 
 }
 
@@ -1640,44 +1676,38 @@ uint32_t vulkan::BufferManager::findMemoryType(uint32_t typeBits, VkMemoryProper
 }
 
 
-void vulkan::BufferManager::CreateTextureSampler(VkSampler& sampler)
+void vulkan::BufferManager::CreateTextureSampler(VkSampler& sampler, uint32_t mipLevels)
 {
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	
-	samplerInfo.maxAnisotropy = device.GetPhyDeviceProperty().properties.limits.maxSamplerAnisotropy;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	samplerInfo.maxAnisotropy = 1.0;
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.maxLod = (float)mipLevels;
+	samplerInfo.maxAnisotropy = 8.0f;
+	samplerInfo.anisotropyEnable = VK_TRUE;
 	Check(vkCreateSampler(device.Handle(), &samplerInfo, nullptr, &sampler), "Create Sampler");
 
 }
 
-VkImageView vulkan::BufferManager::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
+VkImageView vulkan::BufferManager::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = aspectFlags;
-	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
-	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	viewInfo.subresourceRange.layerCount = 1;
-
+	viewInfo.subresourceRange.levelCount = mipLevels;
+	viewInfo.flags = aspectFlags;
 	VkImageView imageView;
 	Check(vkCreateImageView(device.Handle(), &viewInfo, nullptr, &imageView), "Create imageView");
 	return imageView;
@@ -1771,9 +1801,13 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 {
 	ModelData modeldata = _assetMnanger.getModelDataByName(raw_model_name);
 	VulkanRenderObject renderObject;
-
+	
 	renderObject.name = name;
 	
+	for (const auto& x : modeldata.nodes)
+	{
+		ConstructSceneNode(nullptr, x, renderObject, modeldata);
+	}
 	for (const auto& x : textureFiles) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
@@ -1781,7 +1815,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 		texture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
 		CreateTextureImageView(texture.view, texture.image);
-		_BufferManager.CreateTextureSampler(texture.sampler);
+		_BufferManager.CreateTextureSampler(texture.sampler, image.mipLevels);
 		texture.updateDescriptor();
 		renderObject.textures.push_back(texture);
 	}
@@ -1814,16 +1848,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 		renderObject.descriptorSetLayouts.textures = _descriptorLayoutManager.CreateDescriptorSetLayout(configFragment);
 
 	}
-	//设置vertex相关的descriptor Set
-	{
-		VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_descriptorPoolManager.GetIndividualDescriptorPool(name),&renderObject.descriptorSetLayouts.matrices,1);
-		
-	}
-
-	//设置fragment相关的descriptor Set
-	{
-
-	}
+	
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 	renderObject.pipeline = pipeline;
@@ -1868,7 +1893,28 @@ void vulkan::VulkanResouceManager::prepareNodeDescriptor(Node* node, VkDescripto
 
 void vulkan::VulkanResouceManager::CreateTextureImageView(VkImageView& imageview, VkImage image)
 {
-	imageview = _BufferManager.CreateImageView(image, VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT);
+	imageview = _BufferManager.CreateImageView(image, VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,0);
+
+}
+
+void vulkan::VulkanResouceManager::ConstructSceneNode(SceneNode* parent, Node* sourceNode, VulkanRenderObject& object, ModelData& modelData)
+{
+	SceneNode* node = new SceneNode{};
+	
+	node->parent = parent;
+	
+	for (auto& x : sourceNode->children) {
+		ConstructSceneNode(node, x, object, modelData);
+	}
+	if (sourceNode->meshID != -1) {
+		const auto& meshdata = modelData.meshdatas[sourceNode->meshID];
+		VulkanMesh mesh{ .offset = meshdata.meshes };
+		mesh.name = meshdata.name;
+	}
+	if (node->parent) {
+		node->parent->children.push_back(node);
+	}
+	object.sceneGraph.push_back(node);
 
 }
 
