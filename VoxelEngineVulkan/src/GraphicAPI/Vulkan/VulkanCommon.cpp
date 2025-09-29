@@ -197,3 +197,5 @@ void vulkan::Buffer::destroy()
 		vkFreeMemory(device, memory, nullptr);
 	}
 }
+
+

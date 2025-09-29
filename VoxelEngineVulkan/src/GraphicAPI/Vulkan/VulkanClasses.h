@@ -388,6 +388,7 @@ namespace vulkan {
 				DescriptorPoolManager& descPoolManager, 
 				DescriptorLayoutManager& descLayoutManager, 
 				GraphicPipelineManager& graphicPipelineManager,
+				const VkDevice& device,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
@@ -395,7 +396,7 @@ namespace vulkan {
 			const VulkanRenderObject& GetRenderObject(std::string name);
 			const std::unordered_map<std::string, VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
 		private:
-
+			const VkDevice&																			_device;
 			std::unordered_map<std::string, VulkanRenderObject>									_renderObjects;
 			BufferManager&																		_BufferManager;
 			DescriptorPoolManager&																_descriptorPoolManager;

@@ -251,7 +251,7 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 //Set up Vulkan Resouce Manager
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
-	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, _assetManager));
+	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, _devices->Handle(), _assetManager));
 
 }
 
@@ -403,7 +403,8 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 	for (auto& x : object.sceneGraph) {
 		_descriptorPools->PrepareNodeDescriptor(x, object.descriptorSetLayouts.matrices);
 	}
-
+	
+	std::cout << "stop" << std::endl;
 		/*VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = _uniformBuffers[i];
 		bufferInfo.offset = 0;

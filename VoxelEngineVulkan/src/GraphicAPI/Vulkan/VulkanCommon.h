@@ -382,6 +382,8 @@ namespace vulkan {
 			glm::mat4 jointMatrix[64]{};
 			float jointcount{ 0 };
 		} uniformBlock;
+
+	
 	};
 	struct VulkanTexture {
 		VkSampler sampler{ VK_NULL_HANDLE };
@@ -435,7 +437,7 @@ namespace vulkan {
 		std::vector<SceneNode*>children;
 		glm::mat4 matrix;
 		std::string name;
-		std::vector<VulkanMesh> mesh;
+		std::vector<VulkanMesh*> mesh;
 		Skin* skin;
 		int32_t skinIndex = -1;
 		glm::vec3 translation{};
@@ -454,6 +456,7 @@ namespace vulkan {
 			VkDescriptorSetLayout textures{ VK_NULL_HANDLE };
 		} descriptorSetLayouts;
 		std::vector<SceneNode*> sceneGraph;
+		std::vector<VulkanMesh*> meshes;
 		std::vector<VulkanTexture> textures;
 		VkBuffer		vertexBuffer;
 		VkDeviceMemory	vertexmemory;

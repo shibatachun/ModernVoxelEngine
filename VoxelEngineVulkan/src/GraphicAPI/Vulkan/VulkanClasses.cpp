@@ -1324,15 +1324,15 @@ void vulkan::DescriptorPoolManager::PrepareNodeDescriptor(SceneNode* node, VkDes
 				descriptorSetAllocInfo.descriptorPool = _PerFramePool[i];
 				descriptorSetAllocInfo.pSetLayouts = &descriptorSetlayout;
 				descriptorSetAllocInfo.descriptorSetCount = 1;
-				Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &x.uniformBuffer.descriptorSet), "Allocate descriptor set");
+				Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &x->uniformBuffer.descriptorSet), "Allocate descriptor set");
 
 				VkWriteDescriptorSet writeDescriptorSet{};
 				writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 				writeDescriptorSet.descriptorCount = 1;
-				writeDescriptorSet.dstSet = x.uniformBuffer.descriptorSet;
+				writeDescriptorSet.dstSet = x->uniformBuffer.descriptorSet;
 				writeDescriptorSet.dstBinding = 0;
-				writeDescriptorSet.pBufferInfo = &x.uniformBuffer.descriptor;
+				writeDescriptorSet.pBufferInfo = &x->uniformBuffer.descriptor;
 
 				vkUpdateDescriptorSets(_device.Handle(), 1, &writeDescriptorSet, 0, nullptr);
 			}
@@ -1950,16 +1950,18 @@ void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, Vk
 
 
 
-vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager, 
-	DescriptorPoolManager& descPoolManager, 
-	DescriptorLayoutManager& descLayoutManager, 
-	GraphicPipelineManager& graphicPipelineManager, 
-	const asset::AssetManager& assetManager):
+vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager,
+	DescriptorPoolManager& descPoolManager,
+	DescriptorLayoutManager& descLayoutManager,
+	GraphicPipelineManager& graphicPipelineManager,
+	const VkDevice& device,
+	const asset::AssetManager& assetManager) :
 	_BufferManager(bufferManager),
-	_descriptorPoolManager(descPoolManager), 
-	_descriptorLayoutManager(descLayoutManager), 
+	_descriptorPoolManager(descPoolManager),
+	_descriptorLayoutManager(descLayoutManager),
 	_graphicPipelineManager(graphicPipelineManager),
-	_assetMnanger(assetManager)
+	_assetMnanger(assetManager),
+	_device(device)
 {
 }
 
@@ -2048,6 +2050,31 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 
 	renderObject.name = name;
 
+	for (const auto& x : modeldata.linearNodeHierarchy) {
+		
+		if (x->meshID != -1) {
+			glm::mat4 m = x->getMatrix();
+			const auto& meshdata = modeldata.meshdatas[x->meshID];
+			VulkanMesh* vkmesh = new VulkanMesh{};
+			vkmesh->offset = meshdata.meshes;
+			vkmesh->uniformBlock.matrix = meshdata.localTransform;
+			_BufferManager.createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				sizeof(vkmesh->uniformBlock),
+				&vkmesh->uniformBuffer.buffer,
+				&vkmesh->uniformBuffer.memory,
+				&vkmesh->uniformBlock);
+			
+			Check(vkMapMemory(_device, vkmesh->uniformBuffer.memory, 0, sizeof(vkmesh->uniformBlock), 0, &vkmesh->uniformBuffer.mapped), "vkmap memeory uniform buffer");
+			vkmesh->uniformBuffer.descriptor = { vkmesh->uniformBuffer.buffer, 0 , sizeof(vkmesh->uniformBlock) };
+			vkmesh->name = meshdata.name;
+			memcpy(vkmesh->uniformBuffer.mapped, &m, sizeof(glm::mat4));
+			renderObject.meshes.push_back(vkmesh);
+		}
+		
+		
+
+	}
 	for (const auto& x : modeldata.nodes)
 	{
 		ConstructSceneNode(nullptr, x, renderObject, modeldata);
@@ -2056,13 +2083,13 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	for (const auto& x : modeldata.images) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
-		VulkanTexture texture;
-		texture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
-		_BufferManager.CreateImageView(texture.view, texture.image, FromFormat(image.format), VK_IMAGE_ASPECT_COLOR_BIT, image.mipLevels);
-		_BufferManager.CreateTextureSampler(texture.sampler, image.mipLevels);
-		texture.updateDescriptor();
-		renderObject.textures.push_back(texture);
+		VulkanTexture vktexture;
+		vktexture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		_BufferManager.CreateVulkanImageBuffer(image, vktexture.imageLayout, vktexture.image, vktexture.deviceMemory);
+		_BufferManager.CreateImageView(vktexture.view, vktexture.image, FromFormat(image.format), VK_IMAGE_ASPECT_COLOR_BIT, image.mipLevels);
+		_BufferManager.CreateTextureSampler(vktexture.sampler, image.mipLevels);
+		vktexture.updateDescriptor();
+		renderObject.textures.push_back(vktexture);
 	}
 
 
@@ -2079,6 +2106,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	{
 		LayoutConfig configVertex{};
 		configVertex.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		configVertex.UpdateAllArray();
 		renderObject.descriptorSetLayouts.matrices = _descriptorLayoutManager.CreateDescriptorSetLayout(configVertex);
 		for (auto node : modeldata.linearNodeHierarchy) {
 			prepareNodeDescriptor(node, _descriptorLayoutManager.GetDescriptorSetLayout(configVertex));
@@ -2151,9 +2179,7 @@ void vulkan::VulkanResouceManager::ConstructSceneNode(SceneNode* parent, Node* s
 		ConstructSceneNode(node, x, object, modelData);
 	}
 	if (sourceNode->meshID != -1) {
-		const auto& meshdata = modelData.meshdatas[sourceNode->meshID];
-		VulkanMesh mesh{ .offset = meshdata.meshes };
-		mesh.name = meshdata.name;
+		node->mesh.push_back(object.meshes[sourceNode->meshID]);
 	}
 	if (node->parent) {
 		node->parent->children.push_back(node);
