@@ -282,6 +282,59 @@ namespace vulkan {
         }
     }
 
+	inline VkFormat FromFormat(TextureFormat format) {
+		switch (format) {
+		case TextureFormat::RGBA8_UNORM:
+			return VK_FORMAT_R8G8B8A8_UNORM;
+		case TextureFormat::RGBA8_SRGB:
+			return VK_FORMAT_R8G8B8A8_SRGB;
+		case TextureFormat::BGRA8_UNORM:
+			return VK_FORMAT_B8G8R8A8_UNORM;
+		case TextureFormat::BGRA8_SRGB:
+			return VK_FORMAT_B8G8R8A8_SRGB;
+		case TextureFormat::RGB8_UNORM:
+			return VK_FORMAT_R8G8B8_UNORM;
+		case TextureFormat::R8_UNORM:
+			return VK_FORMAT_R8_UNORM;
+		case TextureFormat::RGBA16F:
+			return VK_FORMAT_R16G16B16A16_SFLOAT;
+		case TextureFormat::RGBA32F:
+			return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+			// Block compressed (BCn, aka DXT formats)
+		case TextureFormat::BC1_RGB_UNORM:
+			return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+		case TextureFormat::BC1_RGB_SRGB:
+			return VK_FORMAT_BC1_RGB_SRGB_BLOCK;
+		case TextureFormat::BC3_RGBA_UNORM:
+			return VK_FORMAT_BC3_UNORM_BLOCK;
+		case TextureFormat::BC3_RGBA_SRGB:
+			return VK_FORMAT_BC3_SRGB_BLOCK;
+		case TextureFormat::BC4_R_UNORM:
+			return VK_FORMAT_BC4_UNORM_BLOCK;
+		case TextureFormat::BC5_RG_UNORM:
+			return VK_FORMAT_BC5_UNORM_BLOCK;
+		case TextureFormat::BC7_RGBA_UNORM:
+			return VK_FORMAT_BC7_UNORM_BLOCK;
+		case TextureFormat::BC7_RGBA_SRGB:
+			return VK_FORMAT_BC7_SRGB_BLOCK;
+
+			// ETC2
+		case TextureFormat::ETC2_RGBA8_UNORM:
+			return VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK;
+		case TextureFormat::ETC2_RGBA8_SRGB:
+			return VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK;
+
+			// ASTC
+		case TextureFormat::ASTC_4x4_UNORM:
+			return VK_FORMAT_ASTC_4x4_UNORM_BLOCK;
+		case TextureFormat::ASTC_4x4_SRGB:
+			return VK_FORMAT_ASTC_4x4_SRGB_BLOCK;
+
+		default:
+			return VK_FORMAT_UNDEFINED;
+		}
+	}
     inline VkVertexInputBindingDescription getBindingDescription(){
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;

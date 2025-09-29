@@ -638,7 +638,7 @@ void vulkan::SwapChain::CreateSwapChain(VkPresentModeKHR presentationMode)
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 		Check(vkCreateImageView(_device.Handle(), &createInfo, nullptr, &_imageViews[i]), "Create image view");*/
-		_imageViews[i] = _bufferManager.CreateImageView(_images[i],surfaceFormat.format,VK_IMAGE_ASPECT_COLOR_BIT,0);
+		_bufferManager.CreateImageView(_imageViews[i],_images[i],surfaceFormat.format,VK_IMAGE_ASPECT_COLOR_BIT,1);
 	}
 
 	const auto& debugUtils = _device.DebugUtils();
@@ -810,12 +810,12 @@ void vulkan::SwapChain::CreateDepthResources()
 		};
 	VkFormat depthFormat = findDepthFormat();
 	_depthFormat = depthFormat;
-	_bufferManager.createImageBuffer(_extent.width, _extent.height, depthFormat, 
+	_bufferManager.createImageBuffer(_extent.width, _extent.height,1, depthFormat, 
 		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
 		&_depthImage, &_depthImageMemory);
-	_depthImageView = _bufferManager.CreateImageView(_depthImage, depthFormat,VK_IMAGE_ASPECT_DEPTH_BIT,0);
-	_bufferManager.transitionImageLayout(_depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, QueueFamily::GRAPHIC);
+	 _bufferManager.CreateImageView(_depthImageView,_depthImage, depthFormat,VK_IMAGE_ASPECT_DEPTH_BIT,1);
+	_bufferManager.transitionImageLayout(_depthImage, depthFormat,1, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, QueueFamily::GRAPHIC);
 	
 }
 
@@ -1397,31 +1397,32 @@ void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex1>& vertexData
 	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
 }
 
-void vulkan::BufferManager::CreateVulkanImageBuffer(Image image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory)
+void vulkan::BufferManager::CreateVulkanImageBuffer(const Image& image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 	VkDeviceSize image_size = image_data.texWidth * image_data.texHeight * 4;
+	VkFormat format = FromFormat(image_data.format);
 	createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		image_size,
+		image_data.size,
 		&stagingBuffer,
 		&stagingBufferMemory,
 		image_data.pixel);
-	createImageBuffer(image_data.texWidth, image_data.texHeight,
-		VK_FORMAT_R8G8B8A8_SRGB,
+	createImageBuffer(image_data.texWidth, image_data.texHeight, image_data.mipLevels,
+		format,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		&image,
 		&memory);
 
 	image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, QueueFamily::TRANSFER);
+	transitionImageLayout(image, format,image_data.mipLevels, image_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, QueueFamily::TRANSFER);
 	//transitionImageLayout1(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	image_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	copyBufferToImage(stagingBuffer, image, image_data.subresource,static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight), QueueFamily::TRANSFER);
 	//copyBufferToImage1(stagingBuffer, image, static_cast<uint32_t>(image_data.texWidth), static_cast<uint32_t>(image_data.texHeight));
-	transitionImageLayout(image, VK_FORMAT_R8G8B8A8_SRGB, image_layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, QueueFamily::GRAPHIC);
+	transitionImageLayout(image, format, image_data.mipLevels, image_layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, QueueFamily::GRAPHIC);
 	//transitionImageLayout1(image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -1474,8 +1475,9 @@ void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemory
 	Check(vkBindBufferMemory(device.Handle(), *buffer, *memory, 0), "Bind Memory");
 }
 
-void vulkan::BufferManager::createImageBuffer(uint32_t width,
-	uint32_t height, VkFormat format, VkImageTiling tiling, 
+void vulkan::BufferManager::createImageBuffer(
+	uint32_t width,uint32_t height, uint32_t mipLevels,
+	VkFormat format, VkImageTiling tiling, 
 	VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* imageMemory)
 {
 	VkImageCreateInfo imageInfo{};
@@ -1484,7 +1486,7 @@ void vulkan::BufferManager::createImageBuffer(uint32_t width,
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = 1;
+	imageInfo.mipLevels = mipLevels;
 	imageInfo.arrayLayers = 1;
 	imageInfo.format = format;
 	imageInfo.tiling = tiling;
@@ -1510,48 +1512,114 @@ void vulkan::BufferManager::createImageBuffer(uint32_t width,
 
 }
 
-void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family)
+void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format, uint32_t miplevel, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family)
 {
 	VkCommandBuffer cmdBuffer = createInstantCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, commandPools.GetCommandPool(family), 1, true);
 	VkImageMemoryBarrier barrier{};
-	VkPipelineStageFlags sourceStage;
-	VkPipelineStageFlagBits destinationStage;
+	VkPipelineStageFlags sourceStage = 65536U;
+	VkPipelineStageFlags destinationStage = 65536U;
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.oldLayout = oldLayout;
 	barrier.newLayout = newLayout;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.image = image;
+	
 
 	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = 1;
-	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.levelCount = miplevel;
 	barrier.subresourceRange.layerCount = 1;
-	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
-
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	}
-	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	}
-	else
+	switch (oldLayout)
 	{
-		throw std::invalid_argument("unsupported layout transition");
-	};
+	case VK_IMAGE_LAYOUT_UNDEFINED:
+		// Image layout is undefined (or does not matter)
+		// Only valid as initial layout
+		// No flags required, listed only for completeness
+		barrier.srcAccessMask = 0;
+		
+		break;
+
+	case VK_IMAGE_LAYOUT_PREINITIALIZED:
+		// Image is preinitialized
+		// Only valid as initial layout for linear images, preserves memory contents
+		// Make sure host writes have been finished
+		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		// Image is a color attachment
+		// Make sure any writes to the color buffer have been finished
+		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		// Image is a depth/stencil attachment
+		// Make sure any writes to the depth/stencil buffer have been finished
+		barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		// Image is a transfer source
+		// Make sure any reads from the image have been finished
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		// Image is a transfer destination
+		// Make sure any writes to the image have been finished
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		// Image is read by a shader
+		// Make sure any shader reads from the image have been finished
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		break;
+	default:
+		// Other source layouts aren't handled (yet)
+		break;
+	}
+	switch (newLayout)
+	{
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		// Image will be used as a transfer destination
+		// Make sure any writes to the image have been finished
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		// Image will be used as a transfer source
+		// Make sure any reads from the image have been finished
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		// Image will be used as a color attachment
+		// Make sure any writes to the color buffer have been finished
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		// Image layout will be used as a depth/stencil attachment
+		// Make sure any writes to depth/stencil buffer have been finished
+		barrier.dstAccessMask = barrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		// Image will be read in a shader (sampler, input attachment)
+		// Make sure any writes to the image have been finished
+		if (barrier.srcAccessMask == 0)
+		{
+			barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+		}
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		break;
+	default:
+		// Other source layouts aren't handled (yet)
+		break;
+	}
+
 	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 		if (hasStencilComponent(format)) {
@@ -1579,6 +1647,122 @@ void vulkan::BufferManager::transitionImageLayout(VkImage image, VkFormat format
 
 	}
 
+}
+
+void vulkan::BufferManager::setImageLayout(VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout, VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask)
+{
+	// Create an image barrier object
+	VkImageMemoryBarrier imageMemoryBarrier = initializers::imageMemoryBarrier();
+	imageMemoryBarrier.oldLayout = oldImageLayout;
+	imageMemoryBarrier.newLayout = newImageLayout;
+	imageMemoryBarrier.image = image;
+	imageMemoryBarrier.subresourceRange = subresourceRange;
+
+	// Source layouts (old)
+	// Source access mask controls actions that have to be finished on the old layout
+	// before it will be transitioned to the new layout
+	switch (oldImageLayout)
+	{
+	case VK_IMAGE_LAYOUT_UNDEFINED:
+		// Image layout is undefined (or does not matter)
+		// Only valid as initial layout
+		// No flags required, listed only for completeness
+		imageMemoryBarrier.srcAccessMask = 0;
+	
+		break;
+
+	case VK_IMAGE_LAYOUT_PREINITIALIZED:
+		// Image is preinitialized
+		// Only valid as initial layout for linear images, preserves memory contents
+		// Make sure host writes have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		// Image is a color attachment
+		// Make sure any writes to the color buffer have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		// Image is a depth/stencil attachment
+		// Make sure any writes to the depth/stencil buffer have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		// Image is a transfer source
+		// Make sure any reads from the image have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		// Image is a transfer destination
+		// Make sure any writes to the image have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		// Image is read by a shader
+		// Make sure any shader reads from the image have been finished
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		break;
+	default:
+		// Other source layouts aren't handled (yet)
+		break;
+	}
+
+	// Target layouts (new)
+	// Destination access mask controls the dependency for the new image layout
+	switch (newImageLayout)
+	{
+	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+		// Image will be used as a transfer destination
+		// Make sure any writes to the image have been finished
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+		// Image will be used as a transfer source
+		// Make sure any reads from the image have been finished
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+		// Image will be used as a color attachment
+		// Make sure any writes to the color buffer have been finished
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		// Image layout will be used as a depth/stencil attachment
+		// Make sure any writes to depth/stencil buffer have been finished
+		imageMemoryBarrier.dstAccessMask = imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		break;
+
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		// Image will be read in a shader (sampler, input attachment)
+		// Make sure any writes to the image have been finished
+		if (imageMemoryBarrier.srcAccessMask == 0)
+		{
+			imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+		}
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		break;
+	default:
+		// Other source layouts aren't handled (yet)
+		break;
+	}
+
+	// Put barrier inside setup command buffer
+	vkCmdPipelineBarrier(
+		cmdbuffer,
+		srcStageMask,
+		dstStageMask,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &imageMemoryBarrier);
 }
 
 bool vulkan::BufferManager::hasStencilComponent(VkFormat format)
@@ -1697,20 +1881,19 @@ void vulkan::BufferManager::CreateTextureSampler(VkSampler& sampler, uint32_t mi
 
 }
 
-VkImageView vulkan::BufferManager::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+void vulkan::BufferManager::CreateImageView(VkImageView& view, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.layerCount = 1;
 	viewInfo.subresourceRange.levelCount = mipLevels;
-	viewInfo.flags = aspectFlags;
-	VkImageView imageView;
-	Check(vkCreateImageView(device.Handle(), &viewInfo, nullptr, &imageView), "Create imageView");
-	return imageView;
+	viewInfo.flags = 0;
+	Check(vkCreateImageView(device.Handle(), &viewInfo, nullptr, &view), "Create imageView");
+	
 }
 
 
@@ -1795,8 +1978,7 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 
 void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	std::string name,  
-	VkPipeline pipeline, 
-	VkPipelineLayout layout, std::string raw_model_name, 
+	std::string raw_model_name, 
 	std::vector<std::string> textureFiles)
 {
 	ModelData modeldata = _assetMnanger.getModelDataByName(raw_model_name);
@@ -1851,12 +2033,74 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
-	renderObject.pipeline = pipeline;
-	renderObject.Pipelinelayout = layout;
+
 	
 	
 	
 	
+	_renderObjects[name] = renderObject;
+}
+
+void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name, std::string raw_model_name)
+{
+	ModelData modeldata = _assetMnanger.getModelDataByName(raw_model_name);
+	VulkanRenderObject renderObject;
+
+	renderObject.name = name;
+
+	for (const auto& x : modeldata.nodes)
+	{
+		ConstructSceneNode(nullptr, x, renderObject, modeldata);
+	}
+
+	for (const auto& x : modeldata.images) {
+		const Image& image = _assetMnanger.getImageDataByName(x);
+
+		VulkanTexture texture;
+		texture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
+		_BufferManager.CreateImageView(texture.view, texture.image, FromFormat(image.format), VK_IMAGE_ASPECT_COLOR_BIT, image.mipLevels);
+		_BufferManager.CreateTextureSampler(texture.sampler, image.mipLevels);
+		texture.updateDescriptor();
+		renderObject.textures.push_back(texture);
+	}
+
+
+	//上传vertex indice buffer数据
+	{
+		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
+		_BufferManager.CreateIndexBuffer1(modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+	}
+	//生成DescriptorPool
+	{
+		_descriptorPoolManager.CreatePoolForIndividualObject(1, modeldata.imageCount + 1, name);
+	}
+	//生成vertex shader的关于矩阵变换的layout
+	{
+		LayoutConfig configVertex{};
+		configVertex.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		renderObject.descriptorSetLayouts.matrices = _descriptorLayoutManager.CreateDescriptorSetLayout(configVertex);
+		for (auto node : modeldata.linearNodeHierarchy) {
+			prepareNodeDescriptor(node, _descriptorLayoutManager.GetDescriptorSetLayout(configVertex));
+		}
+	}
+	//生成fragment shader的关于material的layout
+	{
+		LayoutConfig configFragment{};
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0));
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1));
+		configFragment.UpdateAllArray();
+		renderObject.descriptorSetLayouts.textures = _descriptorLayoutManager.CreateDescriptorSetLayout(configFragment);
+
+	}
+
+
+	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
+
+
+
+
+
 	_renderObjects[name] = renderObject;
 }
 
@@ -1893,7 +2137,7 @@ void vulkan::VulkanResouceManager::prepareNodeDescriptor(Node* node, VkDescripto
 
 void vulkan::VulkanResouceManager::CreateTextureImageView(VkImageView& imageview, VkImage image)
 {
-	imageview = _BufferManager.CreateImageView(image, VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,0);
+	_BufferManager.CreateImageView(imageview,image, VK_FORMAT_R8G8B8A8_SRGB,VK_IMAGE_ASPECT_COLOR_BIT,0);
 
 }
 

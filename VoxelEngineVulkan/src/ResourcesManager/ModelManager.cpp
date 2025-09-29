@@ -15,7 +15,7 @@ asset::ModelManager::ModelManager()
 	loadobj("res/models/viking_room.obj");
 	//loadgltf("res/models/Zzz/zzz_alice/alice.pmx");
 	//loadgltf("res/models/sponza/sponza.gltf");
-	loadgltf_test("sponza","res/models/sponza/sponza.gltf");
+	loadgltf_test("Sponza","res/models/sponza/sponza.gltf");
 	loadgltf_test("sky","res/models/sphere.gltf");
 	loadImage("sky", "res/textures/skysphere_rgba.ktx", true);
 	//CollectTexturePaths("res/models/sponza/sponza.gltf");

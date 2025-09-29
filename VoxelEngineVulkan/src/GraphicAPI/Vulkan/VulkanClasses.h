@@ -189,7 +189,7 @@ namespace vulkan {
 			VkBuffer* buffer,
 			VkDeviceMemory* memory,
 			void* data = nullptr);
-		void createImageBuffer(uint32_t width, uint32_t height,
+		void createImageBuffer(uint32_t width, uint32_t height,  uint32_t mipLevels,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 			VkMemoryPropertyFlags properties,
 			VkImage* image,
@@ -197,9 +197,16 @@ namespace vulkan {
 		const VkDevice& GetVkDevice() { return device.Handle(); };
 		void CreateIndexBuffer1(std::vector<uint32_t>& indiceData, VkBuffer& buffer, VkDeviceMemory& memory);
 		void CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory);
-		void CreateVulkanImageBuffer(Image image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory);
+		void CreateVulkanImageBuffer(const Image& image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory);
 
-		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family);
+		void transitionImageLayout(VkImage image, VkFormat format, uint32_t miplevel, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family);
+		void setImageLayout(VkCommandBuffer cmdbuffer,
+			VkImage image,
+			VkImageLayout oldImageLayout,
+			VkImageLayout newImageLayout,
+			VkImageSubresourceRange subresourceRange,
+			VkPipelineStageFlags srcStageMask,
+			VkPipelineStageFlags dstStageMask);
 		bool hasStencilComponent(VkFormat format);
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, QueueFamily family);
@@ -211,7 +218,7 @@ namespace vulkan {
 		uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr) const;
 		void CreateTextureSampler(VkSampler& sampler, uint32_t mipLevels);
 
-		VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+		void CreateImageView(VkImageView& view, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
 		void DestroyBuffer(VkBuffer buffer, VkDeviceMemory memory);
 		void DestroyVkImage(VkImage image, VkDeviceMemory memory);
@@ -383,7 +390,8 @@ namespace vulkan {
 				GraphicPipelineManager& graphicPipelineManager,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
-			void ConstructVulkanRenderObject(std::string name, VkPipeline pipeline, VkPipelineLayout layout, std::string raw_model_name, std::vector<std::string> textureFiles);
+			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
+			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name);
 			const VulkanRenderObject& GetRenderObject(std::string name);
 			const std::unordered_map<std::string, VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
 		private:

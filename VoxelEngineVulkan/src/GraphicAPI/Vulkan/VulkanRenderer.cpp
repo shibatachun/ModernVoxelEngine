@@ -127,7 +127,7 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 
 	CreateSyncObjects();
-	CreateUniformBuffers();
+	//CreateUniformBuffers();
 
 	PrepareRenderObject();
 	
@@ -467,9 +467,10 @@ bool vulkan::VulkanRenderer::IsMinimized() const
 void vulkan::VulkanRenderer::PrepareRenderObject()
 {
 	
-	_resouceManager->ConstructVulkanRenderObject("viking", _graphicsPipline->GetGraphicsPipeline("test_triangle_vulkan"),
-		_graphicsPipline->GetGraphicsPipelineLayout("default"),
-		"viking_room", { "viking" });
+	//_resouceManager->ConstructVulkanRenderObject("viking",
+	//	"viking_room", { "viking" });
+	_resouceManager->ConstructVulkanRenderObject("Sponza",
+		"Sponza");
 
 	for (const auto& x : _resouceManager->GetRenderObjects()) {
 		ConfigureDescriptorSet(x.second);
