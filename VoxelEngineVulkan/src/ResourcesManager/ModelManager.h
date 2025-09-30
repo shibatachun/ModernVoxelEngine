@@ -12,8 +12,10 @@ class ModelManager
 public:
 	ModelManager();
 	~ModelManager();
-	const std::unordered_map<std::string, ModelData>& GetModeDatas() { return _model; };
-	const std::unordered_map<std::string, Image>& GetImageDatas() { return _ImageFile; };
+	const std::unordered_map<std::string, int32_t>& GetModeDatas() { return _modelsIdMapping; };
+	const ModelData& GetModelDataByName(std::string modelname) { return _models[utils::findInMap(_modelsIdMapping, modelname, {})]; }
+	const std::unordered_map<std::string, int32_t>& GetImageDatas() { return _imageFileIdMapping; };
+	const Image& GetImageDataByName(std::string imagename) { return _imageFile[utils::findInMap(_imageFileIdMapping, imagename, {})]; };
 	const void freeImage(unsigned char* pixel);
 private:
 	void processNode(aiNode* node, const aiScene* scene);
@@ -35,8 +37,12 @@ private:
 
 
 private:
-	std::unordered_map<std::string, ModelData>						_model;
-	std::unordered_map<std::string, Image>							_ImageFile;
+	uint32_t														_modelsCount;
+	uint32_t														_imageCount;
+	std::vector<ModelData>											_models;
+	std::unordered_map<std::string, int32_t>						_modelsIdMapping;
+	std::vector<Image>												_imageFile;
+	std::unordered_map<std::string, int32_t>						_imageFileIdMapping;
 
 	std::unordered_map<std::string, FileInfo>						_modelFilesInfo;
 	std::unordered_map<std::string, FileInfo>						_imageFilesInfo;

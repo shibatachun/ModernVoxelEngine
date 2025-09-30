@@ -403,8 +403,11 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 	for (auto& x : object.sceneGraph) {
 		_descriptorPools->PrepareNodeDescriptor(x, object.descriptorSetLayouts.matrices);
 	}
-	
-	std::cout << "stop" << std::endl;
+
+	for (auto& material : object.materials) {
+
+	}
+
 		/*VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = _uniformBuffers[i];
 		bufferInfo.offset = 0;

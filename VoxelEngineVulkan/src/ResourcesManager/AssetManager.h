@@ -10,8 +10,8 @@ namespace asset {
 		AssetManager();
 		~AssetManager();
 		const std::unordered_map<std::string, asset::shader>& getShaderAssets() const { return _shadersManager->GetShaderAssets(); };
-		const std::unordered_map<std::string, ModelData>& getModelDatas() const { return _modelManager->GetModeDatas(); };
-		const std::unordered_map<std::string, Image>& getImageDatas() { return _modelManager->GetImageDatas(); };
+		const std::unordered_map<std::string, int32_t>& getModelDatas() const { return _modelManager->GetModeDatas(); };
+		const std::unordered_map<std::string, int32_t>& getImageDatas() { return _modelManager->GetImageDatas(); };
 		
 		const asset::shader& getShaderByName (std::string) const;
 		const ModelData& getModelDataByName(std::string) const;

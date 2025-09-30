@@ -386,15 +386,17 @@ namespace vulkan {
 	
 	};
 	struct VulkanTexture {
-		VkSampler sampler{ VK_NULL_HANDLE };
-		VkImage image{ VK_NULL_HANDLE };
-		VkImageLayout imageLayout;
-		VkDeviceMemory deviceMemory{ VK_NULL_HANDLE };
-		VkImageView view{ VK_NULL_HANDLE };
-		VkDescriptorImageInfo descriptor;
-		uint32_t width{ 0 };
-		uint32_t height{ 0 };
-		uint32_t mipLevels{ 0 };
+		std::string				name;
+		VkSampler				sampler{ VK_NULL_HANDLE };
+		VkImage					image{ VK_NULL_HANDLE };
+		VkImageLayout			imageLayout;
+		VkDeviceMemory			deviceMemory{ VK_NULL_HANDLE };
+		VkImageView				view{ VK_NULL_HANDLE };
+		VkDescriptorImageInfo	descriptor;
+		uint32_t				width{ 0 };
+		uint32_t				height{ 0 };
+		uint32_t				mipLevels{ 0 };
+		uint32_t				index = -1;
 
 		void      updateDescriptor();
 	};
@@ -445,6 +447,9 @@ namespace vulkan {
 		glm::quat rotation{};
 
 	};
+	struct VulkanMaterial {
+
+	};
 	struct VulkanRenderObject {
 		std::string name;
 		VkPipeline pipeline;
@@ -458,6 +463,7 @@ namespace vulkan {
 		std::vector<SceneNode*> sceneGraph;
 		std::vector<VulkanMesh*> meshes;
 		std::vector<VulkanTexture> textures;
+		std::vector<VulkanMaterial> materials;
 		VkBuffer		vertexBuffer;
 		VkDeviceMemory	vertexmemory;
 

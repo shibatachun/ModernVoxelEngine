@@ -14,13 +14,14 @@
 #include <filesystem>
 
 namespace utils {
-	template<typename Map, typename Key>
-	const typename Map::mapped_type& findInMap(
-		Map& map, const Key& key, const std::string& errorMsg = "key not found") {
-		auto it = map.find(key);
-		if (it == map.end()) {
-			throw std::runtime_error(errorMsg);
-		}
-		return it->second;
-	}
+    template<typename Map, typename Key>
+    const typename Map::mapped_type& findInMap(
+        const Map& map, const Key& key, typename Map::mapped_type defaultValue = {})
+    {
+        auto it = map.find(key);
+        if (it == map.end()) {
+            return defaultValue; // 没找到，返回默认值
+        }
+        return it->second;
+    }
 }

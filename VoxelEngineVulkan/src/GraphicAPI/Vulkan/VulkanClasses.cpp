@@ -2049,7 +2049,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	VulkanRenderObject renderObject;
 
 	renderObject.name = name;
-
+	//生成VKmesh
 	for (const auto& x : modeldata.linearNodeHierarchy) {
 		
 		if (x->meshID != -1) {
@@ -2075,11 +2075,12 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		
 
 	}
+	//生成VkSceneNode
 	for (const auto& x : modeldata.nodes)
 	{
 		ConstructSceneNode(nullptr, x, renderObject, modeldata);
 	}
-
+	//生成VkImage
 	for (const auto& x : modeldata.images) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
@@ -2088,9 +2089,20 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		_BufferManager.CreateVulkanImageBuffer(image, vktexture.imageLayout, vktexture.image, vktexture.deviceMemory);
 		_BufferManager.CreateImageView(vktexture.view, vktexture.image, FromFormat(image.format), VK_IMAGE_ASPECT_COLOR_BIT, image.mipLevels);
 		_BufferManager.CreateTextureSampler(vktexture.sampler, image.mipLevels);
+		vktexture.height = image.texHeight;
+		vktexture.width = image.texWidth;
+		vktexture.mipLevels = image.mipLevels;
 		vktexture.updateDescriptor();
 		renderObject.textures.push_back(vktexture);
 	}
+
+	//生成Material生成
+	for (const auto& x : modeldata.materials) {
+		if (x.baseColorTexture !=-1) {
+
+		}
+	}
+
 
 
 	//上传vertex indice buffer数据
@@ -2115,8 +2127,9 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	//生成fragment shader的关于material的layout
 	{
 		LayoutConfig configFragment{};
-		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0));
-		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1));
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, static_cast<uint32_t>(configFragment.bindingCounts)));
+		configFragment.UpdateAllArray();
+		configFragment.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, static_cast<uint32_t>(configFragment.bindingCounts)));
 		configFragment.UpdateAllArray();
 		renderObject.descriptorSetLayouts.textures = _descriptorLayoutManager.CreateDescriptorSetLayout(configFragment);
 
@@ -2174,7 +2187,10 @@ void vulkan::VulkanResouceManager::ConstructSceneNode(SceneNode* parent, Node* s
 	SceneNode* node = new SceneNode{};
 	
 	node->parent = parent;
-	
+	node->translation = sourceNode->translation;
+	node->scale = sourceNode->scale;
+	node->rotation = sourceNode->rotation;
+	node->matrix = sourceNode->matrix;
 	for (auto& x : sourceNode->children) {
 		ConstructSceneNode(node, x, object, modelData);
 	}

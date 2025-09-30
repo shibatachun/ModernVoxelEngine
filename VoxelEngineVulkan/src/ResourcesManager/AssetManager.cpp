@@ -13,7 +13,7 @@ const asset::shader& asset::AssetManager::getShaderByName(std::string name) cons
 
 const ModelData& asset::AssetManager::getModelDataByName(std::string name) const
 {
-	return utils::findInMap(_modelManager->GetModeDatas(), name);
+	return _modelManager->GetModelDataByName(name);
 }
 
 const ModelData& asset::AssetManager::getRequireModelData(std::string)
@@ -24,7 +24,7 @@ const ModelData& asset::AssetManager::getRequireModelData(std::string)
 
 const Image& asset::AssetManager::getImageDataByName(std::string name) const
 {
-	return utils::findInMap(_modelManager->GetImageDatas(), name);
+	return _modelManager->GetImageDataByName(name);
 }
 
 const Image& asset::AssetManager::getRequrieImageData(std::string) const

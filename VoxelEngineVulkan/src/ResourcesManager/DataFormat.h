@@ -115,13 +115,13 @@ struct Material {
     float matallicFactor = 1.0f;
     float roughnessFactor = 1.0f;
     glm::vec4 baseColorFactor{};
-    std::string baseColorTexture ;
-    std::string matallicRoughnessTexture;
-    std::string normalTexture;
-    std::string occlusionTexture;
-    std::string emissiveTexture;
-    std::string specularGlossinessTexture;
-    std::string diffuseTexture;
+    int32_t baseColorTexture  = -1;
+    int32_t matallicRoughnessTexture = -1;
+    int32_t normalTexture = -1;
+    int32_t occlusionTexture = -1;
+    int32_t emissiveTexture = -1;
+    int32_t specularGlossinessTexture = -1;
+    int32_t diffuseTexture = -1;
 
 };
 
@@ -211,7 +211,9 @@ struct Animation
 
 //模型数据
 struct ModelData {
+    uint32_t id;
     std::string name;
+    
     uint32_t meshCount =0;
     uint32_t materialCount =0;
     uint32_t imageCount = 0;

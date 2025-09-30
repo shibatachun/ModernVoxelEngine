@@ -79,13 +79,19 @@ void asset::ModelManager::loadImage(std::string filename, std::string path, bool
 			subResouces.height = std::max(1u, kt->baseHeight >> i);
 			subResouces.layer = 0;
 		}
-		_ImageFile.emplace(filename, image);
+
+		_imageFileIdMapping.emplace(filename,_imageCount);
+		_imageFile.push_back(image);
+		_imageCount++;
+	
 		
 	}
 	else{
 
 		image.pixel = stbi_load(path.c_str(), &image.texWidth, &image.texHeight, &image.texChannels, STBI_rgb_alpha);
-		_ImageFile.emplace(filename, image);
+		_imageFileIdMapping.emplace(filename, _imageCount);
+		_imageFile.push_back(image);
+		_imageCount++;
 	}
 	
 }
@@ -128,8 +134,11 @@ void asset::ModelManager::loadTestExample()
 		data.indices.push_back(x);
 	}
 	data.meshdatas.push_back(meshData);
-		
-	_model.emplace("test_data", data);
+	
+
+	_modelsIdMapping.emplace("test_data", _modelsCount);
+	_models.push_back(data);
+	_modelsCount++;
 
 }
 
@@ -187,7 +196,10 @@ void asset::ModelManager::loadobj(std::string filePath)
 		meshOffset.indiceCount = indice_start;
 	}
 	assert(data.indices.size() == data.indiceSize && data.vertices.size() == data.vertexSize);
-	_model.emplace("viking_room", data);
+	_modelsIdMapping.emplace("viking_room", _modelsCount);
+	_models.push_back( data);
+	_modelsCount++;
+
 
 
 }
@@ -371,8 +383,9 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 			}
 		}
 	}
-	
-	_model.emplace(filename, model);
+	_modelsIdMapping.emplace(filename,_modelsCount);
+	_models.push_back(model);
+	_modelsCount++;
 
 }
 
@@ -384,6 +397,7 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 		model.images.push_back(image.uri);
 		ktxTexture* ktxTexture;
 		ktxResult result = KTX_SUCCESS;
+		texture_image.name = image.uri;
 		if (!FileExists(path)) {
 			throw std::runtime_error("Could not load texture from " + path + "\n\nMake sure the assets submodule has been checked out and is up-to-date.");
 		}
@@ -397,7 +411,7 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 		texture_image.size = ktxTexture_GetDataSize(ktxTexture);
 		texture_image.format = FromVk(ktxTexture_GetVkFormat(ktxTexture));
 		texture_image.subresource.resize(texture_image.mipLevels);
-		for (uint32_t i = 0; i < texture_image.mipLevels; i++) {
+		for (int i = 0; i < texture_image.mipLevels; i++) {
 			ktx_size_t offset;
 			KTX_error_code result = ktxTexture_GetImageOffset(ktxTexture, i, 0, 0, &offset);
 			assert(result == KTX_SUCCESS);
@@ -408,9 +422,11 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 			sub.depth = 1;
 			sub.offset = offset;
 			sub.layer = 0;
-
 		}
-		_ImageFile.emplace(image.uri, texture_image);
+		
+		_imageFileIdMapping.emplace(image.uri, _imageCount);
+		_imageFile.push_back(texture_image);
+		_imageCount++;
 
 	}
 
@@ -422,11 +438,13 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 	for (tinygltf::Material& mat : gltfMode.materials) {
 		Material material;
 		if (mat.values.find("baseColorTexture") != mat.values.end()) {
-			material.baseColorTexture = gltfMode.images.at(gltfMode.textures[mat.values["baseColorTexture"].TextureIndex()].source).uri;
+			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.values["baseColorTexture"].TextureIndex()].source).uri, -1);
+			material.baseColorTexture = texId == -1 ? -1 : texId;
 			model.imageCount++;
 		}
 		if (mat.values.find("metallicRoughnessTexture") != mat.values.end()) {
-			material.matallicRoughnessTexture = gltfMode.images.at(gltfMode.textures[mat.values["metallicRoughnessTexture"].TextureIndex()].source).uri;
+			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.values["metallicRoughnessTexture"].TextureIndex()].source).uri, -1);
+			material.matallicRoughnessTexture = texId == -1 ? -1 : texId;
 		}
 		if (mat.values.find("roughnessFactor") != mat.values.end()) {
 			material.roughnessFactor = static_cast<float>(mat.values["roughnessFactor"].Factor());
@@ -438,16 +456,19 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 			material.baseColorFactor = glm::make_vec4(mat.values["baseColorFactor"].ColorFactor().data());
 		}
 		if (mat.additionalValues.find("normalTexture") != mat.additionalValues.end()) {
-			material.normalTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["normalTexture"].TextureIndex()].source).uri;
+			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.additionalValues["normalTexture"].TextureIndex()].source).uri, -1);
+			material.normalTexture = texId == -1 ? -1 : texId;
 		}
 		else {
 			//material.normalTexture = &emptyTexture;
 		}
 		if (mat.additionalValues.find("emissiveTexture") != mat.additionalValues.end()) {
-			material.emissiveTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["emissiveTexture"].TextureIndex()].source).uri;
+			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.additionalValues["emissiveTexture"].TextureIndex()].source).uri, -1);
+			material.emissiveTexture = texId == -1 ? -1 : texId;
 		}
 		if (mat.additionalValues.find("occlusionTexture") != mat.additionalValues.end()) {
-			material.occlusionTexture = gltfMode.images.at(gltfMode.textures[mat.additionalValues["occlusionTexture"].TextureIndex()].source).uri;
+			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.additionalValues["occlusionTexture"].TextureIndex()].source).uri, -1);
+			material.occlusionTexture = texId == -1 ? -1 : texId;
 		}
 		if (mat.additionalValues.find("alphaMode") != mat.additionalValues.end()) {
 			tinygltf::Parameter param = mat.additionalValues["alphaMode"];
