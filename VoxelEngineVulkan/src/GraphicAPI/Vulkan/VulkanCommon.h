@@ -396,7 +396,7 @@ namespace vulkan {
 		uint32_t				width{ 0 };
 		uint32_t				height{ 0 };
 		uint32_t				mipLevels{ 0 };
-		uint32_t				index = -1;
+		int						index = -1;
 
 		void      updateDescriptor();
 	};
@@ -435,20 +435,32 @@ namespace vulkan {
 
 	struct SceneNode {
 		SceneNode* parent = nullptr;
-		uint32_t index;
-		std::vector<SceneNode*>children;
-		glm::mat4 matrix;
 		std::string name;
-		std::vector<VulkanMesh*> mesh;
-		Skin* skin;
-		int32_t skinIndex = -1;
+		uint32_t index;
+		glm::mat4 matrix;
 		glm::vec3 translation{};
 		glm::vec3 scale{ 1.0f };
 		glm::quat rotation{};
+		Skin* skin;
+		int32_t skinIndex = -1;
+		std::vector<SceneNode*>children;
+		std::vector<VulkanMesh*> mesh;
 
 	};
 	struct VulkanMaterial {
-
+		AlphaMode alphaMode;
+		float alphaCutoff = 1.0f;
+		float metallicFactor = 1.0f;
+		float roughnessFactor = 1.0f;
+		glm::vec4 baseColorFactor = glm::vec4(1.0f);
+		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+		VulkanTexture* baseColorTexture = nullptr;
+		VulkanTexture* matallicRoughnessTexture = nullptr;
+		VulkanTexture* normalTexture = nullptr;
+		VulkanTexture* occlusionTexture = nullptr;
+		VulkanTexture* emissiveTexture = nullptr;
+		VulkanTexture* specularGlossinessTexture = nullptr;
+		VulkanTexture* diffuseTexture =	nullptr;
 	};
 	struct VulkanRenderObject {
 		std::string name;
@@ -464,6 +476,9 @@ namespace vulkan {
 		std::vector<VulkanMesh*> meshes;
 		std::vector<VulkanTexture> textures;
 		std::vector<VulkanMaterial> materials;
+		uint32_t textureCount = 0;
+		std::unordered_map<int, int> textureIdMapping;
+
 		VkBuffer		vertexBuffer;
 		VkDeviceMemory	vertexmemory;
 

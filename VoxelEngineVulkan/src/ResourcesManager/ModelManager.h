@@ -14,6 +14,8 @@ public:
 	~ModelManager();
 	const std::unordered_map<std::string, int32_t>& GetModeDatas() { return _modelsIdMapping; };
 	const ModelData& GetModelDataByName(std::string modelname) { return _models[utils::findInMap(_modelsIdMapping, modelname, {})]; }
+	const std::vector<ModelData>& GetAllModelDatas() { return _models; }
+	const std::vector<Image>& GetAllImagesDatas() { return _imageFile; }
 	const std::unordered_map<std::string, int32_t>& GetImageDatas() { return _imageFileIdMapping; };
 	const Image& GetImageDataByName(std::string imagename) { return _imageFile[utils::findInMap(_imageFileIdMapping, imagename, {})]; };
 	const void freeImage(unsigned char* pixel);

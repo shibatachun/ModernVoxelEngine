@@ -423,7 +423,7 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 			sub.offset = offset;
 			sub.layer = 0;
 		}
-		
+		texture_image.id = _imageCount;
 		_imageFileIdMapping.emplace(image.uri, _imageCount);
 		_imageFile.push_back(texture_image);
 		_imageCount++;
@@ -473,10 +473,10 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 		if (mat.additionalValues.find("alphaMode") != mat.additionalValues.end()) {
 			tinygltf::Parameter param = mat.additionalValues["alphaMode"];
 			if (param.string_value == "BLEND") {
-				material.alphaMode = Material::ALPHAMODE_BLEND;
+				material.alphaMode = AlphaMode::ALPHAMODE_BLEND;
 			}
 			if (param.string_value == "MASK") {
-				material.alphaMode = Material::ALPHAMODE_MASK;
+				material.alphaMode = AlphaMode::ALPHAMODE_MASK;
 			}
 		}
 		if (mat.additionalValues.find("alphaCutoff") != mat.additionalValues.end()) {

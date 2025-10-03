@@ -363,7 +363,7 @@ namespace vulkan {
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
 		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, std::string name);
-		void AllocateImageDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, std::vector<uint32_t> bindings);
+		void AllocateImageDescriptorSet(VulkanMaterial& material, VkDescriptorSetLayout layout);
 		void PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout);
 		VkDescriptorPool GetIndividualDescriptorPool(std::string poolname)
 		{
@@ -391,6 +391,7 @@ namespace vulkan {
 				const VkDevice& device,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
+			void ConvertToVulkanResource();
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name);
 			const VulkanRenderObject& GetRenderObject(std::string name);
@@ -403,6 +404,10 @@ namespace vulkan {
 			DescriptorLayoutManager&															_descriptorLayoutManager;
 			GraphicPipelineManager&																_graphicPipelineManager;
 			const asset::AssetManager&															_assetMnanger;
+
+			std::vector<VulkanMesh>																_mesh;
+			std::vector<VulkanMaterial>															_material;
+			std::vector<VulkanTexture>															_Texture;
 
 		
 		private:

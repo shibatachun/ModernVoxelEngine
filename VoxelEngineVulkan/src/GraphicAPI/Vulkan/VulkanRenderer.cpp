@@ -397,17 +397,16 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 
 void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 {
-	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-
-	}
+	
 	for (auto& x : object.sceneGraph) {
 		_descriptorPools->PrepareNodeDescriptor(x, object.descriptorSetLayouts.matrices);
 	}
 
 	for (auto& material : object.materials) {
-
+		_descriptorPools->AllocateImageDescriptorSet(material, object.descriptorSetLayouts.textures);
 	}
 
+	std::cout << "stop" << std::endl;
 		/*VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = _uniformBuffers[i];
 		bufferInfo.offset = 0;

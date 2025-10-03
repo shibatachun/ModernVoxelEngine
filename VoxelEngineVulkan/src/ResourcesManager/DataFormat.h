@@ -95,6 +95,7 @@ struct SubResource {
 };
 
 struct Image {
+    uint32_t id;
     std::string name;
     unsigned char* pixel;
     bool isKtx = false;
@@ -107,9 +108,15 @@ struct Image {
     std::vector<SubResource> subresource;
 
 };
+enum AlphaMode { ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND };
+
+enum DescriptorBindingFlags {
+    ImageBaseColor = 0x00000001,
+    ImageNormalMap = 0x00000002
+};
 
 struct Material {
-    enum AlphaMode{ ALPHAMODE_OPAQUE, ALPHAMODE_MASK, ALPHAMODE_BLEND};
+
     AlphaMode alphaMode = ALPHAMODE_OPAQUE;
     float alphaCutoff = 1.0f;
     float matallicFactor = 1.0f;

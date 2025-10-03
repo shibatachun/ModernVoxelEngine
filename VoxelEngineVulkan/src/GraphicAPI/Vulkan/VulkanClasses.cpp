@@ -1310,8 +1310,43 @@ void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout&
 
 }
 
-void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, std::vector<uint32_t> bindings)
+void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& material, VkDescriptorSetLayout layout)
 {
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+		descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorSetAllocInfo.descriptorPool = _PerFramePool[i];
+		descriptorSetAllocInfo.pSetLayouts = &layout;
+		descriptorSetAllocInfo.descriptorSetCount = 1;
+		Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &material.descriptorSet), "Create material DescriptorSet");
+		std::vector<VkDescriptorImageInfo> imageDescriptors{};
+		std::vector<VkWriteDescriptorSet> writeDescriptorSets{};
+		if (material.baseColorTexture) {
+			imageDescriptors.push_back(material.baseColorTexture->descriptor);
+			VkWriteDescriptorSet writeDescriptorSet{};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.dstSet = material.descriptorSet;
+			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
+			writeDescriptorSet.pImageInfo = &material.baseColorTexture->descriptor;
+			writeDescriptorSets.push_back(writeDescriptorSet);
+		}
+
+		if (material.normalTexture) {
+			imageDescriptors.push_back(material.normalTexture->descriptor);
+			VkWriteDescriptorSet writeDescriptorSet{};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.dstSet = material.descriptorSet;
+			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
+			writeDescriptorSet.pImageInfo = &material.normalTexture->descriptor;
+			writeDescriptorSets.push_back(writeDescriptorSet);
+		}
+		vkUpdateDescriptorSets(_device.Handle(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+	}
+
 }
 
 void vulkan::DescriptorPoolManager::PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout)
@@ -1978,6 +2013,11 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 	}
 }
 
+void vulkan::VulkanResouceManager::ConvertToVulkanResource()
+{
+
+}
+
 void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	std::string name,  
 	std::string raw_model_name, 
@@ -2093,15 +2133,17 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		vktexture.width = image.texWidth;
 		vktexture.mipLevels = image.mipLevels;
 		vktexture.updateDescriptor();
+		vktexture.index = image.id;
+		renderObject.textureIdMapping.emplace(image.id, renderObject.textureCount);
 		renderObject.textures.push_back(vktexture);
-	}
+		renderObject.textureCount++;
 
-	//生成Material生成
-	for (const auto& x : modeldata.materials) {
-		if (x.baseColorTexture !=-1) {
-
-		}
 	}
+	//生成DescriptorPool
+	{
+		_descriptorPoolManager.CreatePoolForIndividualObject(1, modeldata.imageCount + 1, name);
+	}
+	
 
 
 
@@ -2134,7 +2176,23 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		renderObject.descriptorSetLayouts.textures = _descriptorLayoutManager.CreateDescriptorSetLayout(configFragment);
 
 	}
-
+	//生成Material生成
+	for (const auto& x : modeldata.materials) {
+		if (x.baseColorTexture != -1) {
+			VulkanMaterial material;
+			material.alphaCutoff = x.alphaCutoff;
+			material.alphaMode = x.alphaMode;
+			material.metallicFactor = x.matallicFactor;
+			material.roughnessFactor = x.roughnessFactor;
+			material.baseColorFactor = x.baseColorFactor;
+			material.baseColorTexture = &renderObject.textures[renderObject.textureIdMapping[x.baseColorTexture]];
+			if (x.normalTexture != -1) {
+				material.normalTexture = &renderObject.textures[renderObject.textureIdMapping[x.normalTexture]];
+			}
+			renderObject.materials.push_back(material);
+		}
+		
+	}
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 
