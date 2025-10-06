@@ -320,8 +320,8 @@ namespace vulkan {
 		void Destroy(std::string pipelineName);
 		VkPipeline GetGraphicsPipeline(std::string pipelineName);
 		VkPipelineLayout GetGraphicsPipelineLayout(std::string piplineLayoutName);
-		void CreateGraphicsPipeline(std::string pipelineName, std::string pipelineLayoutName,  const asset::shader& shaders, VkRenderPass renderPass);
-		void createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout);
+		void CreateGraphicsPipeline(std::string pipelineName, VkPipelineLayout layout, const asset::shader& shaders, VkRenderPass renderPass);
+
 		~GraphicPipelineManager();
 	private:
 		VkShaderModule CreateShaderModule(const std::vector<char>& code);
@@ -394,11 +394,12 @@ namespace vulkan {
 			void ConvertToVulkanResource();
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name);
-			const VulkanRenderObject& GetRenderObject(std::string name);
-			const std::unordered_map<std::string, VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
+			VulkanRenderObject& GetRenderObject(std::string name);
+			std::vector<VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
 		private:
 			const VkDevice&																			_device;
-			std::unordered_map<std::string, VulkanRenderObject>									_renderObjects;
+			std::unordered_map<std::string, uint32_t>									_renderObjectsMapping;
+			
 			BufferManager&																		_BufferManager;
 			DescriptorPoolManager&																_descriptorPoolManager;
 			DescriptorLayoutManager&															_descriptorLayoutManager;
@@ -408,6 +409,9 @@ namespace vulkan {
 			std::vector<VulkanMesh>																_mesh;
 			std::vector<VulkanMaterial>															_material;
 			std::vector<VulkanTexture>															_Texture;
+			std::vector<VulkanRenderObject>														_renderObjects;
+
+
 
 		
 		private:

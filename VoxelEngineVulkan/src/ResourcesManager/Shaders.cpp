@@ -8,6 +8,7 @@ asset::ShadersManager::ShadersManager(std::string dir) :
 	ConstructShader("Triangle_Vulkan", "triangle_vert", "triangle_frag");
 	ConstructShader("Rectangle_Vulkan", "rectangle_vert", "triangle_frag");
 	ConstructShader("SkySphere", "skysphere_vert", "skysphere_frag");
+	ConstructShader("scene", "scene_vert", "scene_frag");
 }
 
 asset::ShadersManager::~ShadersManager(){

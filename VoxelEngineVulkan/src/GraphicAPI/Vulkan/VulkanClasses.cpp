@@ -972,16 +972,13 @@ void vulkan::GraphicPipelineManager::createPipelineCache()
 	Check(vkCreatePipelineCache(_device, &cacheInfo, nullptr, &_pipelineCache), "Create Pipeline Cache!");
 }
 
-void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName,std::string pipelineLayoutName, const asset::shader& shaders, VkRenderPass renderPass)
+void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName,VkPipelineLayout layout, const asset::shader& shaders, VkRenderPass renderPass)
 {
 	
 
 	graphicsPipelineCreateInfoPack createinfo;
 	VkPipeline pipeline;
-	auto it = _pipelineLayouts.find(pipelineLayoutName);
-	if (it == _pipelineLayouts.end()) {
-		throw std::runtime_error("Unable to find the required pipelineLayout, please use CreatePipelineLayout to create the asscociate layout first");
-	}
+	
 	PipelineEntry entry;
 	//´´½¨Shader Module
 	VkShaderModule vertShaderModule = CreateShaderModule(shaders.vertexShader);
@@ -1101,7 +1098,7 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	//pipelineLayoutNameInfo += pipelineName;
 	//Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &entry.layout), pipelineLayoutNameInfo.c_str());
 	
-	createinfo.createInfo.layout = it->second;
+	createinfo.createInfo.layout = layout;
 	createinfo.createInfo.renderPass = renderPass;
 	createinfo.createInfo.stageCount = 2;
 
@@ -1122,7 +1119,6 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	Check(vkCreateGraphicsPipelines(_device, nullptr, 1,&createinfo.createInfo, nullptr, &pipeline), pipelineNameInfo.c_str());
 	_pipelines.emplace(pipelineName, pipeline);
 	entry.pipeline = pipelineName;
-	entry.layout = pipelineLayoutName;
 	_pipelineEntrys[pipelineName] = entry;
 
 	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
@@ -1130,20 +1126,7 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 
 }
 
-void vulkan::GraphicPipelineManager::createPipelineLayout(std::string name, VkDescriptorSetLayout descriptorLayout)
-{
-	VkPipelineLayout pipelineLayout;
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-	std::string debugName = "Create " + name + "Pipeline Layout";
-	Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout), debugName.c_str());
-	_pipelineLayouts.emplace(name, pipelineLayout);
 
-}
 
 
 
@@ -2003,9 +1986,9 @@ vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager,
 vulkan::VulkanResouceManager::~VulkanResouceManager()
 {
 	for (auto& x : _renderObjects) {
-		_BufferManager.DestroyBuffer(x.second.indiceBuffer, x.second.indicememory);
-		_BufferManager.DestroyBuffer(x.second.vertexBuffer, x.second.vertexmemory);
-		for (auto& x : x.second.textures) {
+		_BufferManager.DestroyBuffer(x.indiceBuffer, x.indicememory);
+		_BufferManager.DestroyBuffer(x.vertexBuffer, x.vertexmemory);
+		for (auto& x : x.textures) {
 			_BufferManager.DestroyVkImageView(x.view);
 			_BufferManager.DestroyVkImage(x.image, x.deviceMemory);
 			_BufferManager.DestroySampler(x.sampler);
@@ -2076,11 +2059,8 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 
-	
-	
-	
-	
-	_renderObjects[name] = renderObject;
+	_renderObjectsMapping.emplace(name, _renderObjects.size());
+	_renderObjects.push_back(renderObject);
 }
 
 void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name, std::string raw_model_name)
@@ -2195,17 +2175,14 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	}
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
-
-
-
-
-
-	_renderObjects[name] = renderObject;
+	_renderObjectsMapping[name] = _renderObjects.size();
+	_renderObjects.push_back(renderObject);
 }
 
-const vulkan::VulkanRenderObject& vulkan::VulkanResouceManager::GetRenderObject(std::string name)
-{
-	return utils::findInMap(_renderObjects, name);
+vulkan::VulkanRenderObject& vulkan::VulkanResouceManager::GetRenderObject(std::string name)
+{			
+			
+	return _renderObjects[utils::findInMap(_renderObjectsMapping, name)];
 }
 
 

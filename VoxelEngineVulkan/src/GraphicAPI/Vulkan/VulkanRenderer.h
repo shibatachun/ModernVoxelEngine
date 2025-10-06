@@ -80,10 +80,12 @@ namespace vulkan
 		void CreateSyncObjects();
 		void RecreateSwapChain();
 		void CreateUniformBuffers();
-		void ConfigureDescriptorSet(VulkanRenderObject object);
+		void ConfigureDescriptorSet(VulkanRenderObject& object);
+		void ConfigurePipeline(VulkanRenderObject& object);
 		void UpdateUniformBuffer(uint32_t currentImage);
 		bool IsMinimized() const;
 		void PrepareRenderObject();
+		
 
 
 

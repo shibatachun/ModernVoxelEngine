@@ -393,9 +393,11 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 			&_uniformData[i].buffer.buffer, &_uniformData[i].buffer.memory);
 		_uniformData[i].buffer.map();
 	}
-} 
+}
 
-void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
+
+
+void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject& object)
 {
 	
 	for (auto& x : object.sceneGraph) {
@@ -443,6 +445,21 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject object)
 	
 }
 
+void vulkan::VulkanRenderer::ConfigurePipeline(VulkanRenderObject& object)
+{
+	std::vector<VkDescriptorSetLayout> setLayouts = { object.descriptorSetLayouts.matrices, object.descriptorSetLayouts.textures };
+	VkPipelineLayoutCreateInfo pipelineLayoutCI = initializers::pipelineLayoutCreateInfo(setLayouts.data(), static_cast<uint32_t>(setLayouts.size()));
+	VkPushConstantRange pushConstantRange = initializers::pushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 0);
+	pipelineLayoutCI.pushConstantRangeCount = 1;
+	pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
+	Check(vkCreatePipelineLayout(_devices->Handle(), &pipelineLayoutCI, nullptr, &object.Pipelinelayout), "Create render object pipeline layout");
+
+	PipelineEntry entry;
+
+
+
+}
+
 void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)
 {
 	static auto startTime = std::chrono::high_resolution_clock::now();
@@ -475,9 +492,10 @@ void vulkan::VulkanRenderer::PrepareRenderObject()
 	_resouceManager->ConstructVulkanRenderObject("Sponza",
 		"Sponza");
 
-	for (const auto& x : _resouceManager->GetRenderObjects()) {
-		ConfigureDescriptorSet(x.second);
-		_renderObjects.push_back(x.second);
+	for (auto& x : _resouceManager->GetRenderObjects()) {
+		ConfigureDescriptorSet(x);
+		ConfigurePipeline(x);
+		_renderObjects.push_back(x);
 	}
 }
 
