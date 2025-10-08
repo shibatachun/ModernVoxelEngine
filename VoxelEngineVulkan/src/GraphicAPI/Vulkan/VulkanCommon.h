@@ -454,13 +454,14 @@ namespace vulkan {
 		float roughnessFactor = 1.0f;
 		glm::vec4 baseColorFactor = glm::vec4(1.0f);
 		VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-		VulkanTexture* baseColorTexture = nullptr;
-		VulkanTexture* matallicRoughnessTexture = nullptr;
-		VulkanTexture* normalTexture = nullptr;
-		VulkanTexture* occlusionTexture = nullptr;
-		VulkanTexture* emissiveTexture = nullptr;
-		VulkanTexture* specularGlossinessTexture = nullptr;
-		VulkanTexture* diffuseTexture =	nullptr;
+		VkPipeline pipeline = VK_NULL_HANDLE;
+		uint32_t baseColorTexture = -1;
+		uint32_t matallicRoughnessTexture = -1;
+		uint32_t normalTexture = -1;
+		uint32_t occlusionTexture = -1;
+		uint32_t emissiveTexture = -1;
+		uint32_t specularGlossinessTexture = -1;
+		uint32_t diffuseTexture =	-1;
 	};
 	struct VulkanRenderObject {
 		std::string name;

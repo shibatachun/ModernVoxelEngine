@@ -937,48 +937,11 @@ VkPipelineLayout vulkan::GraphicPipelineManager::GetGraphicsPipelineLayout(std::
 	return utils::findInMap(_pipelineLayouts, piplineLayoutName);
 }
 
-vulkan::GraphicPipelineManager::~GraphicPipelineManager()
+void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName, VkPipelineLayout layout, const asset::shader& shaders, VkRenderPass renderPass)
 {
-	for (auto& x : _pipelines) {
-		vkDestroyPipeline(_device, x.second, nullptr);
-	}
-	for (auto& x : _pipelineLayouts) {
-		vkDestroyPipelineLayout(_device, x.second, nullptr);
-	}
-	vkDestroyPipelineCache(_device, _pipelineCache, nullptr);
-	
-	
-}
-
-VkShaderModule vulkan::GraphicPipelineManager::CreateShaderModule(const std::vector<char>& code)
-{
-	
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = code.size();
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-	VkShaderModule shaderModule;
-	Check(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule), "Create shader Module");
-	return shaderModule;
-	
-}
-
-void vulkan::GraphicPipelineManager::createPipelineCache()
-{
-	VkPipelineCacheCreateInfo cacheInfo{};
-	cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-	cacheInfo.initialDataSize = 0;
-	cacheInfo.pInitialData = nullptr;
-	Check(vkCreatePipelineCache(_device, &cacheInfo, nullptr, &_pipelineCache), "Create Pipeline Cache!");
-}
-
-void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName,VkPipelineLayout layout, const asset::shader& shaders, VkRenderPass renderPass)
-{
-	
-
 	graphicsPipelineCreateInfoPack createinfo;
 	VkPipeline pipeline;
-	
+
 	PipelineEntry entry;
 	//创建Shader Module
 	VkShaderModule vertShaderModule = CreateShaderModule(shaders.vertexShader);
@@ -1002,8 +965,8 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	//顶点输入，用来输入到pipeline中的vertex shader的vertex信息
 	//主要两个作用， 绑定顶点中的间隔的距离，还有他们属性的类型以及偏移
 	//TODO 抽象出来，要弄几个弄几个
-	
-	getPipelineVertexInputState({ VertexComponent::Position, VertexComponent::Color, VertexComponent::UV}, createinfo);
+
+	getPipelineVertexInputState({ VertexComponent::Position, VertexComponent::Color, VertexComponent::UV }, createinfo);
 
 	//规定图元类型，如三角形，线，点等
 	createinfo.inputAssemblyStateCi.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -1014,7 +977,7 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	createinfo.dynamicStates.emplace_back(VK_DYNAMIC_STATE_VIEWPORT);
 	createinfo.dynamicStates.emplace_back(VK_DYNAMIC_STATE_SCISSOR);
 
-	
+
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -1047,7 +1010,7 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
 	rasterizer.depthBiasClamp = 0.0f; // Optional
 	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
-	
+
 	createinfo.rasterizationStateCi = rasterizer;
 
 
@@ -1086,25 +1049,14 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	colorBlending.blendConstants[3] = 0.0f; // Optional
 
 	createinfo.colorBlendStateCi = colorBlending;
-
-	//VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	//pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	//pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	//pipelineLayoutInfo.pSetLayouts = &descriptorLayout; // Optional
-	//pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	//pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-	//
-	//std::string pipelineLayoutNameInfo = "Create pipeline for ";
-	//pipelineLayoutNameInfo += pipelineName;
-	//Check(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &entry.layout), pipelineLayoutNameInfo.c_str());
-	
+		
 	createinfo.createInfo.layout = layout;
 	createinfo.createInfo.renderPass = renderPass;
 	createinfo.createInfo.stageCount = 2;
 
 	std::string pipelineNameInfo = "Create pipeline for ";
 	pipelineNameInfo += pipelineName;
-	
+
 	createinfo.depthStencilStateCi.depthTestEnable = VK_TRUE;
 	createinfo.depthStencilStateCi.depthWriteEnable = VK_TRUE;
 	createinfo.depthStencilStateCi.depthCompareOp = VK_COMPARE_OP_LESS;
@@ -1114,13 +1066,89 @@ void vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipeline
 	createinfo.depthStencilStateCi.stencilTestEnable = VK_FALSE;
 	createinfo.depthStencilStateCi.front = {};
 	createinfo.depthStencilStateCi.back = {};
-	
+
 	createinfo.UpdateAllArrays();
-	Check(vkCreateGraphicsPipelines(_device, nullptr, 1,&createinfo.createInfo, nullptr, &pipeline), pipelineNameInfo.c_str());
+	Check(vkCreateGraphicsPipelines(_device, _pipelineCache, 1, &createinfo.createInfo, nullptr, &pipeline), pipelineNameInfo.c_str());
 	_pipelines.emplace(pipelineName, pipeline);
 	entry.pipeline = pipelineName;
 	_pipelineEntrys[pipelineName] = entry;
 
+	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
+
+}
+
+vulkan::GraphicPipelineManager::~GraphicPipelineManager()
+{
+	for (auto& x : _pipelines) {
+		vkDestroyPipeline(_device, x.second, nullptr);
+	}
+	for (auto& x : _pipelineLayouts) {
+		vkDestroyPipelineLayout(_device, x.second, nullptr);
+	}
+	vkDestroyPipelineCache(_device, _pipelineCache, nullptr);
+	
+	
+}
+
+VkShaderModule vulkan::GraphicPipelineManager::CreateShaderModule(const std::vector<char>& code)
+{
+	
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = code.size();
+	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+	VkShaderModule shaderModule;
+	Check(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule), "Create shader Module");
+	return shaderModule;
+	
+}
+
+void vulkan::GraphicPipelineManager::createPipelineCache()
+{
+	VkPipelineCacheCreateInfo cacheInfo{};
+	cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	cacheInfo.initialDataSize = 0;
+	cacheInfo.pInitialData = nullptr;
+	Check(vkCreatePipelineCache(_device, &cacheInfo, nullptr, &_pipelineCache), "Create Pipeline Cache!");
+}
+
+VkPipeline vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pipelineName, graphicsPipelineCreateInfoPack& pack,  const asset::shader& shaders)
+{
+	
+	VkPipeline pipeline;
+	
+	PipelineEntry entry;
+	//创建Shader Module
+	VkShaderModule vertShaderModule = CreateShaderModule(shaders.vertexShader);
+	VkShaderModule fragShaderModule = CreateShaderModule(shaders.fragmentShader);
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vertShaderStageInfo.module = vertShaderModule;
+	vertShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = fragShaderModule;
+	fragShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+	pack.shaderStages[0] = vertShaderStageInfo;
+	pack.shaderStages[1] = fragShaderStageInfo;
+
+	std::string pipelineNameInfo = "Create pipeline for ";
+	pipelineNameInfo += pipelineName;
+	
+	
+	pack.UpdateAllArrays();
+	Check(vkCreateGraphicsPipelines(_device, _pipelineCache, 1,&pack.createInfo, nullptr, &pipeline), pipelineNameInfo.c_str());
+	_pipelines.emplace(pipelineName, pipeline);
+	entry.pipeline = pipelineName;
+	_pipelineEntrys[pipelineName] = entry;
+
+	return pipeline;
 	vkDestroyShaderModule(_device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(_device, vertShaderModule, nullptr);
 
@@ -1293,7 +1321,7 @@ void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout&
 
 }
 
-void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& material, VkDescriptorSetLayout layout)
+void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& material, std::vector<VulkanTexture>& textures,VkDescriptorSetLayout layout)
 {
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -1304,27 +1332,27 @@ void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& m
 		Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &material.descriptorSet), "Create material DescriptorSet");
 		std::vector<VkDescriptorImageInfo> imageDescriptors{};
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets{};
-		if (material.baseColorTexture) {
-			imageDescriptors.push_back(material.baseColorTexture->descriptor);
+		if (material.baseColorTexture != -1) {
+			imageDescriptors.push_back(textures[material.baseColorTexture].descriptor);
 			VkWriteDescriptorSet writeDescriptorSet{};
 			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writeDescriptorSet.descriptorCount = 1;
 			writeDescriptorSet.dstSet = material.descriptorSet;
 			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
-			writeDescriptorSet.pImageInfo = &material.baseColorTexture->descriptor;
+			writeDescriptorSet.pImageInfo = &textures[material.baseColorTexture].descriptor;
 			writeDescriptorSets.push_back(writeDescriptorSet);
 		}
 
-		if (material.normalTexture) {
-			imageDescriptors.push_back(material.normalTexture->descriptor);
+		if (material.normalTexture != -1) {
+			imageDescriptors.push_back(textures[material.normalTexture].descriptor);
 			VkWriteDescriptorSet writeDescriptorSet{};
 			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writeDescriptorSet.descriptorCount = 1;
 			writeDescriptorSet.dstSet = material.descriptorSet;
 			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
-			writeDescriptorSet.pImageInfo = &material.normalTexture->descriptor;
+			writeDescriptorSet.pImageInfo = &textures[material.normalTexture].descriptor;
 			writeDescriptorSets.push_back(writeDescriptorSet);
 		}
 		vkUpdateDescriptorSets(_device.Handle(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
@@ -1972,7 +2000,7 @@ vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager,
 	DescriptorPoolManager& descPoolManager,
 	DescriptorLayoutManager& descLayoutManager,
 	GraphicPipelineManager& graphicPipelineManager,
-	const VkDevice& device,
+	Device& device,
 	const asset::AssetManager& assetManager) :
 	_BufferManager(bufferManager),
 	_descriptorPoolManager(descPoolManager),
@@ -2059,7 +2087,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
 
-	_renderObjectsMapping.emplace(name, _renderObjects.size());
+	_renderObjectsMapping.emplace(name, static_cast<uint32_t>(_renderObjects.size()));
 	_renderObjects.push_back(renderObject);
 }
 
@@ -2085,7 +2113,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 				&vkmesh->uniformBuffer.memory,
 				&vkmesh->uniformBlock);
 			
-			Check(vkMapMemory(_device, vkmesh->uniformBuffer.memory, 0, sizeof(vkmesh->uniformBlock), 0, &vkmesh->uniformBuffer.mapped), "vkmap memeory uniform buffer");
+			Check(vkMapMemory(_device.Handle(), vkmesh->uniformBuffer.memory, 0, sizeof(vkmesh->uniformBlock), 0, &vkmesh->uniformBuffer.mapped), "vkmap memeory uniform buffer");
 			vkmesh->uniformBuffer.descriptor = { vkmesh->uniformBuffer.buffer, 0 , sizeof(vkmesh->uniformBlock) };
 			vkmesh->name = meshdata.name;
 			memcpy(vkmesh->uniformBuffer.mapped, &m, sizeof(glm::mat4));
@@ -2165,9 +2193,9 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 			material.metallicFactor = x.matallicFactor;
 			material.roughnessFactor = x.roughnessFactor;
 			material.baseColorFactor = x.baseColorFactor;
-			material.baseColorTexture = &renderObject.textures[renderObject.textureIdMapping[x.baseColorTexture]];
+			material.baseColorTexture = renderObject.textureIdMapping[x.baseColorTexture];
 			if (x.normalTexture != -1) {
-				material.normalTexture = &renderObject.textures[renderObject.textureIdMapping[x.normalTexture]];
+				material.normalTexture = renderObject.textureIdMapping[x.normalTexture];
 			}
 			renderObject.materials.push_back(material);
 		}
@@ -2175,7 +2203,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	}
 
 	renderObject.indiceCounts.push_back(static_cast<uint32_t>(modeldata.indices.size()));
-	_renderObjectsMapping[name] = _renderObjects.size();
+	_renderObjectsMapping[name] = static_cast<uint32_t>(_renderObjects.size());
 	_renderObjects.push_back(renderObject);
 }
 
@@ -2183,6 +2211,27 @@ vulkan::VulkanRenderObject& vulkan::VulkanResouceManager::GetRenderObject(std::s
 {			
 			
 	return _renderObjects[utils::findInMap(_renderObjectsMapping, name)];
+}
+
+VkPipelineShaderStageCreateInfo vulkan::VulkanResouceManager::LoadShader(std::string shader_name, VkShaderStageFlagBits stage)
+{
+	VkPipelineShaderStageCreateInfo shaderStage = {};
+	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStage.stage = stage;
+
+	VkShaderModule shaderModule;
+	const auto& shaders = _assetMnanger.getShaderByName(shader_name);
+	VkShaderModuleCreateInfo moduleCreateInfo{};
+	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	assert(shaders.vertexShader.size());
+	moduleCreateInfo.codeSize = shaders.vertexShader.size();
+	moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaders.vertexShader.data());
+	Check(vkCreateShaderModule(_device.Handle(), &moduleCreateInfo, NULL, &shaderModule), "创建shader模组");
+
+
+
+
+	return VkPipelineShaderStageCreateInfo();
 }
 
 

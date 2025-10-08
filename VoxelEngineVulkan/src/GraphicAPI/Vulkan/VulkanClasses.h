@@ -321,6 +321,7 @@ namespace vulkan {
 		VkPipeline GetGraphicsPipeline(std::string pipelineName);
 		VkPipelineLayout GetGraphicsPipelineLayout(std::string piplineLayoutName);
 		void CreateGraphicsPipeline(std::string pipelineName, VkPipelineLayout layout, const asset::shader& shaders, VkRenderPass renderPass);
+		VkPipeline CreateGraphicsPipeline(std::string pipelineName, graphicsPipelineCreateInfoPack& pack, const asset::shader& shaders);
 
 		~GraphicPipelineManager();
 	private:
@@ -363,7 +364,7 @@ namespace vulkan {
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
 		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, std::string name);
-		void AllocateImageDescriptorSet(VulkanMaterial& material, VkDescriptorSetLayout layout);
+		void AllocateImageDescriptorSet(VulkanMaterial& material, std::vector<VulkanTexture>& textures, VkDescriptorSetLayout layout);
 		void PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout);
 		VkDescriptorPool GetIndividualDescriptorPool(std::string poolname)
 		{
@@ -388,17 +389,18 @@ namespace vulkan {
 				DescriptorPoolManager& descPoolManager, 
 				DescriptorLayoutManager& descLayoutManager, 
 				GraphicPipelineManager& graphicPipelineManager,
-				const VkDevice& device,
+				Device& device,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
 			void ConvertToVulkanResource();
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name);
 			VulkanRenderObject& GetRenderObject(std::string name);
+			VkPipelineShaderStageCreateInfo LoadShader(std::string shader_name, VkShaderStageFlagBits);
 			std::vector<VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
 		private:
-			const VkDevice&																			_device;
-			std::unordered_map<std::string, uint32_t>									_renderObjectsMapping;
+			Device&																				_device;
+			std::unordered_map<std::string, uint32_t>											_renderObjectsMapping;
 			
 			BufferManager&																		_BufferManager;
 			DescriptorPoolManager&																_descriptorPoolManager;

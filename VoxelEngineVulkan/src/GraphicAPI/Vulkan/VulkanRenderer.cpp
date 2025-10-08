@@ -223,9 +223,9 @@ void vulkan::VulkanRenderer::SetUpGraphicPipelineManager()
 
 	_descriptorLayouts->CreateDescriptorSetLayout(config);
 
-	_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
+	//_graphicsPipline->createPipelineLayout("default", _descriptorLayouts->GetDescriptorSetLayout(config));
 
-	_graphicsPipline->CreateGraphicsPipeline("test_triangle_vulkan","default",_assetManager.getShaderByName("Rectangle_Vulkan"),_renderPass->GetRenderPass());
+	//_graphicsPipline->CreateGraphicsPipeline("test_triangle_vulkan","default",_assetManager.getShaderByName("Rectangle_Vulkan"),_renderPass->GetRenderPass());
 	
 
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,_descriptorLayouts->GetDescriptorSetLayout(config));
@@ -251,7 +251,7 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 //Set up Vulkan Resouce Manager
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
-	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, _devices->Handle(), _assetManager));
+	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, *_devices, _assetManager));
 
 }
 
@@ -405,7 +405,7 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject& object)
 	}
 
 	for (auto& material : object.materials) {
-		_descriptorPools->AllocateImageDescriptorSet(material, object.descriptorSetLayouts.textures);
+		_descriptorPools->AllocateImageDescriptorSet(material, object.textures, object.descriptorSetLayouts.textures);
 	}
 
 	std::cout << "stop" << std::endl;
@@ -454,10 +454,42 @@ void vulkan::VulkanRenderer::ConfigurePipeline(VulkanRenderObject& object)
 	pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
 	Check(vkCreatePipelineLayout(_devices->Handle(), &pipelineLayoutCI, nullptr, &object.Pipelinelayout), "Create render object pipeline layout");
 
-	PipelineEntry entry;
+	graphicsPipelineCreateInfoPack GPCI;
+	GPCI.inputAssemblyStateCi = initializers::pipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_LINE_LIST, 0, VK_FALSE);
+	GPCI.rasterizationStateCi = initializers::pipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	GPCI.colorBlendAttachmentStates.push_back(initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE));
+	GPCI.depthStencilStateCi = initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	GPCI.viewportStateCi = initializers::pipelineViewportStateCreateInfo(1, 1, 0);
+	GPCI.multisampleStateCi = initializers::pipelineMultisampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT, 0);
+	GPCI.dynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+	GPCI.dynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
+	getPipelineVertexInputState({ VertexComponent::Position, VertexComponent::Normal, VertexComponent::UV, VertexComponent::Color, VertexComponent::Tangent }, GPCI);
+	GPCI.createInfo.layout = object.Pipelinelayout;
+	GPCI.createInfo.renderPass = _renderPass->GetRenderPass();
+	GPCI.createInfo.stageCount = 2;
+	GPCI.shaderStages.resize(2);
+	const auto& shaders = _assetManager.getShaderByName("scene");
+	for (auto& material : object.materials) {
+		struct MaterialSpecializationData {
+			VkBool32 alphaMask;
+			float alphaMaskCutoff;
+		} materialSpecializationData;
 
+		materialSpecializationData.alphaMask = material.alphaMode == ALPHAMODE_MASK;
+		materialSpecializationData.alphaMaskCutoff = material.alphaCutoff;
 
+		std::vector<VkSpecializationMapEntry> specializationMapEntries = {
+			initializers::specializationMapEntry(0, offsetof(MaterialSpecializationData, alphaMask), sizeof(MaterialSpecializationData::alphaMask)),
+			initializers::specializationMapEntry(1, offsetof(MaterialSpecializationData, alphaMaskCutoff), sizeof(MaterialSpecializationData::alphaMaskCutoff))
+		};
+		VkSpecializationInfo specializationInfo = initializers::specializationInfo(specializationMapEntries, sizeof(materialSpecializationData), &materialSpecializationData);
+		GPCI.shaderStages[1].pSpecializationInfo = &specializationInfo;
 
+		material.pipeline = _graphicsPipline->CreateGraphicsPipeline(object.name, GPCI, shaders);
+	}
+	
+	std::cout << "stop" << std::endl;
+	
 }
 
 void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)

@@ -10,10 +10,7 @@
 #include <assimp/GltfMaterial.h>
 
 //tinygltf loader
-#include "../utils/tiny_gltf.h";
-
-
-
+#include "../utils/tiny_gltf.h"
 #include "../utils/TypeDefine.h"
 #include "../utils/minilog.h"
 #include "../utils/Utils.h"

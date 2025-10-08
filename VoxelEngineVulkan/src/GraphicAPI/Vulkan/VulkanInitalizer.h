@@ -130,6 +130,26 @@ namespace vulkan {
 			pipelineColorBlendStateCreateInfo.pAttachments = pAttachments;
 			return pipelineColorBlendStateCreateInfo;
 		}
+		/** @brief Initialize a map entry for a shader specialization constant */
+		inline VkSpecializationMapEntry specializationMapEntry(uint32_t constantID, uint32_t offset, size_t size)
+		{
+			VkSpecializationMapEntry specializationMapEntry{};
+			specializationMapEntry.constantID = constantID;
+			specializationMapEntry.offset = offset;
+			specializationMapEntry.size = size;
+			return specializationMapEntry;
+		}
+
+		/** @brief Initialize a specialization constant info structure to pass to a shader stage */
+		inline VkSpecializationInfo specializationInfo(const std::vector<VkSpecializationMapEntry>& mapEntries, size_t dataSize, const void* data)
+		{
+			VkSpecializationInfo specializationInfo{};
+			specializationInfo.mapEntryCount = static_cast<uint32_t>(mapEntries.size());
+			specializationInfo.pMapEntries = mapEntries.data();
+			specializationInfo.dataSize = dataSize;
+			specializationInfo.pData = data;
+			return specializationInfo;
+		}
 
 		inline VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo(
 			VkBool32 depthTestEnable,
