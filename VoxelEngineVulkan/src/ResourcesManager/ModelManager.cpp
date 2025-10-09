@@ -460,7 +460,7 @@ void asset::ModelManager::loadMaterial_test(tinygltf::Model& gltfMode, ModelData
 			material.normalTexture = texId == -1 ? -1 : texId;
 		}
 		else {
-			//material.normalTexture = &emptyTexture;
+			material.normalTexture = 0;
 		}
 		if (mat.additionalValues.find("emissiveTexture") != mat.additionalValues.end()) {
 			uint32_t texId = utils::findInMap(_imageFileIdMapping, gltfMode.images.at(gltfMode.textures[mat.additionalValues["emissiveTexture"].TextureIndex()].source).uri, -1);

@@ -403,7 +403,7 @@ namespace vulkan {
 
 	struct Buffer
 	{
-		VkDevice device;
+		VkDevice _device;
 		VkBuffer buffer = VK_NULL_HANDLE;
 		VkDeviceMemory memory = VK_NULL_HANDLE;
 		VkDescriptorBufferInfo descriptor;
@@ -414,7 +414,7 @@ namespace vulkan {
 		VkBufferUsageFlags usageFlags;
 		/** @brief Memory property flags to be filled by external source at buffer creation (to query at some later point) */
 		VkMemoryPropertyFlags memoryPropertyFlags;
-		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+		VkResult map(VkDevice device, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		void unmap();
 		VkResult bind(VkDeviceSize offset = 0);
 		void setupDescriptor(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
@@ -422,6 +422,8 @@ namespace vulkan {
 		VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		void destroy();
+
+	
 	};
 	struct ShaderData {
 		Buffer buffer;
@@ -487,6 +489,9 @@ namespace vulkan {
 		VkDeviceMemory	indicememory;
 
 		std::vector<uint32_t>		indiceCounts;
+
+		void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+		void drawNode(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, SceneNode* node);
 	};
 
 

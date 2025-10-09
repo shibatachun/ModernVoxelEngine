@@ -1313,11 +1313,14 @@ void vulkan::DescriptorPoolManager::CreatePoolForIndividualObject(uint32_t uboCo
 	_test_pool.emplace(objectName, pool);
 }
 
-void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout& layout,VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, std::string name)
+void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout& layout,VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo, int index)
 {
-	VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_test_pool[name], &layout, 1);
+	
+	VkDescriptorSetAllocateInfo allocInfo = initializers::descriptorSetAllocateInfo(_PerFramePool[index], &layout, 1);
 	Check(vkAllocateDescriptorSets(_device.Handle(), &allocInfo, &desSet), "Allocate Descriptor Set");
 	VkWriteDescriptorSet writeDescriptorSet = initializers::writeDescriptorSet(desSet, type, binding, &desInfo);
+	vkUpdateDescriptorSets(_device.Handle(), 1, &writeDescriptorSet, 0, nullptr);
+	
 
 }
 
@@ -1330,31 +1333,36 @@ void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& m
 		descriptorSetAllocInfo.pSetLayouts = &layout;
 		descriptorSetAllocInfo.descriptorSetCount = 1;
 		Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &material.descriptorSet), "Create material DescriptorSet");
-		std::vector<VkDescriptorImageInfo> imageDescriptors{};
-		std::vector<VkWriteDescriptorSet> writeDescriptorSets{};
-		if (material.baseColorTexture != -1) {
-			imageDescriptors.push_back(textures[material.baseColorTexture].descriptor);
-			VkWriteDescriptorSet writeDescriptorSet{};
-			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSet.descriptorCount = 1;
-			writeDescriptorSet.dstSet = material.descriptorSet;
-			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
-			writeDescriptorSet.pImageInfo = &textures[material.baseColorTexture].descriptor;
-			writeDescriptorSets.push_back(writeDescriptorSet);
-		}
+		//std::vector<VkDescriptorImageInfo> imageDescriptors{};
+		//std::vector<VkWriteDescriptorSet> writeDescriptorSets{};
+		//if (material.baseColorTexture != -1) {
+		//	imageDescriptors.push_back(textures[material.baseColorTexture].descriptor);
+		//	VkWriteDescriptorSet writeDescriptorSet{};
+		//	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		//	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		//	writeDescriptorSet.descriptorCount = 1;
+		//	writeDescriptorSet.dstSet = material.descriptorSet;
+		//	writeDescriptorSet.dstBinding = 0;
+		//	writeDescriptorSet.pImageInfo = &textures[material.baseColorTexture].descriptor;
+		//	writeDescriptorSets.push_back(writeDescriptorSet);
+		//}
 
-		if (material.normalTexture != -1) {
-			imageDescriptors.push_back(textures[material.normalTexture].descriptor);
-			VkWriteDescriptorSet writeDescriptorSet{};
-			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSet.descriptorCount = 1;
-			writeDescriptorSet.dstSet = material.descriptorSet;
-			writeDescriptorSet.dstBinding = static_cast<uint32_t>(writeDescriptorSets.size());
-			writeDescriptorSet.pImageInfo = &textures[material.normalTexture].descriptor;
-			writeDescriptorSets.push_back(writeDescriptorSet);
-		}
+		//if (material.normalTexture != -1) {
+		//	imageDescriptors.push_back(textures[material.normalTexture].descriptor);
+		//	VkWriteDescriptorSet writeDescriptorSet{};
+		//	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		//	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		//	writeDescriptorSet.descriptorCount = 1;
+		//	writeDescriptorSet.dstSet = material.descriptorSet;
+		//	writeDescriptorSet.dstBinding = 1;
+		//	writeDescriptorSet.pImageInfo = &textures[material.normalTexture].descriptor;
+		//	writeDescriptorSets.push_back(writeDescriptorSet);
+		//}
+		std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
+			initializers::writeDescriptorSet(material.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &textures[material.baseColorTexture].descriptor),
+			initializers::writeDescriptorSet(material.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &textures[material.normalTexture].descriptor)
+		};
+	
 		vkUpdateDescriptorSets(_device.Handle(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
 	}
 
@@ -2070,9 +2078,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 		LayoutConfig configVertex{};
 		configVertex.bindings.push_back(initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
 		renderObject.descriptorSetLayouts.matrices = _descriptorLayoutManager.CreateDescriptorSetLayout(configVertex);
-		for (auto node : modeldata.linearNodeHierarchy) {
-			prepareNodeDescriptor(node, _descriptorLayoutManager.GetDescriptorSetLayout(configVertex));
-		}
+		
 	}
 	//生成fragment shader的关于material的layout
 	{

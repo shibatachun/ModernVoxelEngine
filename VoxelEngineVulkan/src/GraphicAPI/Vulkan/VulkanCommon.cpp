@@ -133,7 +133,7 @@ void vulkan::VulkanTexture::updateDescriptor()
 	descriptor.imageLayout = imageLayout;
 }
 
-VkResult vulkan::Buffer::map(VkDeviceSize size, VkDeviceSize offset)
+VkResult vulkan::Buffer::map(VkDevice device, VkDeviceSize size, VkDeviceSize offset)
 {
 	return vkMapMemory(device, memory, offset, size, 0, &mapped);
 }
@@ -142,14 +142,14 @@ void vulkan::Buffer::unmap()
 {
 	if (mapped)
 	{
-		vkUnmapMemory(device, memory);
+		vkUnmapMemory(_device, memory);
 		mapped = nullptr;
 	}
 }
 
 VkResult vulkan::Buffer::bind(VkDeviceSize offset)
 {
-	return vkBindBufferMemory(device, buffer, memory, offset);	
+	return vkBindBufferMemory(_device, buffer, memory, offset);	
 
 }
 
@@ -173,7 +173,7 @@ VkResult vulkan::Buffer::flush(VkDeviceSize size, VkDeviceSize offset)
 	mappedRange.memory = memory;
 	mappedRange.offset = offset;
 	mappedRange.size = size;
-	return vkFlushMappedMemoryRanges(device, 1, &mappedRange);
+	return vkFlushMappedMemoryRanges(_device, 1, &mappedRange);
 }
 
 VkResult vulkan::Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
@@ -183,18 +183,55 @@ VkResult vulkan::Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 	mappedRange.memory = memory;
 	mappedRange.offset = offset;
 	mappedRange.size = size;
-	return vkInvalidateMappedMemoryRanges(device, 1, &mappedRange);
+	return vkInvalidateMappedMemoryRanges(_device, 1, &mappedRange);
 }
 
 void vulkan::Buffer::destroy()
 {
 	if (buffer)
 	{
-		vkDestroyBuffer(device, buffer, nullptr);
+		vkDestroyBuffer(_device, buffer, nullptr);
 	}
 	if (memory)
 	{
-		vkFreeMemory(device, memory, nullptr);
+		vkFreeMemory(_device, memory, nullptr);
+	}
+}
+
+void vulkan::VulkanRenderObject::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+	VkDeviceSize offsets[1] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, indiceBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+	for (auto& node : sceneGraph) {
+		drawNode(commandBuffer, pipelineLayout, node);
+	}
+
+}
+
+void vulkan::VulkanRenderObject::drawNode(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, SceneNode* node)
+{
+	for (auto& mesh : node->mesh) {
+		if (mesh->offset.size() > 0) {
+			glm::mat4 nodeMatrix = node->matrix;
+			SceneNode* currentParent = node->parent;
+			while (currentParent) {
+				nodeMatrix = currentParent->matrix * nodeMatrix;
+				currentParent = currentParent->parent;
+			}
+			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &nodeMatrix);
+			for (Mesh& offset : mesh->offset) {
+				if (offset.indiceCount > 0) {
+					VulkanMaterial& material = materials[offset.materialID];
+					vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &material.descriptorSet, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, offset.indiceCount, 1, offset.indexOffset,0,0);
+				}
+			}
+		}
+	}
+	for (auto& child : node->children) {
+		drawNode(commandBuffer, pipelineLayout, child);
 	}
 }
 

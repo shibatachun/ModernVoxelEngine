@@ -122,10 +122,10 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	SetUpDescriptorPoolsManager();
 	SetUpGraphicPipelineManager();
 	SetUpVulkanResouceManager();
-
+	
 	CreateFrameBuffer();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
-
+	CreateUniformBuffers();
 	CreateSyncObjects();
 	//CreateUniformBuffers();
 
@@ -325,13 +325,6 @@ void vulkan::VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, 
 	clearValues.push_back(depthStencil);
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.pipeline);
-	VkBuffer vertexBuffers[] = { object.vertexBuffer }; 
-	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, object.indiceBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 
 	VkViewport viewport{};
@@ -348,14 +341,25 @@ void vulkan::VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = _swapchain->GetSwapchainExtent();
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		object.Pipelinelayout,
-		0, 1,
-		&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
-		0, nullptr);
 
-	//vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-	vkCmdDrawIndexed(commandBuffer, object.indiceCounts[0], 1, 0, 0, 0);
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.Pipelinelayout, 0, 1, &object.descriptorSet, 0, nullptr);
+	object.Draw(commandBuffer, object.Pipelinelayout);
+	//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.pipeline);
+	//VkBuffer vertexBuffers[] = { object.vertexBuffer }; 
+	//VkDeviceSize offsets[] = { 0 };
+	//vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	//vkCmdBindIndexBuffer(commandBuffer, object.indiceBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+
+	//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+	//	object.Pipelinelayout,
+	//	0, 1,
+	//	&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
+	//	0, nullptr);
+
+	////vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+	//vkCmdDrawIndexed(commandBuffer, object.indiceCounts[0], 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -385,13 +389,16 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 {
 	
 	_uniformData.resize(MAX_FRAMES_IN_FLIGHT);
+	_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
+
 		_bufferManager->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, sizeof(_uniformData[i].values),
 			&_uniformData[i].buffer.buffer, &_uniformData[i].buffer.memory);
-		_uniformData[i].buffer.map();
+		_uniformData[i].buffer.setupDescriptor();
+		_uniformData[i].buffer.map(_devices->Handle());
 	}
 }
 
@@ -399,6 +406,12 @@ void vulkan::VulkanRenderer::CreateUniformBuffers()
 
 void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject& object)
 {
+	if (object.descriptorSet == VK_NULL_HANDLE) {
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			_descriptorPools->AllocateDescriptorSet(object.descriptorSetLayouts.matrices, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, object.descriptorSet, 0, _uniformData[i].buffer.descriptor, i);
+
+		}
+	}
 	
 	for (auto& x : object.sceneGraph) {
 		_descriptorPools->PrepareNodeDescriptor(x, object.descriptorSetLayouts.matrices);
@@ -455,7 +468,7 @@ void vulkan::VulkanRenderer::ConfigurePipeline(VulkanRenderObject& object)
 	Check(vkCreatePipelineLayout(_devices->Handle(), &pipelineLayoutCI, nullptr, &object.Pipelinelayout), "Create render object pipeline layout");
 
 	graphicsPipelineCreateInfoPack GPCI;
-	GPCI.inputAssemblyStateCi = initializers::pipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_LINE_LIST, 0, VK_FALSE);
+	GPCI.inputAssemblyStateCi = initializers::pipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 	GPCI.rasterizationStateCi = initializers::pipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 	GPCI.colorBlendAttachmentStates.push_back(initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE));
 	GPCI.depthStencilStateCi = initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -498,14 +511,22 @@ void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)
 	
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f),
+	
+	// 相机半径（距离原点的距离）
+	float radius = 5.0f;
+
+	// 绕 Y 轴旋转（XZ 平面绕圈）
+	glm::vec3 camPos = glm::vec3(
+		sin(time) * radius,
+		-5.0f,              // Y 高度调大 = 俯视角
+		cos(time) * radius
+	);
+	_uniformData[currentImage].values.view= glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	_uniformData[currentImage].values.projection = glm::perspective(glm::radians(45.0f),
 		_swapchain->GetSwapchainExtent().width / (float)_swapchain->GetSwapchainExtent().height, 
 		0.1f, 10.f);
-	ubo.proj[1][1] *= -1;
-	memcpy(_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+	_uniformData[currentImage].values.projection[1][1] *= -1;
+	memcpy(_uniformData[currentImage].buffer.mapped, &_uniformData[currentImage].values, sizeof(_uniformData[currentImage].values));
 }
 
 bool vulkan::VulkanRenderer::IsMinimized() const
@@ -529,6 +550,7 @@ void vulkan::VulkanRenderer::PrepareRenderObject()
 		ConfigurePipeline(x);
 		_renderObjects.push_back(x);
 	}
+	std::cout << "stop PrepareRenderObject" << std::endl;
 }
 
 //Constructor
