@@ -5,6 +5,8 @@
 #include "GraphicAPI/RenderFactory.h"
 #include "ResourcesManager/AssetManager.h"
 #include "utils/GlfwHelper.h"
+#include "utils/Camera.h"
+
 
 
 #define GLFW_EXPOSE_NATIVE_WIN32

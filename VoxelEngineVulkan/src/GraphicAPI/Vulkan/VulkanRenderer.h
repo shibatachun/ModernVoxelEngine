@@ -3,6 +3,8 @@
 #include "../../ResourcesManager/AssetManager.h"
 #include "VulkanClasses.h"
 
+
+
 namespace vulkan
 {
 	class VulkanRenderer : public IRenderer
@@ -23,7 +25,8 @@ namespace vulkan
 		const VkPresentModeKHR									_presentMode;
 		GLFWwindow*												_window;
 		asset::AssetManager&									_assetManager;
-	
+		
+		Camera													_camera;
 
 		std::unique_ptr<class vulkan::Instance>					_instance;
 		std::unique_ptr<class vulkan::Surface>					_surface;
@@ -74,6 +77,7 @@ namespace vulkan
 		void SetUpVulkanResouceManager();
 
 
+
 		void CreateFrameBuffer();
 		void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, VulkanRenderObject object);
 		void CreateCommandBuffer(QueueFamily family);
@@ -85,9 +89,6 @@ namespace vulkan
 		void UpdateUniformBuffer(uint32_t currentImage);
 		bool IsMinimized() const;
 		void PrepareRenderObject();
-		
-
-
 
 
 	};

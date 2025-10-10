@@ -83,8 +83,8 @@ void vulkan::VulkanRenderer::Cleanup()
 	_swapchain->CleanUpSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(_devices->Handle(), _uniformBuffers[i], nullptr);
-		vkFreeMemory(_devices->Handle(), _uniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer(_devices->Handle(), _uniformData[i].buffer.buffer, nullptr);
+		vkFreeMemory(_devices->Handle(), _uniformData[i].buffer.memory, nullptr);
 	}
 	_descriptorPools.reset();
 	_descriptorLayouts.reset();
@@ -254,6 +254,7 @@ void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, *_devices, _assetManager));
 
 }
+
 
 //Set up Sync Objects
 void vulkan::VulkanRenderer::CreateSyncObjects()
@@ -507,25 +508,14 @@ void vulkan::VulkanRenderer::ConfigurePipeline(VulkanRenderObject& object)
 
 void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
+	//static auto startTime = std::chrono::high_resolution_clock::now();
+	//
+	//auto currentTime = std::chrono::high_resolution_clock::now();
+	//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 	
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-	
-	// 相机半径（距离原点的距离）
-	float radius = 5.0f;
-
-	// 绕 Y 轴旋转（XZ 平面绕圈）
-	glm::vec3 camPos = glm::vec3(
-		sin(time) * radius,
-		-5.0f,              // Y 高度调大 = 俯视角
-		cos(time) * radius
-	);
-	_uniformData[currentImage].values.view= glm::lookAt(camPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-	_uniformData[currentImage].values.projection = glm::perspective(glm::radians(45.0f),
-		_swapchain->GetSwapchainExtent().width / (float)_swapchain->GetSwapchainExtent().height, 
-		0.1f, 10.f);
-	_uniformData[currentImage].values.projection[1][1] *= -1;
+	_uniformData[currentImage].values.view=	gCamera.matrices.view;
+	_uniformData[currentImage].values.projection =	gCamera.matrices.perspective;
+	_uniformData[currentImage].values.viewPos = gCamera.viewPos;
 	memcpy(_uniformData[currentImage].buffer.mapped, &_uniformData[currentImage].values, sizeof(_uniformData[currentImage].values));
 }
 
@@ -552,6 +542,8 @@ void vulkan::VulkanRenderer::PrepareRenderObject()
 	}
 	std::cout << "stop PrepareRenderObject" << std::endl;
 }
+
+
 
 //Constructor
 vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(presentmode), _assetManager(assetManager)

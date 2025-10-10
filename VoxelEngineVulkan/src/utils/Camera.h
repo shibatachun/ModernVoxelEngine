@@ -239,3 +239,5 @@ public:
 	}
 
 };
+
+extern Camera gCamera;
