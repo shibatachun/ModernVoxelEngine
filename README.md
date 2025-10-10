@@ -13,8 +13,8 @@ The engine uses a modular rendering abstraction, allowing API switches at runtim
 
 ## Current Progress
 10/10/2025 Finally rendered something up
-[10/10/2025](VoxelEngineVulkan/record/Sponza-10-10-2025.png)
-[10/10/2025-unfix](VoxelEngineVulkan/record/Sponza-10-10-2025-unfix.png)
+![10/10/2025](VoxelEngineVulkan/record/Sponza-10-10-2025.png)
+![10/10/2025-unfix](VoxelEngineVulkan/record/Sponza-10-10-2025-unfix.png)
 
 ## Quick Start (Visual Studio)
 
