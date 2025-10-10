@@ -13,7 +13,7 @@ struct Vertex1 {
     glm::vec3 normal{};
     glm::vec4 joint0{};
     glm::vec4 weight0{};
-    glm::vec3 tangent{};
+    glm::vec4 tangent{};
   
     
 };

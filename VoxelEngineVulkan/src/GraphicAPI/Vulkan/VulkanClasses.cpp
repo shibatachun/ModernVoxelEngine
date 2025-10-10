@@ -1333,31 +1333,6 @@ void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& m
 		descriptorSetAllocInfo.pSetLayouts = &layout;
 		descriptorSetAllocInfo.descriptorSetCount = 1;
 		Check(vkAllocateDescriptorSets(_device.Handle(), &descriptorSetAllocInfo, &material.descriptorSet), "Create material DescriptorSet");
-		//std::vector<VkDescriptorImageInfo> imageDescriptors{};
-		//std::vector<VkWriteDescriptorSet> writeDescriptorSets{};
-		//if (material.baseColorTexture != -1) {
-		//	imageDescriptors.push_back(textures[material.baseColorTexture].descriptor);
-		//	VkWriteDescriptorSet writeDescriptorSet{};
-		//	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		//	writeDescriptorSet.descriptorCount = 1;
-		//	writeDescriptorSet.dstSet = material.descriptorSet;
-		//	writeDescriptorSet.dstBinding = 0;
-		//	writeDescriptorSet.pImageInfo = &textures[material.baseColorTexture].descriptor;
-		//	writeDescriptorSets.push_back(writeDescriptorSet);
-		//}
-
-		//if (material.normalTexture != -1) {
-		//	imageDescriptors.push_back(textures[material.normalTexture].descriptor);
-		//	VkWriteDescriptorSet writeDescriptorSet{};
-		//	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		//	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		//	writeDescriptorSet.descriptorCount = 1;
-		//	writeDescriptorSet.dstSet = material.descriptorSet;
-		//	writeDescriptorSet.dstBinding = 1;
-		//	writeDescriptorSet.pImageInfo = &textures[material.normalTexture].descriptor;
-		//	writeDescriptorSets.push_back(writeDescriptorSet);
-		//}
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
 			initializers::writeDescriptorSet(material.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &textures[material.baseColorTexture].descriptor),
 			initializers::writeDescriptorSet(material.descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &textures[material.normalTexture].descriptor)

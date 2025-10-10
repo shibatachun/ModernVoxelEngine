@@ -58,8 +58,8 @@ bool paused = false;
 void mouseMoveCallback(GLFWwindow* window, double xpos, double ypos) {
 	if (mouseState.buttons.left) {
 		glm::vec2 delta = mouseState.position - glm::vec2((float)xpos, (float)ypos);
-		gCamera.rotate(glm::vec3(delta.y, delta.x, 0.0f));
-		viewUpdated = true;
+		gCamera.rotate(glm::vec3(delta.y, -delta.x, 0.0f));
+		
 	}
 	mouseState.position = glm::vec2((float)xpos, (float)ypos);
 }
@@ -121,18 +121,24 @@ int main() {
 	glfwSetScrollCallback(window, scrollCallback);
 	
 	gCamera.type = Camera::CameraType::firstperson;
-	gCamera.flipY = true;
+	gCamera.flipY = false;
 	gCamera.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 	gCamera.setRotation(glm::vec3(0.0f, -90.0f, 0.0f));
 	gCamera.setPerspective(60.0f, (float)width / (float)height, 0.1f, 256.0f);
+	float frameCounter = 0.0f;
+	float frameTimer = 0.0f;
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 		
 
-	
+		auto tStart = std::chrono::high_resolution_clock::now();
 		app.Draw();
-		
+		frameCounter++;
+		auto tEnd = std::chrono::high_resolution_clock::now();
+		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+		frameTimer = (float)tDiff / 1000.0f;
+		gCamera.update(frameTimer);
 
 		TitleFps("lihai", window);
 	}
