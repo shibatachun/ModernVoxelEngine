@@ -11,6 +11,10 @@ FPSGame is a next-generation first-person shooter that integrates modern graphic
 
 The engine uses a modular rendering abstraction, allowing API switches at runtime for cross-platform development and performance benchmarking.
 
+## Current Progress
+10/10/2025 Finally rendered something up
+[10/10/2025](VoxelEngineVulkan/record/Sponza-10-10-2025.png)
+[10/10/2025-unfix](VoxelEngineVulkan/record/Sponza-10-10-2025-unfix.png)
 
 ## Quick Start (Visual Studio)
 
@@ -43,3 +47,4 @@ FPSGame/
 ├── dep/
 └── README.md
 ```
+
