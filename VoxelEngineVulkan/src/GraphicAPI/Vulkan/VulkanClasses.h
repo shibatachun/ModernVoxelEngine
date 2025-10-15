@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanInitalizer.h"
+#include "VulkanResource.h"
 namespace vulkan {
 
 	class Instance final {
@@ -392,6 +393,7 @@ namespace vulkan {
 				Device& device,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
+			void init();
 			void ConvertToVulkanResource();
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name, std::vector<std::string> textureFiles);
 			void ConstructVulkanRenderObject(std::string name, std::string raw_model_name);
@@ -412,6 +414,16 @@ namespace vulkan {
 			std::vector<VulkanMaterial>															_material;
 			std::vector<VulkanTexture>															_Texture;
 			std::vector<VulkanRenderObject>														_renderObjects;
+
+			ResourcePool																		_buffers;
+			ResourcePool																		_textures;
+			ResourcePool																		_pipelines;
+			ResourcePool																		_samplers;
+			ResourcePool																		_descriptor_set_layouts;
+			ResourcePool																		_descriptor_sets;
+			ResourcePool																		_render_passes;
+			ResourcePool																		_command_buffers;
+			ResourcePool																		_shaders;
 
 
 

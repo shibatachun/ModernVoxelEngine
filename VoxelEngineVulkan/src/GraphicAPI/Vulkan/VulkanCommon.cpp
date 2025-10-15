@@ -235,4 +235,6 @@ void vulkan::VulkanRenderObject::drawNode(VkCommandBuffer commandBuffer, VkPipel
 	}
 }
 
-
+void vulkan::ResourcePool::init(uint32_t pool_size, uint32_t resource_size)
+{
+}

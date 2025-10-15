@@ -2007,6 +2007,10 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 	}
 }
 
+void vulkan::VulkanResouceManager::init()
+{
+}
+
 void vulkan::VulkanResouceManager::ConvertToVulkanResource()
 {
 

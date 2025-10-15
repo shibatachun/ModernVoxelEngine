@@ -150,6 +150,7 @@
     <ClCompile Include="src\utils\Math.cpp" />
     <ClCompile Include="src\utils\minilog.cpp" />
     <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
+    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanResource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\Camera.h" />
@@ -180,6 +181,7 @@
     <ClInclude Include="src\utils\ScopeExit.h" />
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanClasses.h" />
     <ClInclude Include="src\utils\Utils.h" />
+    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanResource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />
