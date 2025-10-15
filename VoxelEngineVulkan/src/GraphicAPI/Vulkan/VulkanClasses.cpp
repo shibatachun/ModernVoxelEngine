@@ -1324,7 +1324,7 @@ void vulkan::DescriptorPoolManager::AllocateDescriptorSet(VkDescriptorSetLayout&
 
 }
 
-void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(VulkanMaterial& material, std::vector<VulkanTexture>& textures,VkDescriptorSetLayout layout)
+void vulkan::DescriptorPoolManager::AllocateImageDescriptorSet(Vulkan_Material& material, std::vector<Vulkan_Texture>& textures,VkDescriptorSetLayout layout)
 {
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
@@ -2033,7 +2033,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(
 	for (const auto& x : textureFiles) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
-		VulkanTexture texture;
+		Vulkan_Texture texture;
 		texture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		_BufferManager.CreateVulkanImageBuffer(image, texture.imageLayout, texture.image, texture.deviceMemory);
 		CreateTextureImageView(texture.view, texture.image);
@@ -2088,7 +2088,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		if (x->meshID != -1) {
 			glm::mat4 m = x->getMatrix();
 			const auto& meshdata = modeldata.meshdatas[x->meshID];
-			VulkanMesh* vkmesh = new VulkanMesh{};
+			Vulkan_Mesh* vkmesh = new Vulkan_Mesh{};
 			vkmesh->offset = meshdata.meshes;
 			vkmesh->uniformBlock.matrix = meshdata.localTransform;
 			_BufferManager.createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -2117,7 +2117,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	for (const auto& x : modeldata.images) {
 		const Image& image = _assetMnanger.getImageDataByName(x);
 
-		VulkanTexture vktexture;
+		Vulkan_Texture vktexture;
 		vktexture.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		_BufferManager.CreateVulkanImageBuffer(image, vktexture.imageLayout, vktexture.image, vktexture.deviceMemory);
 		_BufferManager.CreateImageView(vktexture.view, vktexture.image, FromFormat(image.format), VK_IMAGE_ASPECT_COLOR_BIT, image.mipLevels);
@@ -2172,7 +2172,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	//生成Material生成
 	for (const auto& x : modeldata.materials) {
 		if (x.baseColorTexture != -1) {
-			VulkanMaterial material;
+			Vulkan_Material material;
 			material.alphaCutoff = x.alphaCutoff;
 			material.alphaMode = x.alphaMode;
 			material.metallicFactor = x.matallicFactor;

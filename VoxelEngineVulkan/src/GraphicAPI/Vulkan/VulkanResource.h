@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanCommon.h"
 namespace vulkan {
-		
+
 	static const uint32_t					invalidIndex = 0xffffffff;
 
 	typedef uint32_t                         ResourceHandle;
@@ -48,7 +48,7 @@ namespace vulkan {
 
 	struct RenderPassHandle {
 		ResourceHandle                  index;
-	}; 
+	};
 	namespace ResourceUsageType {
 		enum Enum {
 			Immutable, Dynamic, Stream, Count
@@ -199,7 +199,7 @@ namespace vulkan {
 		FillMode::Enum                  fill = FillMode::Solid;
 	}; // struct RasterizationCreation
 
-	struct VulkanBuffer {
+	struct VulkanVulkanBuffer {
 		VkBuffer				_vkBuffer;
 		VmaAllocation			_vmaAllocation;
 		VkDeviceMemory			_vkDeviceMemory;
@@ -215,29 +215,29 @@ namespace vulkan {
 		BufferHandle			_parentBuffer;
 
 		const char* _name = nullptr;
-		
+
 	};
 
-	struct Sampler {
+	struct VulkanSampler {
 
 		VkSampler                       _vkSampler;
 
 		VkFilter                        _minFilter = VK_FILTER_NEAREST;
 		VkFilter                        _magFilter = VK_FILTER_NEAREST;
 		VkSamplerMipmapMode             _mipFilter = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-										
+
 		VkSamplerAddressMode            _addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		VkSamplerAddressMode            _addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		VkSamplerAddressMode            _addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-										
+
 		const char* name = nullptr;
 
-	}; 
+	};
 
-	struct Texture {
+	struct VulkanTexture {
 
-		VkImage                         vk_image;
-		VkImageView                     vk_image_view;
+		VkImage                         image;
+		VkImageView                     view;
 		VkFormat                        vk_format;
 		VkImageLayout                   vk_image_layout;
 		VmaAllocation                   vma_allocation;
@@ -251,12 +251,12 @@ namespace vulkan {
 		TextureHandle                   handle;
 		TextureType::Enum               type = TextureType::Texture2D;
 
-		Sampler* sampler = nullptr;
+		VulkanSampler* sampler = nullptr;
 
 		const char* name = nullptr;
 	}; // struct TextureVulkan
 
-	struct ShaderState {
+	struct VulkanShaderState {
 
 		VkPipelineShaderStageCreateInfo shader_stage_info[k_max_shader_stages];
 
@@ -265,10 +265,10 @@ namespace vulkan {
 		uint32_t                             active_shaders = 0;
 		bool                            graphics_pipeline = false;
 
-		
+
 	}; // struct ShaderStateVulkan
 
-	struct DescriptorBinding {
+	struct VulkanDescriptorBinding {
 
 		VkDescriptorType					 type;
 		uint16_t                             start = 0;
@@ -278,12 +278,12 @@ namespace vulkan {
 		const char* name = nullptr;
 	}; // struct ResourceBindingVulkan
 
-	struct DesciptorSetLayout {
+	struct VulkanDesciptorSetLayout {
 
 		VkDescriptorSetLayout					vk_descriptor_set_layout;
 
-		VkDescriptorSetLayoutBinding*			vk_binding = nullptr;
-		DescriptorBinding*						bindings = nullptr;
+		VkDescriptorSetLayoutBinding* vk_binding = nullptr;
+		VulkanDescriptorBinding* bindings = nullptr;
 		uint16_t								num_bindings = 0;
 		uint16_t								set_index = 0;
 
@@ -292,20 +292,20 @@ namespace vulkan {
 	}; // struct DesciptorSetLayoutVulkan
 
 
-	struct DesciptorSet {
+	struct VulkanDesciptorSet {
 
 		VkDescriptorSet						vk_descriptor_set;
 
-		ResourceHandle*						resources = nullptr;
-		SamplerHandle*						samplers = nullptr;
-		uint16_t*							bindings = nullptr;
+		ResourceHandle* resources = nullptr;
+		SamplerHandle* samplers = nullptr;
+		uint16_t* bindings = nullptr;
 
-		const DesciptorSetLayout* layout = nullptr;
+		const VulkanDesciptorSetLayout* layout = nullptr;
 		uint32_t                             num_resources = 0;
 	}; // struct DesciptorSetVulkan
 
 
-	struct Pipeline {
+	struct VulkanPipeline {
 
 		VkPipeline                      vk_pipeline;
 		VkPipelineLayout                vk_pipeline_layout;
@@ -314,7 +314,7 @@ namespace vulkan {
 
 		ShaderStateHandle               shader_state;
 
-		const DesciptorSetLayout*		descriptor_set[k_max_descriptor_set_layouts];
+		const VulkanDesciptorSetLayout* descriptor_set[k_max_descriptor_set_layouts];
 		DescriptorSetLayoutHandle       descriptor_set_layout_handle[k_max_descriptor_set_layouts];
 		uint32_t                        num_active_layouts = 0;
 
@@ -352,8 +352,85 @@ namespace vulkan {
 		const char* name = nullptr;
 	}; // struct RenderPass
 
+	template <typename T>
 	struct ResourcePool {
-		void init(uint32_t pool_size, uint32_t resource_size);
+		void init(uint32_t pool_size) {
+			resources.resize(pool_size);
+			freeIndices.resize(pool_size);
+			usedIndices.resize(poolSize);
+			
+
+			for (uint32_t i = 0; i < pool_size; ++i) {
+				freeIndices[i] = i;
+			}
+			freeIndicesHead = 0;
+			usedIndices = 0;
+		}
+		void shutdown() {
+
+		}
+
+		T* obtain() {
+			uint32_t resourceIndex = obtain_resouce();
+			if (resourceIndex != invalidIndex) {
+				T* resource = get(resourceIndex);
+				resource->poolIndex = resourceIndex;
+				return resource;
+			}
+		}
+		void release(T* resource) {
+
+		}
+
+		T* get(uint32_t index) {
+
+		}
+		const T* get(uint32_t index) const {
+
+		}
+
+	private:
+		uint32_t poolSize;
+		std::vector<T> resources;
+		std::vector<uint32_t> freeIndices;
+		uint32_t usedIndiced;
+		uint32_t freeIndicesHead;
+	private:
+		uint32_t obtain_resouce() {
+			if (freeIndicesHead < poolSize) {
+				const uint32_t freeIndex = freeIndices[freeIndicesHead++];
+				--usedIndiced;
+				
+				return freeIndex;
+			}
+			return invalidIndex;
+		}
+		void release_resource(uint32_t handle) {
+			freeIndices[--freeIndicesHead] = handle;
+			--usedIndiced;
+		}
+		void free_all_resource() {
+			freeIndicesHead = 0;
+			usedIndiced = 0;
+			for (uint32_t i = 0; i < poolSize; i++) {
+				freeIndices[i] = i;
+			}
+		}
+
+		void* access_resource(uint32_t handle) {
+			if (handle != invalidIndex) {
+				return &resources[handle];
+			}
+			return nullptr;
+		}
+		const void* access_resource(uint32_t handle) {
+			if (handle != invalidIndex) {
+				return &resources[handle];
+			}
+			return nullptr;
+		}
+	
+
 
 	};
 }

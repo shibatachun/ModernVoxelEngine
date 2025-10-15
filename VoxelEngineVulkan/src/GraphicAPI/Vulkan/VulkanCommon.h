@@ -368,7 +368,7 @@ namespace vulkan {
 		return setLayoutBinding;
 	}
 
-	struct VulkanMesh {
+	struct Vulkan_Mesh {
 		std::vector<Mesh> offset;
 		std::string name;
 		struct UniformBuffer {
@@ -387,7 +387,7 @@ namespace vulkan {
 
 	
 	};
-	struct VulkanTexture {
+	struct Vulkan_Texture {
 		std::string				name;
 		VkSampler				sampler{ VK_NULL_HANDLE };
 		VkImage					image{ VK_NULL_HANDLE };
@@ -448,10 +448,10 @@ namespace vulkan {
 		Skin* skin;
 		int32_t skinIndex = -1;
 		std::vector<SceneNode*>children;
-		std::vector<VulkanMesh*> mesh;
+		std::vector<Vulkan_Mesh*> mesh;
 
 	};
-	struct VulkanMaterial {
+	struct Vulkan_Material {
 		AlphaMode alphaMode;
 		float alphaCutoff = 1.0f;
 		float metallicFactor = 1.0f;
@@ -478,9 +478,9 @@ namespace vulkan {
 			VkDescriptorSetLayout textures{ VK_NULL_HANDLE };
 		} descriptorSetLayouts;
 		std::vector<SceneNode*> sceneGraph;
-		std::vector<VulkanMesh*> meshes;
-		std::vector<VulkanTexture> textures;
-		std::vector<VulkanMaterial> materials;
+		std::vector<Vulkan_Mesh*> meshes;
+		std::vector<Vulkan_Texture> textures;
+		std::vector<Vulkan_Material> materials;
 		uint32_t textureCount = 0;
 		std::unordered_map<int, int> textureIdMapping;
 

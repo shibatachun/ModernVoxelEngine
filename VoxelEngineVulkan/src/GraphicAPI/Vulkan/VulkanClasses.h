@@ -365,7 +365,7 @@ namespace vulkan {
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);
 		void AllocateDescriptorSet(VkDescriptorSetLayout& layout, VkDescriptorType type, VkDescriptorSet& desSet, uint32_t binding, VkDescriptorBufferInfo& desInfo,int index);
-		void AllocateImageDescriptorSet(VulkanMaterial& material, std::vector<VulkanTexture>& textures, VkDescriptorSetLayout layout);
+		void AllocateImageDescriptorSet(Vulkan_Material& material, std::vector<Vulkan_Texture>& textures, VkDescriptorSetLayout layout);
 		void PrepareNodeDescriptor(SceneNode* node, VkDescriptorSetLayout descriptorSetlayout);
 		VkDescriptorPool GetIndividualDescriptorPool(std::string poolname)
 		{
@@ -410,9 +410,9 @@ namespace vulkan {
 			GraphicPipelineManager&																_graphicPipelineManager;
 			const asset::AssetManager&															_assetMnanger;
 
-			std::vector<VulkanMesh>																_mesh;
-			std::vector<VulkanMaterial>															_material;
-			std::vector<VulkanTexture>															_Texture;
+			std::vector<Vulkan_Mesh>																_mesh;
+			std::vector<Vulkan_Material>															_material;
+			std::vector<Vulkan_Texture>															_Texture;
 			std::vector<VulkanRenderObject>														_renderObjects;
 
 			ResourcePool																		_buffers;
