@@ -1,27 +1,51 @@
-## Introduction
+# ModernVoxelEngine
 
-FPSGame is a next-generation first-person shooter that integrates modern graphics APIs—**Vulkan**, **OpenGL**, and **DirectX**—to showcase AAA-level visual features:
+A next-generation **voxel-based rendering engine** built in modern C++, designed for **real-time global illumination**, **cross-API rendering**, and **scalable world simulation**.  
+It supports both **Vulkan** and **DirectX 12**, aiming to push voxel-based worlds to the same visual fidelity as modern AAA engines.
 
-- **Ray Tracing** for global illumination, shadows, and reflections
-- **Temporal Anti-Aliasing (TAA)** for smooth frame-to-frame detail
-- **Volumetric Fog** and light shafts for immersive atmosphere
-- **Physically Based Rendering (PBR)** for unified material and lighting
-- **SSAO/HBAO** for enhanced ambient occlusion
-- **Post-Processing**: HDR, tone mapping, depth-of-field, motion blur
+---
 
-The engine uses a modular rendering abstraction, allowing API switches at runtime for cross-platform development and performance benchmarking.
+## Overview
+
+**ModernVoxelEngine** is a modular, high-performance voxel engine currently under active development.  
+It serves as an experimental platform for exploring advanced rendering techniques — from voxel-based geometry streaming to path-traced global illumination — all powered by a unified multi-API abstraction layer.
+
+The engine targets:
+- Physically-based rendering (PBR)
+- Massive voxel world streaming
+- Real-time global illumination and reflections
+- Cross-platform graphics backend (Vulkan + DirectX12)
+
+---
+
+## Current Progress
+
+ Implemented:
+- Core **graphics abstraction layer** (DX12 / Vulkan)  
+- Scene rendering pipeline with forward shading  
+- Camera system with free-flight control  
+- GPU resource manager (VMA / Descriptor Pool / Handle System)  
+- Chunk-based voxel world mesh generation  
+
+In Progress:
+- Data-driven resource system (shaders, materials, meshes)
+- FrameGraph + RenderGraph system  
+- PBR material shading  
+- Cross-platform window abstraction (Win32 / GLFW)  
+
+---
 
 ## Current Progress
 10/10/2025 Finally rendered something up
-![10/10/2025](VoxelEngineVulkan/record/Sponza-10-10-2025.png)
-![10/10/2025-unfix](VoxelEngineVulkan/record/Sponza-10-10-2025-unfix.png)
+![10/10/2025](ModernVoxelEngine/record/Sponza-10-10-2025.png)
+![10/10/2025-unfix](ModernVoxelEngine/record/Sponza-10-10-2025-unfix.png)
 
 ## Quick Start (Visual Studio)
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourname/FPSGame.git
-cd FPSGame/VoxelEngineVulkan
+git clone https://github.com/shibatachun/FPSGame.git
+cd FPSGame/ModernVoxelEngine
 
 # Install dependencies (using vcpkg)
 vcpkg integrate install
@@ -37,14 +61,5 @@ Select Debug or Release → Build Solution
 Press F5 or run FPSGame.exe in the corresponding folder
 ```
 
-## Project Structure
 
-```
-FPSGame/
-├── VoxelEngineVulkan/       # Vulkan module (main branch)
-│   ├── src/
-│   └── VoxelEngineVulkan.sln
-├── dep/
-└── README.md
-```
 
