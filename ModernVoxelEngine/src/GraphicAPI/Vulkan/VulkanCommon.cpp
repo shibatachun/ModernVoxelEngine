@@ -126,7 +126,7 @@ void vulkan::VulkanResource::createTextureImage()
     createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);*/
 }
 
-void vulkan::VulkanTexture::updateDescriptor()
+void vulkan::Vulkan_Texture::updateDescriptor()
 {
 	descriptor.sampler = sampler;
 	descriptor.imageView = view;
@@ -222,7 +222,7 @@ void vulkan::VulkanRenderObject::drawNode(VkCommandBuffer commandBuffer, VkPipel
 			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &nodeMatrix);
 			for (Mesh& offset : mesh->offset) {
 				if (offset.indiceCount > 0) {
-					VulkanMaterial& material = materials[offset.materialID];
+					Vulkan_Material& material = materials[offset.materialID];
 					vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.pipeline);
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &material.descriptorSet, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, offset.indiceCount, 1, offset.indexOffset,0,0);
@@ -235,6 +235,3 @@ void vulkan::VulkanRenderObject::drawNode(VkCommandBuffer commandBuffer, VkPipel
 	}
 }
 
-void vulkan::ResourcePool::init(uint32_t pool_size, uint32_t resource_size)
-{
-}

@@ -161,17 +161,26 @@ namespace vulkan {
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
 	};
+	/////////////////////////////////////////////////CommandBuffer and Pool//////////////////////////////////////////////////////////////
+	struct CommandBuffer {
+		void Init(Device& device);
+		void Shutdown();
+		void Begin();
+		void BeginSecondary(VulkanRenderPass* currentRenderPass, VulkanFramebuffer* currentFramebuffer );
+		void End();
+		void EndCurrentRenderPass();
+	};
 
 	class CommandPoolManager final {
 	public:
 		VULKAN_NON_COPIABLE(CommandPoolManager)
-			CommandPoolManager(const Device& device);
+		CommandPoolManager(const Device& device);
 		~CommandPoolManager();
 		void CreateCommandPool(QueueFamily);
 		VkCommandPool GetCommandPool(QueueFamily family) { return _commandPools[family]; };
 		void FreeCommandBuffer(QueueFamily, uint32_t, const VkCommandBuffer&);
 	private:
-		void Init();
+		void Init(uint32_t num_threads);
 		std::unordered_map<QueueFamily, VkCommandPool>				_commandPools;
 		const Device& _device;
 
@@ -415,15 +424,15 @@ namespace vulkan {
 			std::vector<Vulkan_Texture>															_Texture;
 			std::vector<VulkanRenderObject>														_renderObjects;
 
-			ResourcePool																		_buffers;
-			ResourcePool																		_textures;
-			ResourcePool																		_pipelines;
-			ResourcePool																		_samplers;
-			ResourcePool																		_descriptor_set_layouts;
-			ResourcePool																		_descriptor_sets;
-			ResourcePool																		_render_passes;
-			ResourcePool																		_command_buffers;
-			ResourcePool																		_shaders;
+			ResourcePool<VulkanBuffer>																		_buffers;
+			ResourcePool<VulkanTexture>															_textures;
+			ResourcePool<VulkanPipeline>																		_pipelines;
+			ResourcePool<VulkanSampler>																		_samplers;
+			ResourcePool<VulkanDesciptorSetLayout>																		_descriptor_set_layouts;
+			ResourcePool<VulkanDesciptorSet>																		_descriptor_sets;
+			ResourcePool<VulkanRenderPass>																		_render_passes;
+			ResourcePool<VulkanBuffer>																		_command_buffers;
+			ResourcePool<VulkanShaderState>																		_shaders;
 
 
 

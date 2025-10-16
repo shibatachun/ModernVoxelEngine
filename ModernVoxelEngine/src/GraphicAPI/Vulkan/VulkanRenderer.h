@@ -89,6 +89,7 @@ namespace vulkan
 		void UpdateUniformBuffer(uint32_t currentImage);
 		bool IsMinimized() const;
 		void PrepareRenderObject();
+		void BuildCommandBuffer();
 
 
 	};

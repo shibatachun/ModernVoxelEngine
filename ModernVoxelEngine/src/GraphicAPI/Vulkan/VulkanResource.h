@@ -199,7 +199,7 @@ namespace vulkan {
 		FillMode::Enum                  fill = FillMode::Solid;
 	}; // struct RasterizationCreation
 
-	struct VulkanVulkanBuffer {
+	struct VulkanBuffer {
 		VkBuffer				_vkBuffer;
 		VmaAllocation			_vmaAllocation;
 		VkDeviceMemory			_vkDeviceMemory;
@@ -351,6 +351,28 @@ namespace vulkan {
 
 		const char* name = nullptr;
 	}; // struct RenderPass
+	struct VulkanFramebuffer {
+
+		// NOTE(marco): this will be a null handle if dynamic rendering is available
+		VkFramebuffer                   vk_framebuffer;
+
+		// NOTE(marco): cache render pass handle
+		RenderPassHandle                render_pass;
+
+		uint16_t                             width = 0;
+		uint16_t                             height = 0;
+
+		float                             scale_x = 1.f;
+		float                             scale_y = 1.f;
+
+		TextureHandle						color_attachments[k_max_image_outputs];
+		TextureHandle						depth_stencil_attachment;
+		uint32_t                             num_color_attachments;
+
+		uint8_t                              resize = 0;
+
+		const char* name = nullptr;
+	}; // struct Framebuffer
 
 	template <typename T>
 	struct ResourcePool {
@@ -393,13 +415,13 @@ namespace vulkan {
 		uint32_t poolSize;
 		std::vector<T> resources;
 		std::vector<uint32_t> freeIndices;
-		uint32_t usedIndiced;
+		uint32_t usedIndices;
 		uint32_t freeIndicesHead;
 	private:
 		uint32_t obtain_resouce() {
 			if (freeIndicesHead < poolSize) {
 				const uint32_t freeIndex = freeIndices[freeIndicesHead++];
-				--usedIndiced;
+				--usedIndices;
 				
 				return freeIndex;
 			}
@@ -407,11 +429,11 @@ namespace vulkan {
 		}
 		void release_resource(uint32_t handle) {
 			freeIndices[--freeIndicesHead] = handle;
-			--usedIndiced;
+			--usedIndices;
 		}
 		void free_all_resource() {
 			freeIndicesHead = 0;
-			usedIndiced = 0;
+			usedIndices = 0;
 			for (uint32_t i = 0; i < poolSize; i++) {
 				freeIndices[i] = i;
 			}
@@ -423,7 +445,7 @@ namespace vulkan {
 			}
 			return nullptr;
 		}
-		const void* access_resource(uint32_t handle) {
+		const void* access_resource(uint32_t handle) const {
 			if (handle != invalidIndex) {
 				return &resources[handle];
 			}

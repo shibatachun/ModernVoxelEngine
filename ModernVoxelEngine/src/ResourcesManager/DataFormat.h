@@ -38,7 +38,7 @@ struct Mesh final {
     uint32_t indiceCount = 0;
 
     // Offsets to LOD indices data. The last offset is used as a marker to calculate the size
-    uint32_t lodOffset[kMaxLODs + 1] = { 0.f };
+    uint32_t lodOffset[kMaxLODs + 1] = { 0 };
 
     uint32_t materialID = 0;
 

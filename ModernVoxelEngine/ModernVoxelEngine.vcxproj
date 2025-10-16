@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -22,8 +22,9 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{5b165973-55a6-4365-ac0d-05e6d7c3818f}</ProjectGuid>
-    <RootNamespace>VoxelEngineVulkan</RootNamespace>
+    <RootNamespace>ModernVoxelEngine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ModernVoxelEngine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -171,6 +172,7 @@
     <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h" />
     <ClInclude Include="src\utils\CommonUtileTemplate.h" />
     <ClInclude Include="src\utils\GlmUtils.h" />
+    <ClInclude Include="src\utils\LRUCache.h" />
     <ClInclude Include="src\utils\Math.h" />
     <ClInclude Include="src\utils\Pool.h" />
     <ClInclude Include="src\utils\stb_image.h" />

@@ -24,14 +24,11 @@ void vulkan::VulkanRenderer::DrawFrame()
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
-	vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
+	//vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
 	UpdateUniformBuffer(_currentFrame);
 	///////
 
-	for (const auto& x : _renderObjects) {
-
-		RecordCommandBuffer(_commandBuffers[_currentFrame], imageIndex,x);
-	}
+	
 	/////
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -62,7 +59,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 	result = vkQueuePresentKHR(_devices->PresentQueue(), &presentInfo);
-	vkDeviceWaitIdle(_devices->Handle());
+	// vkDeviceWaitIdle(_devices->Handle());
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || _framebufferResized){
 		_framebufferResized = false;
 		RecreateSwapChain();
@@ -130,6 +127,7 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	//CreateUniformBuffers();
 
 	PrepareRenderObject();
+	BuildCommandBuffer();
 	
 	return true;
 }
@@ -423,39 +421,7 @@ void vulkan::VulkanRenderer::ConfigureDescriptorSet(VulkanRenderObject& object)
 	}
 
 	std::cout << "stop" << std::endl;
-		/*VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = _uniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		VkDescriptorImageInfo imageinfo;
-		imageinfo.imageLayout = object.textures[0].imageLayout;
-		imageinfo.imageView = object.textures[0].view;
-		imageinfo.sampler = object.textures[0].sampler;
 	
-		std::vector<VkWriteDescriptorSet> descriptorWrites;
-		VkWriteDescriptorSet descriptorWrit1{};
-		descriptorWrit1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrit1.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
-		descriptorWrit1.dstBinding = 0;
-		descriptorWrit1.dstArrayElement = 0;
-		descriptorWrit1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrit1.descriptorCount = 1;
-		descriptorWrit1.pBufferInfo = &bufferInfo;
-		descriptorWrit1.pImageInfo = nullptr;
-		descriptorWrit1.pTexelBufferView = nullptr;
-		VkWriteDescriptorSet descriptorWrit2{};
-		descriptorWrit2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrit2.dstSet = _descriptorPools->GetHardCodedDescriptorSet()[i];
-		descriptorWrit2.dstBinding = 1;
-		descriptorWrit2.dstArrayElement = 0;
-		descriptorWrit2.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrit2.descriptorCount = static_cast<uint32_t>(object.textures.size());
-		descriptorWrit2.pImageInfo = &imageinfo;
-		descriptorWrites.push_back(descriptorWrit1);
-		descriptorWrites.push_back(descriptorWrit2);
-
-		vkUpdateDescriptorSets(_devices->Handle(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);*/
 	
 }
 
@@ -541,6 +507,19 @@ void vulkan::VulkanRenderer::PrepareRenderObject()
 		_renderObjects.push_back(x);
 	}
 	std::cout << "stop PrepareRenderObject" << std::endl;
+}
+
+void vulkan::VulkanRenderer::BuildCommandBuffer()
+{
+	for (const auto& x : _renderObjects) {
+
+		for (uint32_t i = 0; i < _commandBuffers.size(); i++)
+		{
+			RecordCommandBuffer(_commandBuffers[i], i, x);
+
+		}
+	}
+
 }
 
 

@@ -580,7 +580,7 @@ void vulkan::SwapChain::CreateSwapChain(VkPresentModeKHR presentationMode)
 	VkSwapchainCreateInfoKHR createInfo = {
 	.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 	.surface = surface.Handle(),
-	.minImageCount = imageCount,
+	.minImageCount = imageCount+1,
 	.imageFormat = surfaceFormat.format,
 	.imageColorSpace = surfaceFormat.colorSpace,
 	.imageExtent = extent,
@@ -1159,9 +1159,10 @@ VkPipeline vulkan::GraphicPipelineManager::CreateGraphicsPipeline(std::string pi
 
 
 /////////////////////////////////////////////////////////////////////////COMMAND POOL//////////////////////////////////////////////////////////////
+
 vulkan::CommandPoolManager::CommandPoolManager(const Device& device) : _device(device)
 {
-	Init();
+	Init(4);
 }
 
 vulkan::CommandPoolManager::~CommandPoolManager()
@@ -1198,8 +1199,12 @@ void vulkan::CommandPoolManager::FreeCommandBuffer(QueueFamily family, uint32_t 
 	vkFreeCommandBuffers(_device.Handle(), _commandPools[family], count, &buffer);
 }
 
-void vulkan::CommandPoolManager::Init()
+
+
+void vulkan::CommandPoolManager::Init(uint32_t num_threads)
 {
+	const uint32_t totalPool = num_threads * MAX_FRAMES_IN_FLIGHT;
+
 	CreateCommandPool(QueueFamily::GRAPHIC);
 	CreateCommandPool(QueueFamily::TRANSFER);
 }
