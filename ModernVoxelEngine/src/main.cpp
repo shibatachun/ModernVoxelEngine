@@ -1,4 +1,5 @@
-#include "Application.h"
+#include "ModernEngine/ModernEngineApplication.h"
+#include "VoxelEngine/VoxelApplication.h"
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 	auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
@@ -111,7 +112,8 @@ int main() {
 	uint32_t height = 1080;
 	GLFWwindow* window = initWindow("GLFW example", width, height);
 	API api = API::VULKAN;
-	auto& app = Application::getInstance(window);
+	//auto& app = Application::getInstance(window);
+	auto& app = ModernEngineApplication::GetInstance(window);
 	app.Init();
 	app.SetWindowUserPointer();
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);

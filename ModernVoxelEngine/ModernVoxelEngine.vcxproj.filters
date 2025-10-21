@@ -81,6 +81,9 @@
     <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\GlfwHelper.h">
@@ -192,6 +195,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ModernEngine\ModernEngineCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ModernEngine\ModernEngineApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

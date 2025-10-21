@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp" />
     <ClCompile Include="src\VoxelEngine\PerlinNoise.cpp" />
     <ClCompile Include="src\VoxelEngine\Chunk.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ModernEngine\ModernEngineApplication.h" />
     <ClInclude Include="src\ModernEngine\ModernEngineCommon.h" />
     <ClInclude Include="src\RendererHeader.h" />
     <ClInclude Include="src\Singleton.h" />
