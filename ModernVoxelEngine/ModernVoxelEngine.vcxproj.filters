@@ -24,19 +24,19 @@
     <ClCompile Include="src\utils\GlslangCompiler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\RenderFactory.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\RenderFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanRenderer.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\DirectX\DirectX11Renderer.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\DirectX\D3DClasses.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3DClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp">
@@ -54,7 +54,7 @@
     <ClCompile Include="src\utils\Math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanCommon.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ResourcesManager\DataFormat.cpp">
@@ -63,7 +63,22 @@
     <ClCompile Include="src\utils\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanResource.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VoxelEngine\Chunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VoxelEngine\VoxelApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VoxelEngine\PerlinNoise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,28 +95,28 @@
     <ClInclude Include="src\utils\ScopeExit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\IRenderer.h">
+    <ClInclude Include="src\Core\GraphicAPI\IRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\RenderFactory.h">
+    <ClInclude Include="src\Core\GraphicAPI\RenderFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h">
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanClasses.h">
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanClasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanCommon.h">
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\DirectX\DirectX11Renderer.h">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\DirectX\D3DClasses.h">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DClasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\DirectX\D3DCommonUtils.hpp">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DCommonUtils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ResourcesManager\AssetManager.h">
@@ -146,16 +161,37 @@
     <ClInclude Include="src\utils\CommonUtileTemplate.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanInitalizer.h">
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanInitalizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanResource.h">
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\LRUCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VoxelEngine\Chunk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VoxelEngine\VoxelApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VoxelEngine\PerlinNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VoxelEngine\VoxelCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RendererHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Singleton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ModernEngine\ModernEngineCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

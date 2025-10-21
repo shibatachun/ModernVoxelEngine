@@ -1,6 +1,6 @@
 #pragma once
 #include "../IRenderer.h"
-#include "../../ResourcesManager/AssetManager.h"
+#include "../../../ResourcesManager/AssetManager.h"
 #include "VulkanClasses.h"
 
 
@@ -40,6 +40,7 @@ namespace vulkan
 		std::unique_ptr<class vulkan::DescriptorPoolManager>	_descriptorPools;
 		std::unique_ptr<class vulkan::BufferManager>			_bufferManager;
 		std::unique_ptr<class vulkan::VulkanResouceManager>		_resouceManager;
+
 		
 
 		

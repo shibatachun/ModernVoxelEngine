@@ -26,10 +26,6 @@ void vulkan::VulkanRenderer::DrawFrame()
 	vkResetFences(_devices->Handle(), 1, &_inFlightFences[_currentFrame]);
 	//vkResetCommandBuffer(_commandBuffers[_currentFrame], 0);
 	UpdateUniformBuffer(_currentFrame);
-	///////
-
-	
-	/////
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -344,21 +340,7 @@ void vulkan::VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.Pipelinelayout, 0, 1, &object.descriptorSet, 0, nullptr);
 	object.Draw(commandBuffer, object.Pipelinelayout);
-	//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.pipeline);
-	//VkBuffer vertexBuffers[] = { object.vertexBuffer }; 
-	//VkDeviceSize offsets[] = { 0 };
-	//vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	//vkCmdBindIndexBuffer(commandBuffer, object.indiceBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-
-	//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-	//	object.Pipelinelayout,
-	//	0, 1,
-	//	&_descriptorPools->GetHardCodedDescriptorSet()[_currentFrame],
-	//	0, nullptr);
-
-	////vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-	//vkCmdDrawIndexed(commandBuffer, object.indiceCounts[0], 1, 0, 0, 0);
 
 	vkCmdEndRenderPass(commandBuffer);
 

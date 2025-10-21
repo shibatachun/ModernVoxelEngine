@@ -18,6 +18,10 @@ namespace vulkan {
 	static const uint32_t                    k_max_resource_deletions = 64;
 
 
+	struct ResourceInfo{
+		
+	};
+
 	struct BufferHandle {
 		ResourceHandle                  index;
 	}; // struct BufferHandle
@@ -126,18 +130,28 @@ namespace vulkan {
 		};
 	} // namespace RenderPassType
 
-	struct StencilOperationState {
+	struct Resource {
 
-		VkStencilOp                     fail = VK_STENCIL_OP_KEEP;
-		VkStencilOp                     pass = VK_STENCIL_OP_KEEP;
-		VkStencilOp                     depth_fail = VK_STENCIL_OP_KEEP;
-		VkCompareOp                     compare = VK_COMPARE_OP_ALWAYS;
+		void				add_reference() { ++references; }
+		void				remove_reference() { assert(references != 0); --references; }
+		uint32_t			poolIndex;
+
+		uint64_t            references = 0;
+		std::string         name = nullptr;
+
+	}; // struct Resource
+	struct StencilOperationState : Resource {
+
+		VkStencilOp							 fail = VK_STENCIL_OP_KEEP;
+		VkStencilOp							 pass = VK_STENCIL_OP_KEEP;
+		VkStencilOp							 depth_fail = VK_STENCIL_OP_KEEP;
+		VkCompareOp							 compare = VK_COMPARE_OP_ALWAYS;
 		uint32_t                             compare_mask = 0xff;
 		uint32_t                             write_mask = 0xff;
 		uint32_t                             reference = 0xff;
 
 	}; // struct StencilOperationState
-	struct DepthStencilCreation {
+	struct DepthStencilCreation : Resource {
 
 		StencilOperationState           front;
 		StencilOperationState           back;
@@ -156,7 +170,7 @@ namespace vulkan {
 
 	}; // struct DepthStencilCreation
 
-	struct BlendState {
+	struct BlendState : Resource {
 
 		VkBlendFactor                   source_color = VK_BLEND_FACTOR_ONE;
 		VkBlendFactor                   destination_color = VK_BLEND_FACTOR_ONE;
@@ -182,7 +196,7 @@ namespace vulkan {
 
 	}; // struct BlendState
 
-	struct BlendStateCreation {
+	struct BlendStateCreation : Resource {
 
 		BlendState                      blend_states[k_max_image_outputs];
 		uint32_t                             active_states = 0;
@@ -192,14 +206,14 @@ namespace vulkan {
 
 	}; // BlendStateCreation
 
-	struct RasterizationCreation {
+	struct RasterizationCreation : Resource {
 
 		VkCullModeFlagBits              cull_mode = VK_CULL_MODE_NONE;
 		VkFrontFace                     front = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		FillMode::Enum                  fill = FillMode::Solid;
 	}; // struct RasterizationCreation
 
-	struct VulkanBuffer {
+	struct VulkanBuffer : Resource {
 		VkBuffer				_vkBuffer;
 		VmaAllocation			_vmaAllocation;
 		VkDeviceMemory			_vkDeviceMemory;
@@ -218,7 +232,7 @@ namespace vulkan {
 
 	};
 
-	struct VulkanSampler {
+	struct VulkanSampler : Resource {
 
 		VkSampler                       _vkSampler;
 
@@ -230,11 +244,13 @@ namespace vulkan {
 		VkSamplerAddressMode            _addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		VkSamplerAddressMode            _addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
+
+
 		const char* name = nullptr;
 
 	};
 
-	struct VulkanTexture {
+	struct VulkanTexture : Resource {
 
 		VkImage                         image;
 		VkImageView                     view;
@@ -256,7 +272,7 @@ namespace vulkan {
 		const char* name = nullptr;
 	}; // struct TextureVulkan
 
-	struct VulkanShaderState {
+	struct VulkanShaderState : Resource {
 
 		VkPipelineShaderStageCreateInfo shader_stage_info[k_max_shader_stages];
 
@@ -268,7 +284,7 @@ namespace vulkan {
 
 	}; // struct ShaderStateVulkan
 
-	struct VulkanDescriptorBinding {
+	struct VulkanDescriptorBinding : Resource {
 
 		VkDescriptorType					 type;
 		uint16_t                             start = 0;
@@ -278,7 +294,7 @@ namespace vulkan {
 		const char* name = nullptr;
 	}; // struct ResourceBindingVulkan
 
-	struct VulkanDesciptorSetLayout {
+	struct VulkanDesciptorSetLayout : Resource {
 
 		VkDescriptorSetLayout					vk_descriptor_set_layout;
 
@@ -292,7 +308,7 @@ namespace vulkan {
 	}; // struct DesciptorSetLayoutVulkan
 
 
-	struct VulkanDesciptorSet {
+	struct VulkanDesciptorSet : Resource {
 
 		VkDescriptorSet						vk_descriptor_set;
 
@@ -305,7 +321,7 @@ namespace vulkan {
 	}; // struct DesciptorSetVulkan
 
 
-	struct VulkanPipeline {
+	struct VulkanPipeline : Resource {
 
 		VkPipeline                      vk_pipeline;
 		VkPipelineLayout                vk_pipeline_layout;
@@ -327,7 +343,7 @@ namespace vulkan {
 
 	}; // struct PipelineVulkan
 
-	struct VulkanRenderPass {
+	struct VulkanRenderPass : Resource {
 
 		VkRenderPass                    vk_render_pass;
 		VkFramebuffer                   vk_frame_buffer;
@@ -351,22 +367,22 @@ namespace vulkan {
 
 		const char* name = nullptr;
 	}; // struct RenderPass
-	struct VulkanFramebuffer {
+	struct VulkanFramebuffer : Resource {
 
 		// NOTE(marco): this will be a null handle if dynamic rendering is available
-		VkFramebuffer                   vk_framebuffer;
+		VkFramebuffer                        vk_framebuffer;
 
 		// NOTE(marco): cache render pass handle
-		RenderPassHandle                render_pass;
+		RenderPassHandle                     render_pass;
 
 		uint16_t                             width = 0;
 		uint16_t                             height = 0;
 
-		float                             scale_x = 1.f;
-		float                             scale_y = 1.f;
+		float							     scale_x = 1.f;
+		float								 scale_y = 1.f;
 
-		TextureHandle						color_attachments[k_max_image_outputs];
-		TextureHandle						depth_stencil_attachment;
+		TextureHandle						 color_attachments[k_max_image_outputs];
+		TextureHandle						 depth_stencil_attachment;
 		uint32_t                             num_color_attachments;
 
 		uint8_t                              resize = 0;
@@ -374,12 +390,112 @@ namespace vulkan {
 		const char* name = nullptr;
 	}; // struct Framebuffer
 
+
+	///////////////////////////////////////////////////////////////////Resource///////////////////////////////////////////////////////////
+
+
+
+	struct BufferResource : public Resource {
+
+		BufferHandle                    handle;
+		uint32_t                             pool_index;
+		
+
+		std::string        k_type = "raptor_buffer_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Buffer
+
+	//
+	//
+	struct TextureResource : public Resource {
+
+		TextureHandle							handle;
+		uint32_t								pool_index;
+		
+
+		std::string								k_type = "raptor_texture_type";
+		static uint64_t							k_type_hash;
+
+	}; // struct Texture
+
+	//
+	//
+	struct SamplerResource : public Resource {
+
+		SamplerHandle                   handle;
+		uint32_t                              pool_index;
+
+
+		std::string       k_type = "raptor_sampler_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Sampler
+
+	// Material/Shaders /////////////////////////////////////////////////////////////
+
+	//
+	//
+	struct ProgramPass {
+
+		PipelineHandle                  pipeline;
+		DescriptorSetLayoutHandle       descriptor_set_layout;
+	}; // struct ProgramPass
+
+	//
+	//
+
+
+	//
+	//
+	struct Program : public Resource {
+
+		uint32_t                             get_num_passes() const;
+
+		std::vector<ProgramPass>             passes;
+
+		uint32_t                             pool_index;
+
+		std::string							 k_type = "raptor_program_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Program
+
+	//
+	//
+	struct MaterialCreation {
+
+		MaterialCreation& reset();
+		MaterialCreation& set_program(Program* program);
+		MaterialCreation& set_name(std::string name);
+		MaterialCreation& set_render_index(uint32_t render_index);
+
+		Program* program = nullptr;
+		std::string                         name = nullptr;
+		uint32_t                             render_index = ~0u;
+
+	}; // struct MaterialCreation
+
+	//
+	//
+	struct Material : public Resource {
+
+		Program* program;
+
+		uint32_t                             render_index;
+
+		uint32_t                             pool_index;
+
+		std::string							 k_type = "raptor_material_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Material
 	template <typename T>
 	struct ResourcePool {
 		void init(uint32_t pool_size) {
 			resources.resize(pool_size);
 			freeIndices.resize(pool_size);
-			usedIndices.resize(poolSize);
+		
 			
 
 			for (uint32_t i = 0; i < pool_size; ++i) {

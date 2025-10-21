@@ -1509,6 +1509,8 @@ void vulkan::BufferManager::createBuffer(VkBufferUsageFlags usageFlags, VkMemory
 	Check(vkBindBufferMemory(device.Handle(), *buffer, *memory, 0), "Bind Memory");
 }
 
+
+
 void vulkan::BufferManager::createImageBuffer(
 	uint32_t width,uint32_t height, uint32_t mipLevels,
 	VkFormat format, VkImageTiling tiling, 
@@ -2147,6 +2149,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 
 	//上传vertex indice buffer数据
 	{
+
 		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
 		_BufferManager.CreateIndexBuffer1(modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
 	}

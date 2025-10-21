@@ -199,6 +199,7 @@ namespace vulkan {
 			VkBuffer* buffer,
 			VkDeviceMemory* memory,
 			void* data = nullptr);
+		BufferHandle CreateBuffer(VkBufferUsageFlags type, ResourceUsageType::Enum usage, uint32_t size, void* data, std::string name);
 		void createImageBuffer(uint32_t width, uint32_t height,  uint32_t mipLevels,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 			VkMemoryPropertyFlags properties,
@@ -394,6 +395,7 @@ namespace vulkan {
 		
 	class VulkanResouceManager final {
 
+
 		public:
 			VulkanResouceManager(BufferManager& bufferManager, 
 				DescriptorPoolManager& descPoolManager, 
@@ -409,6 +411,8 @@ namespace vulkan {
 			VulkanRenderObject& GetRenderObject(std::string name);
 			VkPipelineShaderStageCreateInfo LoadShader(std::string shader_name, VkShaderStageFlagBits);
 			std::vector<VulkanRenderObject>& GetRenderObjects() { return _renderObjects; };
+
+
 		private:
 			Device&																				_device;
 			std::unordered_map<std::string, uint32_t>											_renderObjectsMapping;
@@ -419,26 +423,38 @@ namespace vulkan {
 			GraphicPipelineManager&																_graphicPipelineManager;
 			const asset::AssetManager&															_assetMnanger;
 
-			std::vector<Vulkan_Mesh>																_mesh;
-			std::vector<Vulkan_Material>															_material;
+			std::vector<Vulkan_Mesh>															_mesh;
+			std::vector<Vulkan_Material>														_material;
 			std::vector<Vulkan_Texture>															_Texture;
 			std::vector<VulkanRenderObject>														_renderObjects;
 
-			ResourcePool<VulkanBuffer>																		_buffers;
+			//GPU Resources
+			ResourcePool<VulkanBuffer>															_buffers;
 			ResourcePool<VulkanTexture>															_textures;
-			ResourcePool<VulkanPipeline>																		_pipelines;
-			ResourcePool<VulkanSampler>																		_samplers;
-			ResourcePool<VulkanDesciptorSetLayout>																		_descriptor_set_layouts;
-			ResourcePool<VulkanDesciptorSet>																		_descriptor_sets;
-			ResourcePool<VulkanRenderPass>																		_render_passes;
-			ResourcePool<VulkanBuffer>																		_command_buffers;
-			ResourcePool<VulkanShaderState>																		_shaders;
+			ResourcePool<VulkanPipeline>														_pipelines;
+			ResourcePool<VulkanSampler>															_samplers;
+			ResourcePool<VulkanDesciptorSetLayout>												_descriptor_set_layouts;
+			ResourcePool<VulkanDesciptorSet>													_descriptor_sets;
+			ResourcePool<VulkanRenderPass>														_render_passes;
+			ResourcePool<VulkanBuffer>															_command_buffers;
+			ResourcePool<VulkanShaderState>														_shaders;
 
+			//RenderObject Resources
+
+			ResourcePool<TextureResource>  textures;
+			ResourcePool<BufferResource>   buffers;
+			ResourcePool<SamplerResource>  samplers;
+			ResourcePool<Program>          programs;
+			ResourcePool<Material>         materials;
 
 
 		
 		private:
-		
+			BufferHandle* CreateBufferResource();
+			SamplerHandle* CreateSamplerResource();
+			TextureHandle* CreateTextureResource();
+			void CreatePasses();
+			void CreateMaterial();
 			void ConstructVulkanRenderObject();
 			void prepareNodeDescriptor(Node* node, VkDescriptorSetLayout descriptorSetLayout);
 			void CreateTextureImageView(VkImageView& imageview, VkImage image);

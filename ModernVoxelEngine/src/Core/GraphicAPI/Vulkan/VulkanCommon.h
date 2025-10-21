@@ -26,11 +26,11 @@ private: \
 
 
 
-#include "../../ResourcesManager/AssetManager.h"
-#include "../../utils/minilog.h"
-#include "../../utils/Pool.h"
-#include "../../utils/Utils.h"
-#include "../../utils/Camera.h"
+#include "../../../ResourcesManager/AssetManager.h"
+#include "../../../utils/minilog.h"
+#include "../../../utils/Pool.h"
+#include "../../../utils/Utils.h"
+#include "../../../utils/Camera.h"
 
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;

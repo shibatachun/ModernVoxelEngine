@@ -135,27 +135,37 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp" />
+    <ClCompile Include="src\VoxelEngine\PerlinNoise.cpp" />
+    <ClCompile Include="src\VoxelEngine\Chunk.cpp" />
     <ClCompile Include="src\utils\Camera.cpp" />
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanCommon.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.cpp" />
     <ClCompile Include="src\ResourcesManager\DataFormat.cpp" />
     <ClCompile Include="src\ResourcesManager\ModelManager.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ResourcesManager\Shaders.cpp" />
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp" />
-    <ClCompile Include="src\GraphicAPI\DirectX\D3DClasses.cpp" />
-    <ClCompile Include="src\GraphicAPI\DirectX\DirectX11Renderer.cpp" />
-    <ClCompile Include="src\GraphicAPI\RenderFactory.cpp" />
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanRenderer.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3DClasses.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RenderFactory.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utils\GlslangCompiler.cpp" />
     <ClCompile Include="src\utils\Math.cpp" />
     <ClCompile Include="src\utils\minilog.cpp" />
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanClasses.cpp" />
-    <ClCompile Include="src\GraphicAPI\Vulkan\VulkanResource.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanClasses.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanResource.cpp" />
+    <ClCompile Include="src\VoxelEngine\VoxelApplication.cpp" />
+    <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ModernEngine\ModernEngineCommon.h" />
+    <ClInclude Include="src\RendererHeader.h" />
+    <ClInclude Include="src\Singleton.h" />
+    <ClInclude Include="src\VoxelEngine\PerlinNoise.h" />
+    <ClInclude Include="src\VoxelEngine\Chunk.h" />
     <ClInclude Include="src\utils\Camera.h" />
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanInitalizer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanInitalizer.h" />
     <ClInclude Include="src\ResourcesManager\DataFormat.h" />
     <ClInclude Include="src\ResourcesManager\ModelManager.h" />
     <ClInclude Include="res\models\testVertexData.h" />
@@ -163,13 +173,13 @@
     <ClInclude Include="src\ResourcesManager\Shaders.h" />
     <ClInclude Include="src\ResourcesManager\AssetCommonUtils.h" />
     <ClInclude Include="src\ResourcesManager\AssetManager.h" />
-    <ClInclude Include="src\GraphicAPI\DirectX\D3DClasses.h" />
-    <ClInclude Include="src\GraphicAPI\DirectX\D3DCommonUtils.hpp" />
-    <ClInclude Include="src\GraphicAPI\DirectX\DirectX11Renderer.h" />
-    <ClInclude Include="src\GraphicAPI\RenderFactory.h" />
-    <ClInclude Include="src\GraphicAPI\IRenderer.h" />
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanCommon.h" />
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DClasses.h" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DCommonUtils.hpp" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RenderFactory.h" />
+    <ClInclude Include="src\Core\GraphicAPI\IRenderer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.h" />
     <ClInclude Include="src\utils\CommonUtileTemplate.h" />
     <ClInclude Include="src\utils\GlmUtils.h" />
     <ClInclude Include="src\utils\LRUCache.h" />
@@ -181,9 +191,11 @@
     <ClInclude Include="src\utils\GlslangCompiler.h" />
     <ClInclude Include="src\utils\minilog.h" />
     <ClInclude Include="src\utils\ScopeExit.h" />
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanClasses.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanClasses.h" />
     <ClInclude Include="src\utils\Utils.h" />
-    <ClInclude Include="src\GraphicAPI\Vulkan\VulkanResource.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanResource.h" />
+    <ClInclude Include="src\VoxelEngine\VoxelApplication.h" />
+    <ClInclude Include="src\VoxelEngine\VoxelCommon.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />
