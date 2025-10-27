@@ -53,6 +53,15 @@ namespace vulkan {
 	struct RenderPassHandle {
 		ResourceHandle                  index;
 	};
+
+	static BufferHandle                Invalid_Buffer{ invalidIndex };
+	static TextureHandle               Invalid_Texture{ invalidIndex };
+	static ShaderStateHandle           Invalid_Shader{ invalidIndex };
+	static SamplerHandle               Invalid_Sampler{ invalidIndex };
+	static DescriptorSetLayoutHandle   Invalid_Layout{ invalidIndex };
+	static DescriptorSetHandle         Invalid_Set{ invalidIndex };
+	static PipelineHandle              Invalid_Pipeline{ invalidIndex };
+	static RenderPassHandle            Invalid_Pass{ invalidIndex };
 	namespace ResourceUsageType {
 		enum Enum {
 			Immutable, Dynamic, Stream, Count
@@ -475,7 +484,271 @@ namespace vulkan {
 		uint32_t                             render_index = ~0u;
 
 	}; // struct MaterialCreation
+	// Resource creation structs //////////////////////////////////////////////
 
+//
+//
+	struct Rect2D {
+		float                             x = 0.0f;
+		float                             y = 0.0f;
+		float                             width = 0.0f;
+		float                             height = 0.0f;
+	}; // struct Rect2D
+
+	//
+	//
+	struct Rect2DInt {
+		int16_t                             x = 0;
+		int16_t                             y = 0;
+		uint16_t                             width = 0;
+		uint16_t                             height = 0;
+	}; // struct Rect2D
+
+	//
+	//
+	struct Viewport {
+		Rect2DInt                       rect;
+		float                             min_depth = 0.0f;
+		float                             max_depth = 0.0f;
+	}; // struct Viewport
+
+	//
+	//
+	struct ViewportState {
+		uint32_t                             num_viewports = 0;
+		uint32_t                             num_scissors = 0;
+
+		Viewport* viewport = nullptr;
+		Rect2DInt* scissors = nullptr;
+	}; // struct ViewportState
+
+	//
+	//
+	struct StencilOperationState {
+
+		VkStencilOp                     fail = VK_STENCIL_OP_KEEP;
+		VkStencilOp                     pass = VK_STENCIL_OP_KEEP;
+		VkStencilOp                     depth_fail = VK_STENCIL_OP_KEEP;
+		VkCompareOp                     compare = VK_COMPARE_OP_ALWAYS;
+		uint32_t                             compare_mask = 0xff;
+		uint32_t                             write_mask = 0xff;
+		uint32_t                             reference = 0xff;
+
+	}; // struct StencilOperationState
+
+	//
+	//
+	struct DepthStencilCreation {
+
+		StencilOperationState           front;
+		StencilOperationState           back;
+		VkCompareOp                     depth_comparison = VK_COMPARE_OP_ALWAYS;
+
+		uint8_t                              depth_enable : 1;
+		uint8_t                              depth_write_enable : 1;
+		uint8_t                              stencil_enable : 1;
+		uint8_t                              pad : 5;
+
+		// Default constructor
+		DepthStencilCreation() : depth_enable(0), depth_write_enable(0), stencil_enable(0) {
+		}
+
+		DepthStencilCreation& set_depth(bool write, VkCompareOp comparison_test);
+
+	}; // struct DepthStencilCreation
+
+	struct BlendState {
+
+		VkBlendFactor                   source_color = VK_BLEND_FACTOR_ONE;
+		VkBlendFactor                   destination_color = VK_BLEND_FACTOR_ONE;
+		VkBlendOp                       color_operation = VK_BLEND_OP_ADD;
+
+		VkBlendFactor                   source_alpha = VK_BLEND_FACTOR_ONE;
+		VkBlendFactor                   destination_alpha = VK_BLEND_FACTOR_ONE;
+		VkBlendOp                       alpha_operation = VK_BLEND_OP_ADD;
+
+		ColorWriteEnabled::Mask         color_write_mask = ColorWriteEnabled::All_mask;
+
+		uint8_t                              blend_enabled : 1;
+		uint8_t                              separate_blend : 1;
+		uint8_t                              pad : 6;
+
+
+		BlendState() : blend_enabled(0), separate_blend(0) {
+		}
+
+		BlendState& set_color(VkBlendFactor source_color, VkBlendFactor destination_color, VkBlendOp color_operation);
+		BlendState& set_alpha(VkBlendFactor source_color, VkBlendFactor destination_color, VkBlendOp color_operation);
+		BlendState& set_color_write_mask(ColorWriteEnabled::Mask value);
+
+	}; // struct BlendState
+
+	struct BlendStateCreation {
+
+		BlendState                      blend_states[k_max_image_outputs];
+		uint32_t                             active_states = 0;
+
+		BlendStateCreation& reset();
+		BlendState& add_blend_state();
+
+	}; // BlendStateCreation
+
+	//
+	//
+	struct RasterizationCreation {
+
+		VkCullModeFlagBits              cull_mode = VK_CULL_MODE_NONE;
+		VkFrontFace                     front = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		FillMode::Enum                  fill = FillMode::Solid;
+	}; // struct RasterizationCreation
+
+	//
+	//
+	struct BufferCreation {
+
+		VkBufferUsageFlags              type_flags = 0;
+		ResourceUsageType::Enum         usage = ResourceUsageType::Immutable;
+		uint32_t                             size = 0;
+		void* initial_data = nullptr;
+
+		const char* name = nullptr;
+
+		BufferCreation& reset();
+		BufferCreation& set(VkBufferUsageFlags flags, ResourceUsageType::Enum usage, uint32_t size);
+		BufferCreation& set_data(void* data);
+		BufferCreation& set_name(const char* name);
+
+	}; // struct BufferCreation
+
+	//
+	//
+	struct TextureCreation {
+
+		void* initial_data = nullptr;
+		uint16_t                             width = 1;
+		uint16_t                             height = 1;
+		uint16_t                             depth = 1;
+		uint8_t                              mipmaps = 1;
+		uint8_t                              flags = 0;    // TextureFlags bitmasks
+
+		VkFormat                        format = VK_FORMAT_UNDEFINED;
+		TextureType::Enum               type = TextureType::Texture2D;
+
+		const char* name = nullptr;
+
+		TextureCreation& set_size(uint16_t width, uint16_t height, uint16_t depth);
+		TextureCreation& set_flags(uint8_t mipmaps, uint8_t flags);
+		TextureCreation& set_format_type(VkFormat format, TextureType::Enum type);
+		TextureCreation& set_name(const char* name);
+		TextureCreation& set_data(void* data);
+
+	}; // struct TextureCreation
+
+	//
+	//
+	struct SamplerCreation {
+
+		VkFilter                        min_filter = VK_FILTER_NEAREST;
+		VkFilter                        mag_filter = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode             mip_filter = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+		VkSamplerAddressMode            address_mode_u = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		VkSamplerAddressMode            address_mode_v = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		VkSamplerAddressMode            address_mode_w = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		const char* name = nullptr;
+
+		SamplerCreation& set_min_mag_mip(VkFilter min, VkFilter mag, VkSamplerMipmapMode mip);
+		SamplerCreation& set_address_mode_u(VkSamplerAddressMode u);
+		SamplerCreation& set_address_mode_uv(VkSamplerAddressMode u, VkSamplerAddressMode v);
+		SamplerCreation& set_address_mode_uvw(VkSamplerAddressMode u, VkSamplerAddressMode v, VkSamplerAddressMode w);
+		SamplerCreation& set_name(const char* name);
+
+	}; // struct SamplerCreation
+
+	//
+	//
+	struct ShaderStage {
+
+		const char* code = nullptr;
+		uint32_t                             code_size = 0;
+		VkShaderStageFlagBits           type = VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
+
+	}; // struct ShaderStage
+
+	//
+	//
+	struct ShaderStateCreation {
+
+		ShaderStage                     stages[k_max_shader_stages];
+
+		const char* name = nullptr;
+
+		uint32_t                             stages_count = 0;
+		uint32_t                             spv_input = 0;
+
+		// Building helpers
+		ShaderStateCreation& reset();
+		ShaderStateCreation& set_name(const char* name);
+		ShaderStateCreation& add_stage(const char* code, uint32_t code_size, VkShaderStageFlagBits type);
+		ShaderStateCreation& set_spv_input(bool value);
+
+	}; // struct ShaderStateCreation
+
+	//
+	//
+	struct DescriptorSetLayoutCreation {
+
+		//
+		// A single descriptor binding. It can be relative to one or more resources of the same type.
+		//
+		struct Binding {
+
+			VkDescriptorType            type = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+			uint16_t                         start = 0;
+			uint16_t                         count = 0;
+			std::string                     name = nullptr;  // Comes from external memory.
+		}; // struct Binding
+
+		Binding									bindings[k_max_descriptors_per_set];
+		uint32_t                             num_bindings = 0;
+		uint32_t                             set_index = 0;
+
+		std::string                         name = nullptr;
+
+		// Building helpers
+		DescriptorSetLayoutCreation& reset();
+		DescriptorSetLayoutCreation& add_binding(const Binding& binding);
+		DescriptorSetLayoutCreation& add_binding_at_index(const Binding& binding, int index);
+		DescriptorSetLayoutCreation& set_name(std::string name);
+		DescriptorSetLayoutCreation& set_set_index(uint32_t index);
+
+	}; // struct DescriptorSetLayoutCreation
+
+	//
+	//
+	struct DescriptorSetCreation {
+
+		ResourceHandle                  resources[k_max_descriptors_per_set];
+		SamplerHandle                   samplers[k_max_descriptors_per_set];
+		uint16_t                             bindings[k_max_descriptors_per_set];
+
+		DescriptorSetLayoutHandle       layout;
+		uint32_t                             num_resources = 0;
+
+		std::string                         name = nullptr;
+
+		// Building helpers
+		DescriptorSetCreation& reset();
+		DescriptorSetCreation& set_layout(DescriptorSetLayoutHandle layout);
+		DescriptorSetCreation& texture(TextureHandle texture, uint16_t binding);
+		DescriptorSetCreation& buffer(BufferHandle buffer, uint16_t binding);
+		DescriptorSetCreation& texture_sampler(TextureHandle texture, SamplerHandle sampler, uint16_t binding);   // TODO: separate samplers from textures
+		DescriptorSetCreation& set_name(std::string name);
+
+	}; // struct DescriptorSetCreation
+
+	//
 	//
 	//
 	struct Material : public Resource {
@@ -517,15 +790,26 @@ namespace vulkan {
 			}
 		}
 		void release(T* resource) {
-
+			
 		}
 
 		T* get(uint32_t index) {
-
+			return (T*)access_resource(index);
 		}
 		const T* get(uint32_t index) const {
-
+			return (const T*)access_resource(index);
 		}
+
+	
+		void free_all_resource() {
+			freeIndicesHead = 0;
+			usedIndices = 0;
+			for (uint32_t i = 0; i < poolSize; i++) {
+				freeIndices[i] = i;
+			}
+		}
+
+
 
 	private:
 		uint32_t poolSize;
@@ -547,14 +831,6 @@ namespace vulkan {
 			freeIndices[--freeIndicesHead] = handle;
 			--usedIndices;
 		}
-		void free_all_resource() {
-			freeIndicesHead = 0;
-			usedIndices = 0;
-			for (uint32_t i = 0; i < poolSize; i++) {
-				freeIndices[i] = i;
-			}
-		}
-
 		void* access_resource(uint32_t handle) {
 			if (handle != invalidIndex) {
 				return &resources[handle];
@@ -567,8 +843,6 @@ namespace vulkan {
 			}
 			return nullptr;
 		}
-	
-
 
 	};
 }

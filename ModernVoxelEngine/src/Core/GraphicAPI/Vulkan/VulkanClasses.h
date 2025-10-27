@@ -397,11 +397,13 @@ namespace vulkan {
 
 
 		public:
-			VulkanResouceManager(BufferManager& bufferManager, 
+			VulkanResouceManager(
+				BufferManager& bufferManager, 
 				DescriptorPoolManager& descPoolManager, 
 				DescriptorLayoutManager& descLayoutManager, 
 				GraphicPipelineManager& graphicPipelineManager,
 				Device& device,
+				Instance& instance,
 				const asset::AssetManager& assetManager);
 			~VulkanResouceManager();
 			void init();
@@ -415,6 +417,8 @@ namespace vulkan {
 
 		private:
 			Device&																				_device;
+			Instance&																			_instance;
+			VmaAllocator																		_vmaAllocator;
 			std::unordered_map<std::string, uint32_t>											_renderObjectsMapping;
 			
 			BufferManager&																		_BufferManager;
@@ -441,18 +445,17 @@ namespace vulkan {
 
 			//RenderObject Resources
 
-			ResourcePool<TextureResource>  textures;
-			ResourcePool<BufferResource>   buffers;
-			ResourcePool<SamplerResource>  samplers;
+		
 			ResourcePool<Program>          programs;
 			ResourcePool<Material>         materials;
 
 
 		
 		private:
-			BufferHandle* CreateBufferResource();
-			SamplerHandle* CreateSamplerResource();
-			TextureHandle* CreateTextureResource();
+			BufferHandle CreateBufferResource(const BufferCreation& creation);
+			
+			SamplerHandle CreateSamplerResource(const SamplerCreation& creation);
+			TextureHandle CreateTextureResource(const TextureCreation& creation);
 			void CreatePasses();
 			void CreateMaterial();
 			void ConstructVulkanRenderObject();

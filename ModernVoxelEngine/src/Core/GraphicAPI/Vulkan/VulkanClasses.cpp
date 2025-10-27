@@ -1986,19 +1986,26 @@ void vulkan::BufferManager::flushCommandBuffer(VkCommandBuffer commandBuffer, Vk
 
 
 
-vulkan::VulkanResouceManager::VulkanResouceManager(BufferManager& bufferManager,
+vulkan::VulkanResouceManager::VulkanResouceManager(
+	BufferManager& bufferManager,
 	DescriptorPoolManager& descPoolManager,
 	DescriptorLayoutManager& descLayoutManager,
 	GraphicPipelineManager& graphicPipelineManager,
 	Device& device,
+	Instance& instance,
 	const asset::AssetManager& assetManager) :
 	_BufferManager(bufferManager),
 	_descriptorPoolManager(descPoolManager),
 	_descriptorLayoutManager(descLayoutManager),
 	_graphicPipelineManager(graphicPipelineManager),
 	_assetMnanger(assetManager),
-	_device(device)
+	_device(device),
+	_instance(instance)
 {
+
+
+
+	
 }
 
 vulkan::VulkanResouceManager::~VulkanResouceManager()
@@ -2016,6 +2023,11 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 
 void vulkan::VulkanResouceManager::init()
 {
+	VmaAllocatorCreateInfo allocatorInfo = {};
+	allocatorInfo.physicalDevice = _device.PhysicalDevice();
+	allocatorInfo.device = _device.Handle();
+	allocatorInfo.instance = _instance.Handle();
+	Check(vmaCreateAllocator(&allocatorInfo, &_vmaAllocator), "Create vma Allocator");
 }
 
 void vulkan::VulkanResouceManager::ConvertToVulkanResource()
@@ -2225,6 +2237,37 @@ VkPipelineShaderStageCreateInfo vulkan::VulkanResouceManager::LoadShader(std::st
 
 
 	return VkPipelineShaderStageCreateInfo();
+}
+
+
+
+vulkan::BufferHandle vulkan::VulkanResouceManager::CreateBufferResource(const BufferCreation& creation)
+{	
+	VulkanBuffer* buffer = _buffers.obtain();
+	if (buffer) {
+
+		buffer->name = creation.name;
+		buffer->_size = creation.size;
+		buffer->_typeFlags = creation.type_flags;
+		buffer->_usage = creation.usage;
+		buffer->_global_offset = 0;
+		buffer->_parentBuffer = Invalid_Buffer;
+		
+		static const VkBufferUsageFlags dynamic_buffer_mask = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		//TODO::dynamic buffer 
+		VkBufferCreateInfo buffer_info{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | creation.type_flags;
+		buffer_info.size = creation.size > 0 ? creation.size : 1;
+
+		VmaAllocationCreateInfo memory_info{};
+		memory_info.flags = VMA_ALLOCATION_CREATE_STRATEGY_BEST_FIT_BIT;
+		memory_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+		VmaAllocationInfo allocation_info{};
+		Check(vmaCreateBuffer(_vmaAllocator, &buffer_info, &memory_info, &buffer->_vkBuffer, &buffer->_vmaAllocation, &allocation_info), "Create buffer");
+
+	}
+	return { invalidIndex };
 }
 
 
