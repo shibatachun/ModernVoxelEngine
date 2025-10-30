@@ -84,6 +84,9 @@
     <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VmaUsage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\GlfwHelper.h">

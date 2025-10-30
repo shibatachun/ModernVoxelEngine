@@ -1,5 +1,8 @@
 #pragma once
 #include "VulkanCommon.h"
+
+
+#include "vma/vk_mem_alloc.h"
 namespace vulkan {
 
 	static const uint32_t					invalidIndex = 0xffffffff;
@@ -79,6 +82,7 @@ namespace vulkan {
 			return ((uint32_t)e < Enum::Count ? _sValueNames[(int)e] : "unsupported");
 		}
 	}
+
 	namespace ColorWriteEnabled {
 		enum Enum {
 			Red, Green, Blue, Alpha, All, Count
@@ -114,6 +118,7 @@ namespace vulkan {
 			return ((uint32_t)e < Enum::Count ? s_value_names[(int)e] : "unsupported");
 		}
 	} // namespace TextureType
+
 	namespace FillMode {
 		enum Enum {
 			Wireframe, Solid, Point, Count
@@ -149,35 +154,9 @@ namespace vulkan {
 		std::string         name = nullptr;
 
 	}; // struct Resource
-	struct StencilOperationState : Resource {
 
-		VkStencilOp							 fail = VK_STENCIL_OP_KEEP;
-		VkStencilOp							 pass = VK_STENCIL_OP_KEEP;
-		VkStencilOp							 depth_fail = VK_STENCIL_OP_KEEP;
-		VkCompareOp							 compare = VK_COMPARE_OP_ALWAYS;
-		uint32_t                             compare_mask = 0xff;
-		uint32_t                             write_mask = 0xff;
-		uint32_t                             reference = 0xff;
 
-	}; // struct StencilOperationState
-	struct DepthStencilCreation : Resource {
 
-		StencilOperationState           front;
-		StencilOperationState           back;
-		VkCompareOp                     depth_comparison = VK_COMPARE_OP_ALWAYS;
-
-		uint8_t                              depth_enable : 1;
-		uint8_t                              depth_write_enable : 1;
-		uint8_t                              stencil_enable : 1;
-		uint8_t                              pad : 5;
-
-		// Default constructor
-		DepthStencilCreation() : depth_enable(0), depth_write_enable(0), stencil_enable(0) {
-		}
-
-		DepthStencilCreation& set_depth(bool write, VkCompareOp comparison_test);
-
-	}; // struct DepthStencilCreation
 
 	struct BlendState : Resource {
 
@@ -205,289 +184,7 @@ namespace vulkan {
 
 	}; // struct BlendState
 
-	struct BlendStateCreation : Resource {
 
-		BlendState                      blend_states[k_max_image_outputs];
-		uint32_t                             active_states = 0;
-
-		BlendStateCreation& reset();
-		BlendState& add_blend_state();
-
-	}; // BlendStateCreation
-
-	struct RasterizationCreation : Resource {
-
-		VkCullModeFlagBits              cull_mode = VK_CULL_MODE_NONE;
-		VkFrontFace                     front = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		FillMode::Enum                  fill = FillMode::Solid;
-	}; // struct RasterizationCreation
-
-	struct VulkanBuffer : Resource {
-		VkBuffer				_vkBuffer;
-		VmaAllocation			_vmaAllocation;
-		VkDeviceMemory			_vkDeviceMemory;
-		VkDeviceSize			_vkDeviceSize;
-
-		VkBufferUsageFlags		_typeFlags = 0;
-		ResourceUsageType::Enum _usage = ResourceUsageType::Immutable;
-
-		uint32_t				_size = 0;
-		uint32_t				_global_offset = 0;
-
-		BufferHandle			_handle;
-		BufferHandle			_parentBuffer;
-
-		const char* _name = nullptr;
-
-	};
-
-	struct VulkanSampler : Resource {
-
-		VkSampler                       _vkSampler;
-
-		VkFilter                        _minFilter = VK_FILTER_NEAREST;
-		VkFilter                        _magFilter = VK_FILTER_NEAREST;
-		VkSamplerMipmapMode             _mipFilter = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-
-		VkSamplerAddressMode            _addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		VkSamplerAddressMode            _addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		VkSamplerAddressMode            _addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-
-
-		const char* name = nullptr;
-
-	};
-
-	struct VulkanTexture : Resource {
-
-		VkImage                         image;
-		VkImageView                     view;
-		VkFormat                        vk_format;
-		VkImageLayout                   vk_image_layout;
-		VmaAllocation                   vma_allocation;
-
-		uint16_t                        width = 1;
-		uint16_t                        height = 1;
-		uint16_t                        depth = 1;
-		uint8_t                         mipmaps = 1;
-		uint8_t                         flags = 0;
-
-		TextureHandle                   handle;
-		TextureType::Enum               type = TextureType::Texture2D;
-
-		VulkanSampler* sampler = nullptr;
-
-		const char* name = nullptr;
-	}; // struct TextureVulkan
-
-	struct VulkanShaderState : Resource {
-
-		VkPipelineShaderStageCreateInfo shader_stage_info[k_max_shader_stages];
-
-		const char* name = nullptr;
-
-		uint32_t                             active_shaders = 0;
-		bool                            graphics_pipeline = false;
-
-
-	}; // struct ShaderStateVulkan
-
-	struct VulkanDescriptorBinding : Resource {
-
-		VkDescriptorType					 type;
-		uint16_t                             start = 0;
-		uint16_t                             count = 0;
-		uint16_t                             set = 0;
-
-		const char* name = nullptr;
-	}; // struct ResourceBindingVulkan
-
-	struct VulkanDesciptorSetLayout : Resource {
-
-		VkDescriptorSetLayout					vk_descriptor_set_layout;
-
-		VkDescriptorSetLayoutBinding* vk_binding = nullptr;
-		VulkanDescriptorBinding* bindings = nullptr;
-		uint16_t								num_bindings = 0;
-		uint16_t								set_index = 0;
-
-		DescriptorSetLayoutHandle				handle;
-
-	}; // struct DesciptorSetLayoutVulkan
-
-
-	struct VulkanDesciptorSet : Resource {
-
-		VkDescriptorSet						vk_descriptor_set;
-
-		ResourceHandle* resources = nullptr;
-		SamplerHandle* samplers = nullptr;
-		uint16_t* bindings = nullptr;
-
-		const VulkanDesciptorSetLayout* layout = nullptr;
-		uint32_t                             num_resources = 0;
-	}; // struct DesciptorSetVulkan
-
-
-	struct VulkanPipeline : Resource {
-
-		VkPipeline                      vk_pipeline;
-		VkPipelineLayout                vk_pipeline_layout;
-
-		VkPipelineBindPoint             vk_bind_point;
-
-		ShaderStateHandle               shader_state;
-
-		const VulkanDesciptorSetLayout* descriptor_set[k_max_descriptor_set_layouts];
-		DescriptorSetLayoutHandle       descriptor_set_layout_handle[k_max_descriptor_set_layouts];
-		uint32_t                        num_active_layouts = 0;
-
-		DepthStencilCreation            depth_stencil;
-		BlendStateCreation              blend_state;
-		RasterizationCreation           rasterization;
-
-		PipelineHandle                  handle;
-		bool                            graphics_pipeline = true;
-
-	}; // struct PipelineVulkan
-
-	struct VulkanRenderPass : Resource {
-
-		VkRenderPass                    vk_render_pass;
-		VkFramebuffer                   vk_frame_buffer;
-
-
-		TextureHandle                   output_textures[k_max_image_outputs];
-		TextureHandle                   output_depth;
-
-		RenderPassType::Enum            type;
-
-		float                             scale_x = 1.f;
-		float                             scale_y = 1.f;
-		uint16_t                             width = 0;
-		uint16_t                             height = 0;
-		uint16_t                             dispatch_x = 0;
-		uint16_t                             dispatch_y = 0;
-		uint16_t                             dispatch_z = 0;
-
-		uint8_t                              resize = 0;
-		uint8_t                              num_render_targets = 0;
-
-		const char* name = nullptr;
-	}; // struct RenderPass
-	struct VulkanFramebuffer : Resource {
-
-		// NOTE(marco): this will be a null handle if dynamic rendering is available
-		VkFramebuffer                        vk_framebuffer;
-
-		// NOTE(marco): cache render pass handle
-		RenderPassHandle                     render_pass;
-
-		uint16_t                             width = 0;
-		uint16_t                             height = 0;
-
-		float							     scale_x = 1.f;
-		float								 scale_y = 1.f;
-
-		TextureHandle						 color_attachments[k_max_image_outputs];
-		TextureHandle						 depth_stencil_attachment;
-		uint32_t                             num_color_attachments;
-
-		uint8_t                              resize = 0;
-
-		const char* name = nullptr;
-	}; // struct Framebuffer
-
-
-	///////////////////////////////////////////////////////////////////Resource///////////////////////////////////////////////////////////
-
-
-
-	struct BufferResource : public Resource {
-
-		BufferHandle                    handle;
-		uint32_t                             pool_index;
-		
-
-		std::string        k_type = "raptor_buffer_type";
-		static uint64_t                      k_type_hash;
-
-	}; // struct Buffer
-
-	//
-	//
-	struct TextureResource : public Resource {
-
-		TextureHandle							handle;
-		uint32_t								pool_index;
-		
-
-		std::string								k_type = "raptor_texture_type";
-		static uint64_t							k_type_hash;
-
-	}; // struct Texture
-
-	//
-	//
-	struct SamplerResource : public Resource {
-
-		SamplerHandle                   handle;
-		uint32_t                              pool_index;
-
-
-		std::string       k_type = "raptor_sampler_type";
-		static uint64_t                      k_type_hash;
-
-	}; // struct Sampler
-
-	// Material/Shaders /////////////////////////////////////////////////////////////
-
-	//
-	//
-	struct ProgramPass {
-
-		PipelineHandle                  pipeline;
-		DescriptorSetLayoutHandle       descriptor_set_layout;
-	}; // struct ProgramPass
-
-	//
-	//
-
-
-	//
-	//
-	struct Program : public Resource {
-
-		uint32_t                             get_num_passes() const;
-
-		std::vector<ProgramPass>             passes;
-
-		uint32_t                             pool_index;
-
-		std::string							 k_type = "raptor_program_type";
-		static uint64_t                      k_type_hash;
-
-	}; // struct Program
-
-	//
-	//
-	struct MaterialCreation {
-
-		MaterialCreation& reset();
-		MaterialCreation& set_program(Program* program);
-		MaterialCreation& set_name(std::string name);
-		MaterialCreation& set_render_index(uint32_t render_index);
-
-		Program* program = nullptr;
-		std::string                         name = nullptr;
-		uint32_t                             render_index = ~0u;
-
-	}; // struct MaterialCreation
-	// Resource creation structs //////////////////////////////////////////////
-
-//
-//
 	struct Rect2D {
 		float                             x = 0.0f;
 		float                             y = 0.0f;
@@ -557,31 +254,6 @@ namespace vulkan {
 
 	}; // struct DepthStencilCreation
 
-	struct BlendState {
-
-		VkBlendFactor                   source_color = VK_BLEND_FACTOR_ONE;
-		VkBlendFactor                   destination_color = VK_BLEND_FACTOR_ONE;
-		VkBlendOp                       color_operation = VK_BLEND_OP_ADD;
-
-		VkBlendFactor                   source_alpha = VK_BLEND_FACTOR_ONE;
-		VkBlendFactor                   destination_alpha = VK_BLEND_FACTOR_ONE;
-		VkBlendOp                       alpha_operation = VK_BLEND_OP_ADD;
-
-		ColorWriteEnabled::Mask         color_write_mask = ColorWriteEnabled::All_mask;
-
-		uint8_t                              blend_enabled : 1;
-		uint8_t                              separate_blend : 1;
-		uint8_t                              pad : 6;
-
-
-		BlendState() : blend_enabled(0), separate_blend(0) {
-		}
-
-		BlendState& set_color(VkBlendFactor source_color, VkBlendFactor destination_color, VkBlendOp color_operation);
-		BlendState& set_alpha(VkBlendFactor source_color, VkBlendFactor destination_color, VkBlendOp color_operation);
-		BlendState& set_color_write_mask(ColorWriteEnabled::Mask value);
-
-	}; // struct BlendState
 
 	struct BlendStateCreation {
 
@@ -747,6 +419,274 @@ namespace vulkan {
 		DescriptorSetCreation& set_name(std::string name);
 
 	}; // struct DescriptorSetCreation
+
+	struct VulkanBuffer : Resource {
+		VkBuffer				_vkBuffer;
+		VmaAllocation			_vmaAllocation;
+		VkDeviceMemory			_vkDeviceMemory;
+		VkDeviceSize			_vkDeviceSize;
+
+		VkBufferUsageFlags		_typeFlags = 0;
+		ResourceUsageType::Enum _usage = ResourceUsageType::Immutable;
+
+		uint32_t				_size = 0;
+		uint32_t				_global_offset = 0;
+
+		BufferHandle			_handle;
+		BufferHandle			_parentBuffer;
+
+		const char* _name = nullptr;
+
+	};
+
+	struct VulkanSampler : Resource {
+
+		VkSampler                       _vkSampler;
+
+		VkFilter                        _minFilter = VK_FILTER_NEAREST;
+		VkFilter                        _magFilter = VK_FILTER_NEAREST;
+		VkSamplerMipmapMode             _mipFilter = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+
+		VkSamplerAddressMode            _addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		VkSamplerAddressMode            _addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		VkSamplerAddressMode            _addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+
+
+		const char* name = nullptr;
+
+	};
+
+	struct VulkanTexture : Resource {
+
+		VkImage                         image;
+		VkImageView                     view;
+		VkFormat                        vk_format;
+		VkImageLayout                   vk_image_layout;
+		VmaAllocation                   vma_allocation;
+
+		uint16_t                        width = 1;
+		uint16_t                        height = 1;
+		uint16_t                        depth = 1;
+		uint8_t                         mipmaps = 1;
+		uint8_t                         flags = 0;
+
+		TextureHandle                   handle;
+		TextureType::Enum               type = TextureType::Texture2D;
+
+		VulkanSampler* sampler = nullptr;
+
+		const char* name = nullptr;
+	}; // struct TextureVulkan
+
+	struct VulkanShaderState : Resource {
+
+		VkPipelineShaderStageCreateInfo shader_stage_info[k_max_shader_stages];
+
+		const char* name = nullptr;
+
+		uint32_t                             active_shaders = 0;
+		bool                            graphics_pipeline = false;
+
+
+	}; // struct ShaderStateVulkan
+
+	struct VulkanDescriptorBinding : Resource {
+
+		VkDescriptorType					 type;
+		uint16_t                             start = 0;
+		uint16_t                             count = 0;
+		uint16_t                             set = 0;
+
+		const char* name = nullptr;
+	}; // struct ResourceBindingVulkan
+
+	struct VulkanDesciptorSetLayout : Resource {
+
+		VkDescriptorSetLayout					vk_descriptor_set_layout;
+
+		VkDescriptorSetLayoutBinding* vk_binding = nullptr;
+		VulkanDescriptorBinding* bindings = nullptr;
+		uint16_t								num_bindings = 0;
+		uint16_t								set_index = 0;
+
+		DescriptorSetLayoutHandle				handle;
+
+	}; // struct DesciptorSetLayoutVulkan
+
+
+	struct VulkanDesciptorSet : Resource {
+
+		VkDescriptorSet						vk_descriptor_set;
+
+		ResourceHandle* resources = nullptr;
+		SamplerHandle* samplers = nullptr;
+		uint16_t* bindings = nullptr;
+
+		const VulkanDesciptorSetLayout* layout = nullptr;
+		uint32_t                             num_resources = 0;
+	}; // struct DesciptorSetVulkan
+
+
+	struct VulkanPipeline : Resource {
+
+		VkPipeline                      vk_pipeline;
+		VkPipelineLayout                vk_pipeline_layout;
+
+		VkPipelineBindPoint             vk_bind_point;
+
+		ShaderStateHandle               shader_state;
+
+		const VulkanDesciptorSetLayout* descriptor_set[k_max_descriptor_set_layouts];
+		DescriptorSetLayoutHandle       descriptor_set_layout_handle[k_max_descriptor_set_layouts];
+		uint32_t                        num_active_layouts = 0;
+
+		DepthStencilCreation            depth_stencil;
+		BlendStateCreation              blend_state;
+		RasterizationCreation           rasterization;
+
+		PipelineHandle                  handle;
+		bool                            graphics_pipeline = true;
+
+	}; // struct PipelineVulkan
+
+	struct VulkanRenderPass : Resource {
+
+		VkRenderPass                    vk_render_pass;
+		VkFramebuffer                   vk_frame_buffer;
+
+
+		TextureHandle                   output_textures[k_max_image_outputs];
+		TextureHandle                   output_depth;
+
+		RenderPassType::Enum            type;
+
+		float                             scale_x = 1.f;
+		float                             scale_y = 1.f;
+		uint16_t                             width = 0;
+		uint16_t                             height = 0;
+		uint16_t                             dispatch_x = 0;
+		uint16_t                             dispatch_y = 0;
+		uint16_t                             dispatch_z = 0;
+
+		uint8_t                              resize = 0;
+		uint8_t                              num_render_targets = 0;
+
+		const char* name = nullptr;
+	}; // struct RenderPass
+
+	struct VulkanFramebuffer : Resource {
+
+		// NOTE(marco): this will be a null handle if dynamic rendering is available
+		VkFramebuffer                        vk_framebuffer;
+
+		// NOTE(marco): cache render pass handle
+		RenderPassHandle                     render_pass;
+
+		uint16_t                             width = 0;
+		uint16_t                             height = 0;
+
+		float							     scale_x = 1.f;
+		float								 scale_y = 1.f;
+
+		TextureHandle						 color_attachments[k_max_image_outputs];
+		TextureHandle						 depth_stencil_attachment;
+		uint32_t                             num_color_attachments;
+
+		uint8_t                              resize = 0;
+
+		const char* name = nullptr;
+	}; // struct Framebuffer
+
+
+	///////////////////////////////////////////////////////////////////Resource///////////////////////////////////////////////////////////
+
+
+
+	struct BufferResource : public Resource {
+
+		BufferHandle                    handle;
+		uint32_t                             pool_index;
+		
+
+		std::string        k_type = "raptor_buffer_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Buffer
+
+	//
+	//
+	struct TextureResource : public Resource {
+
+		TextureHandle							handle;
+		uint32_t								pool_index;
+		
+
+		std::string								k_type = "raptor_texture_type";
+		static uint64_t							k_type_hash;
+
+	}; // struct Texture
+
+	//
+	//
+	struct SamplerResource : public Resource {
+
+		SamplerHandle                   handle;
+		uint32_t                              pool_index;
+
+
+		std::string       k_type = "raptor_sampler_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Sampler
+
+	// Material/Shaders /////////////////////////////////////////////////////////////
+
+	//
+	//
+	struct ProgramPass {
+
+		PipelineHandle                  pipeline;
+		DescriptorSetLayoutHandle       descriptor_set_layout;
+	}; // struct ProgramPass
+
+	//
+	//
+
+
+	//
+	//
+	struct Program : public Resource {
+
+		uint32_t                             get_num_passes() const;
+
+		std::vector<ProgramPass>             passes;
+
+		uint32_t                             pool_index;
+
+		std::string							 k_type = "raptor_program_type";
+		static uint64_t                      k_type_hash;
+
+	}; // struct Program
+
+	//
+	//
+	struct MaterialCreation {
+
+		MaterialCreation& reset();
+		MaterialCreation& set_program(Program* program);
+		MaterialCreation& set_name(std::string name);
+		MaterialCreation& set_render_index(uint32_t render_index);
+
+		Program* program = nullptr;
+		std::string                         name = nullptr;
+		uint32_t                             render_index = ~0u;
+
+	}; // struct MaterialCreation
+	// Resource creation structs //////////////////////////////////////////////
+
+//
+//
 
 	//
 	//

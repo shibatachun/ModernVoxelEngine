@@ -1,6 +1,10 @@
 #pragma once
+
 #include "VulkanInitalizer.h"
 #include "VulkanResource.h"
+
+
+
 namespace vulkan {
 
 	class Instance final {

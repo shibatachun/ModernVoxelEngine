@@ -1,5 +1,7 @@
 #include "VulkanClasses.h"
 
+#include "vma/vk_mem_alloc.h"
+
 vulkan::Instance::Instance(GLFWwindow* window) : _window(window)
 {
 	
@@ -2157,13 +2159,15 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 	}
 	
 
-
-
 	//上传vertex indice buffer数据
 	{
 
 		_BufferManager.CreateVertexBuffer1(modeldata.vertices, renderObject.vertexBuffer, renderObject.vertexmemory);
 		_BufferManager.CreateIndexBuffer1(modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
+		
+		BufferCreation creation{};
+		creation.size = modeldata.vertices.size();
+
 	}
 	//生成DescriptorPool
 	{
@@ -2261,7 +2265,7 @@ vulkan::BufferHandle vulkan::VulkanResouceManager::CreateBufferResource(const Bu
 
 		VmaAllocationCreateInfo memory_info{};
 		memory_info.flags = VMA_ALLOCATION_CREATE_STRATEGY_BEST_FIT_BIT;
-		memory_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		memory_info.usage = VMA_MEMORY_USAGE_AUTO;
 
 		VmaAllocationInfo allocation_info{};
 		Check(vmaCreateBuffer(_vmaAllocator, &buffer_info, &memory_info, &buffer->_vkBuffer, &buffer->_vmaAllocation, &allocation_info), "Create buffer");

@@ -6,8 +6,9 @@
 
 #define NOMINMAX
 #pragma comment(lib, "vulkan-1.lib")
+
 #include <vulkan/vulkan.h>
-#include <vma/vk_mem_alloc.h>
+
 
 #define VULKAN_NON_COPIABLE(ClassName) \
 	ClassName(const ClassName&) = delete; \

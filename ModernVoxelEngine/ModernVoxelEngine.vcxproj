@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VmaUsage.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp" />
     <ClCompile Include="src\VoxelEngine\PerlinNoise.cpp" />

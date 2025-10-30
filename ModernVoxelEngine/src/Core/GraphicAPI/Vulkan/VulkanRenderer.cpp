@@ -245,7 +245,7 @@ void vulkan::VulkanRenderer::SetUpBufferManager()
 //Set up Vulkan Resouce Manager
 void vulkan::VulkanRenderer::SetUpVulkanResouceManager()
 {
-	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, *_devices, _assetManager));
+	_resouceManager.reset(new vulkan::VulkanResouceManager(*_bufferManager,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline, *_devices,*_instance, _assetManager));
 
 }
 
