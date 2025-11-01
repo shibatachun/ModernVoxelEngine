@@ -61,7 +61,7 @@ public:
 	virtual void Finish() = 0; 
 	virtual void SetWindowUserPointer();
 protected:
-	Application(GLFWwindow* window) : _window(window) {}
+	Application(GLFWwindow* window, API api) : _window(window), _graphicApi(api) {}
 	
 	API										_graphicApi;
 	std::unique_ptr<IRenderer>				_render;

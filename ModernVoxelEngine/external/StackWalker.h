@@ -41,7 +41,7 @@
 // so we need not to check the version (because we only support _MSC_VER >= 1100)!
 #pragma once
 
-#include "foundation/windows_declarations.h"
+#include "windows_declarations.h"
 
 // Forward declaration
 struct _CONTEXT;

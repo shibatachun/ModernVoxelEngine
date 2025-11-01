@@ -111,9 +111,9 @@ int main() {
 	uint32_t width = 1920;
 	uint32_t height = 1080;
 	GLFWwindow* window = initWindow("GLFW example", width, height);
-	API api = API::VULKAN;
+	API api = API::RVULKAN;
 	//auto& app = Application::getInstance(window);
-	auto& app = ModernEngineApplication::GetInstance(window);
+	auto& app = ModernEngineApplication::GetInstance(window,api);
 	app.Init();
 	app.SetWindowUserPointer();
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);

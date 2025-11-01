@@ -58,6 +58,7 @@
 #define ENKI_ASSERT(x) assert(x)
 #endif
 
+#define _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS
 namespace enki
 {
 

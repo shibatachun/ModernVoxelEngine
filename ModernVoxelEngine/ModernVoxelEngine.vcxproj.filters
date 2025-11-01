@@ -102,6 +102,60 @@
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="external\enkiTS\TaskScheduler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\clusterizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\indexcodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\indexgenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\overdrawanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\overdrawoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\simplifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\spatialorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\stripifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vcacheanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vcacheoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vertexcodec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vertexfilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vfetchanalyzer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\meshoptimizer\vfetchoptimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\StackWalker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\tlsf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\GlfwHelper.h">
@@ -231,6 +285,444 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\ortho_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\ortho_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\ortho_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\ortho_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\persp_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\persp_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\persp_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\persp_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\project_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\project_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\view_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\view_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\view_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\clipspace\view_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\affine2d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\bezier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\cam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\curve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\ease.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\euler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\frustum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\mat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\mat3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\project.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\quat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\ray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\vec2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\vec3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call\vec4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\ortho_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\ortho_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\ortho_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\ortho_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\persp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\persp_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\persp_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\persp_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\persp_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\project_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\project_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_lh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_rh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\clipspace\view_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\avx\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\avx\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\neon\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\neon\mat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\neon\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\neon\quat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\sse2\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\sse2\mat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\sse2\mat3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\sse2\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\sse2\quat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\arm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\intrin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\simd\x86.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\ortho_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\ortho_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\persp_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\persp_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\persp_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\persp_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\view_lh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\view_lh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\view_rh_no.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\clipspace\view_rh_zo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\affine2d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\cam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\curve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\euler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\frustum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\mat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\mat3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\project.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\quat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec2-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec3-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct\vec4-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\affine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\affine2d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\affine-mat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\applesimd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\bezier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\call.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\cam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\cglm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\curve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\ease.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\euler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\frustum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\mat2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\mat3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\mat4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\project.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\quat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\ray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\struct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\types-struct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec2-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec3-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\vec4-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\cglm\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\enkiTS\LockLessMultiReadPipe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\enkiTS\TaskScheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\meshoptimizer\meshoptimizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\StackWalker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\thsvs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\tlsf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\vk_mem_alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\wyhash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\windows_declarations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
