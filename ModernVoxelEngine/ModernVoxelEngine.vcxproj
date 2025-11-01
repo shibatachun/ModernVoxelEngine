@@ -135,6 +135,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RHIGraphicResourceManager.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RHIResource.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VmaUsage.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp" />
@@ -159,8 +163,13 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanResource.cpp" />
     <ClCompile Include="src\VoxelEngine\VoxelApplication.cpp" />
     <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RHIGraphicResourceManager.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RHIResource.h" />
     <ClInclude Include="src\ModernEngine\ModernEngineApplication.h" />
     <ClInclude Include="src\ModernEngine\ModernEngineCommon.h" />
     <ClInclude Include="src\RendererHeader.h" />
@@ -199,6 +208,7 @@
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanResource.h" />
     <ClInclude Include="src\VoxelEngine\VoxelApplication.h" />
     <ClInclude Include="src\VoxelEngine\VoxelCommon.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />

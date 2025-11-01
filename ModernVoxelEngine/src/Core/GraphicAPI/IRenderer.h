@@ -4,7 +4,8 @@ enum class API
 {
 	VULKAN,
 	OPENGL,
-	DIRECTX
+	DIRECTX,
+	RVULKAN
 };
 
 class IRenderer {

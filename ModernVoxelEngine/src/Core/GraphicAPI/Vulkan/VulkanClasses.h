@@ -203,7 +203,7 @@ namespace vulkan {
 			VkBuffer* buffer,
 			VkDeviceMemory* memory,
 			void* data = nullptr);
-		BufferHandle CreateBuffer(VkBufferUsageFlags type, ResourceUsageType::Enum usage, uint32_t size, void* data, std::string name);
+	
 		void createImageBuffer(uint32_t width, uint32_t height,  uint32_t mipLevels,
 			VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
 			VkMemoryPropertyFlags properties,
@@ -456,16 +456,17 @@ namespace vulkan {
 
 		
 		private:
-			BufferHandle CreateBufferResource(const BufferCreation& creation);
 			
-			SamplerHandle CreateSamplerResource(const SamplerCreation& creation);
-			TextureHandle CreateTextureResource(const TextureCreation& creation);
-			void CreatePasses();
-			void CreateMaterial();
+			TextureHandle CreateTextureResource (const TextureCreation& creation);
+			PipelineHandle CreatePipeline(const PipelineCreation&);
+			SamplerHandle CreateSamplerResource (const SamplerCreation& creation);
+
+	
 			void ConstructVulkanRenderObject();
 			void prepareNodeDescriptor(Node* node, VkDescriptorSetLayout descriptorSetLayout);
 			void CreateTextureImageView(VkImageView& imageview, VkImage image);
-			void ConstructSceneNode(SceneNode* parent, Node* sourceNode, VulkanRenderObject& object, ModelData& modelData);
+			void ConstructSceneNode(SceneNode* parent, Node* sourceNode, VulkanRenderObject& object, ModelData& modelData); 
+
 	
 	};
 }

@@ -2236,43 +2236,9 @@ VkPipelineShaderStageCreateInfo vulkan::VulkanResouceManager::LoadShader(std::st
 	moduleCreateInfo.codeSize = shaders.vertexShader.size();
 	moduleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaders.vertexShader.data());
 	Check(vkCreateShaderModule(_device.Handle(), &moduleCreateInfo, NULL, &shaderModule), "创建shader模组");
-
-
-
-
 	return VkPipelineShaderStageCreateInfo();
 }
 
-
-
-vulkan::BufferHandle vulkan::VulkanResouceManager::CreateBufferResource(const BufferCreation& creation)
-{	
-	VulkanBuffer* buffer = _buffers.obtain();
-	if (buffer) {
-
-		buffer->name = creation.name;
-		buffer->_size = creation.size;
-		buffer->_typeFlags = creation.type_flags;
-		buffer->_usage = creation.usage;
-		buffer->_global_offset = 0;
-		buffer->_parentBuffer = Invalid_Buffer;
-		
-		static const VkBufferUsageFlags dynamic_buffer_mask = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		//TODO::dynamic buffer 
-		VkBufferCreateInfo buffer_info{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-		buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | creation.type_flags;
-		buffer_info.size = creation.size > 0 ? creation.size : 1;
-
-		VmaAllocationCreateInfo memory_info{};
-		memory_info.flags = VMA_ALLOCATION_CREATE_STRATEGY_BEST_FIT_BIT;
-		memory_info.usage = VMA_MEMORY_USAGE_AUTO;
-
-		VmaAllocationInfo allocation_info{};
-		Check(vmaCreateBuffer(_vmaAllocator, &buffer_info, &memory_info, &buffer->_vkBuffer, &buffer->_vmaAllocation, &allocation_info), "Create buffer");
-
-	}
-	return { invalidIndex };
-}
 
 
 

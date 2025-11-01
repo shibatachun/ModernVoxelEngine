@@ -116,6 +116,9 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	SetUpGraphicPipelineManager();
 	SetUpVulkanResouceManager();
 	
+	_GpuResouce.reset(new vulkan::VulkanGraphicResourceManager(*_instance,*_devices,*_swapchain,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline));
+	_GpuResouce->Init(); 
+	
 	CreateFrameBuffer();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 	CreateUniformBuffers();

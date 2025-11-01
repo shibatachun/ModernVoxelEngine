@@ -1,5 +1,6 @@
 #include "D3DClasses.h"
 
+
 D3D11::D3DClass::D3DClass()
 {
 	m_swapChain = 0;
@@ -50,6 +51,7 @@ bool D3D11::D3DClass::Initialize(int screenWidth, int scrfeenHeight, bool vsync,
 void D3D11::D3DClass::Shutdown()
 {
 }
+
 
 void D3D11::D3DClass::BeginScene(float, float, float, float)
 {

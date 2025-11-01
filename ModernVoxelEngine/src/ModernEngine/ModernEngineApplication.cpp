@@ -13,6 +13,8 @@ void ModernEngineApplication::InitRendererBackend(API api)
 	{
 	case API::VULKAN:
 		_render = CreateRenderer(API::VULKAN, _window, VK_PRESENT_MODE_IMMEDIATE_KHR, *_assetManager);
+	case API::RVULKAN:
+		
 
 	default:
 		break;

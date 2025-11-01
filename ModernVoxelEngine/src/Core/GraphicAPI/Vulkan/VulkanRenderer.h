@@ -1,7 +1,7 @@
 #pragma once
 #include "../IRenderer.h"
 #include "../../../ResourcesManager/AssetManager.h"
-#include "VulkanClasses.h"
+#include "VulkanGraphicResourceManager.h"
 
 
 
@@ -62,7 +62,8 @@ namespace vulkan
 		VkDescriptorSetLayout descriptorSetLayoutImage = VK_NULL_HANDLE;
 		VkDescriptorSetLayout descriptorSetLayoutUbo = VK_NULL_HANDLE;
 		VkMemoryPropertyFlags memoryPropertyFlags = 0;
-
+		std::unique_ptr<VulkanGraphicResourceManager>			_GpuResouce;
+	
 
 		std::vector<VulkanRenderObject>							_renderObjects;
 		
