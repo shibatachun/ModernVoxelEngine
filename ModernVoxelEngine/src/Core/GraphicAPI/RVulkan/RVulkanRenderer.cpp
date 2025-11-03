@@ -7,6 +7,8 @@ namespace rvulkan {
 		MemoryService::instance()->init(&memory_configuration);
 		Allocator* allocator = &MemoryService::instance()->system_allocator;
 
+		StackAllocator scratch_allocator;
+		scratch_allocator.init(rmega(8));
 
 	}
 	void shutdown() {

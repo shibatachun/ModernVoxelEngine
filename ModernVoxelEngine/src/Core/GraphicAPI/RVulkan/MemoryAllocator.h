@@ -55,7 +55,24 @@ namespace rvulkan {
         size_t                       allocated_size = 0;
     }; // struct LinearAllocator
 
+    struct StackAllocator : public Allocator {
+        void    init(size_t size);
+        void shutdown();
+        void* allocate(size_t size, size_t alignment) override;
+        void* allocate(size_t size, size_t alignment, cstring file, int32_t line) override;
+        void deallocate(void* pointer) override;
+        size_t get_marker();
+        void free_marker(size_t marker);
 
+        void clear();
+
+        uint8_t* memory = nullptr;
+        size_t  total_size = 0;
+        size_t  allocated_size = 0;
+
+
+
+    };
     struct MemoryService {
         static MemoryService* instance();
         void init(void* configuration);

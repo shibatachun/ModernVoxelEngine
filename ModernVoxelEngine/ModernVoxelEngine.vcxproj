@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\Array.cpp" />
     <ClCompile Include="external\enkiTS\TaskScheduler.cpp" />
     <ClCompile Include="external\meshoptimizer\allocator.cpp" />
     <ClCompile Include="external\meshoptimizer\clusterizer.cpp" />
@@ -182,8 +183,10 @@
     <ClCompile Include="src\VoxelEngine\VoxelApplication.cpp" />
     <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\Array.h" />
     <ClInclude Include="external\cglm\affine-mat.h" />
     <ClInclude Include="external\cglm\affine.h" />
     <ClInclude Include="external\cglm\affine2d.h" />
@@ -373,6 +376,7 @@
     <ClInclude Include="src\VoxelEngine\VoxelApplication.h" />
     <ClInclude Include="src\VoxelEngine\VoxelCommon.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />

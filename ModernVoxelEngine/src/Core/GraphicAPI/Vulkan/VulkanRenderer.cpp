@@ -118,7 +118,14 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	
 	_GpuResouce.reset(new vulkan::VulkanGraphicResourceManager(*_instance,*_devices,*_swapchain,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline));
 	_GpuResouce->Init(); 
+	BufferCreation bc;
+	ModelData model = _assetManager.getModelDataByName("Sponza");
+	VkBufferUsageFlags flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bc.set(flags, ResourceUsageType::Immutable, (sizeof(Vertex1) * model.vertexSize)).set_persistent(true).set_name(nullptr);
+	BufferHandle br = _GpuResouce->CreateBufferResouce(bc);
 	
+	_GpuResouce->CreateBufferResouce(bc);
+	VulkanBuffer* vertex_buffer = _GpuResouce->AccessBuffer(br);
 	CreateFrameBuffer();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 	CreateUniformBuffers();

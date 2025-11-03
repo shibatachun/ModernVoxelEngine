@@ -19,7 +19,8 @@ namespace vulkan {
 		allocatorInfo.physicalDevice = _vk_device.PhysicalDevice();
 		allocatorInfo.device = _vk_device.Handle();
 		allocatorInfo.instance = _vk_instance.Handle();
-
+		_vertexs.init(1023);
+		_samplers.init(203);
 		_buffers.init(1024);
 
 		Check(vmaCreateAllocator(&allocatorInfo, &_vma_allocator), "Create Vma allocator");
@@ -35,7 +36,7 @@ namespace vulkan {
 		}
 
 		VulkanBuffer* buffer = _buffers.get(handle.index);
-		buffer->name = creation.name;
+		//buffer->name = creation.name;
 		buffer->_size = creation.size;
 		buffer->_typeFlags = creation.type_flags;
 		buffer->_usage = creation.usage;
@@ -66,6 +67,10 @@ namespace vulkan {
 			vmaUnmapMemory(_vma_allocator, buffer->_vmaAllocation);
 		}
 
-		return BufferHandle();
+		return handle;
+	}
+	VulkanBuffer* VulkanGraphicResourceManager::AccessBuffer(BufferHandle handle)
+	{
+		return _buffers.get(handle.index);
 	}
 }

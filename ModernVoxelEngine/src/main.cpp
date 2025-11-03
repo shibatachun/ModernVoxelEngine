@@ -111,7 +111,7 @@ int main() {
 	uint32_t width = 1920;
 	uint32_t height = 1080;
 	GLFWwindow* window = initWindow("GLFW example", width, height);
-	API api = API::RVULKAN;
+	API api = API::VULKAN;
 	//auto& app = Application::getInstance(window);
 	auto& app = ModernEngineApplication::GetInstance(window,api);
 	app.Init();

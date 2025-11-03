@@ -156,6 +156,12 @@
     <ClCompile Include="external\tlsf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\GraphicAPI\RVulkan\Array.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\GlfwHelper.h">
@@ -723,6 +729,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\windows_declarations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\GraphicAPI\RVulkan\Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -30,6 +30,39 @@ namespace rvulkan {
 	{
 	}
 
+	void  StackAllocator::init(size_t size) {
+
+	}
+
+	void* StackAllocator::allocate(size_t size, size_t alignment)
+	{
+		return nullptr;
+	}
+
+	void* StackAllocator::allocate(size_t size, size_t alignment, cstring file, int32_t line)
+	{
+		return nullptr;
+	}
+
+	void StackAllocator::deallocate(void* pointer)
+	{
+	}
+
+	size_t StackAllocator::get_marker()
+	{
+		return allocated_size;
+	}
+
+	void StackAllocator::free_marker(size_t marker)
+	{
+		const size_t difference = marker - allocated_size;
+		if (difference > 0) {
+			allocated_size = marker;
+		}
+	}
+
+
+
 	void* HeapAllocator::allocate(size_t size, size_t alignment)
 	{
 		return nullptr;

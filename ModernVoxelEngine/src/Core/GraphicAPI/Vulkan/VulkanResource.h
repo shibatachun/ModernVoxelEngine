@@ -13,7 +13,8 @@ namespace vulkan {
 		uint32_t			poolIndex;
 
 		uint64_t            references = 0;
-		std::string         name = nullptr;
+		const char* name = nullptr;
+		
 
 	}; // struct Resource
 
@@ -140,14 +141,18 @@ namespace vulkan {
 		VkBufferUsageFlags              type_flags = 0;
 		ResourceUsageType::Enum         usage = ResourceUsageType::Immutable;
 		uint32_t                             size = 0;
+		uint32_t                              persistent = 0;
+		uint32_t                              device_only = 0;
 		void* initial_data = nullptr;
 
 		const char* name = nullptr;
 
 		BufferCreation& reset();
-		BufferCreation& set(VkBufferUsageFlags flags, ResourceUsageType::Enum usage, uint32_t size);
-		BufferCreation& set_data(void* data);
-		BufferCreation& set_name(const char* name);
+		BufferCreation& set(VkBufferUsageFlags flags, ResourceUsageType::Enum usage_, uint32_t size_);
+		BufferCreation& set_data(void* data_);
+		BufferCreation& set_name(const char* name_);
+		BufferCreation& set_persistent(bool value);
+		BufferCreation& set_device_only(bool value);
 
 	}; // struct BufferCreation
 
@@ -315,6 +320,7 @@ namespace vulkan {
 	};
 
 	struct VulkanBuffer : Resource {
+	
 		VkBuffer				_vkBuffer;
 		VmaAllocation			_vmaAllocation;
 		VkDeviceMemory			_vkDeviceMemory;
@@ -329,7 +335,7 @@ namespace vulkan {
 		BufferHandle			_handle;
 		BufferHandle			_parentBuffer;
 
-		const char* _name = nullptr;
+		//const char* _name = nullptr;
 
 	};
 

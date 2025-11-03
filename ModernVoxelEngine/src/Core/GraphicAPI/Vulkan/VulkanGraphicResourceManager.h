@@ -12,6 +12,7 @@ namespace vulkan {
 		void											Shutdown();
 
 		BufferHandle									CreateBufferResouce(const BufferCreation& creation);
+		VulkanBuffer*									AccessBuffer(BufferHandle handle);
 	private:
 		Instance&									    _vk_instance;
 		Device&											_vk_device;
@@ -28,6 +29,8 @@ namespace vulkan {
 		ResourcePool<VulkanShaderState>					_shaders;
 		ResourcePool<VulkanDesciptorSet>				_descriptor_sets;
 		ResourcePool<VulkanSampler>						_samplers;
+
+		ResourcePool<Vertex1>							_vertexs;
 
 		// Primitive resources
 		BufferHandle									_fullscrean_vertex_buffer;

@@ -179,7 +179,8 @@
 	template <typename T>
 	struct ResourcePool {
 		void init(uint32_t pool_size) {
-			resources.reserve(pool_size);
+			poolSize = pool_size;
+			resources.resize(pool_size);
 			freeIndices.resize(pool_size);
 			for (uint32_t i = 0; i < pool_size; ++i) {
 				freeIndices[i] = i;
