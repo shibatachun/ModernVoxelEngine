@@ -10,6 +10,11 @@ namespace rvulkan {
 		StackAllocator scratch_allocator;
 		scratch_allocator.init(rmega(8));
 
+		enki::TaskSchedulerConfig config;
+		config.numTaskThreadsToCreate += 1;
+		enki::TaskScheduler task_scheduler;
+
+
 	}
 	void shutdown() {
 

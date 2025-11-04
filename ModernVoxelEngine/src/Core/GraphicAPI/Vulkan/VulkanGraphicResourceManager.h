@@ -12,7 +12,17 @@ namespace vulkan {
 		void											Shutdown();
 
 		BufferHandle									CreateBufferResouce(const BufferCreation& creation);
+		TextureHandle									CreateTextureResource(const TextureCreation& creation);
+		TextureHandle									CreateTextureViewResource(const TextureViewCreation& creation);
+		PipelineHandle									CreatePipeline(const PipelineCreation& creation, const char* cache_path = nullptr);
+		SamplerHandle									CreateSampler(const SamplerCreation& creation);
+		DescriptorSetLayoutHandle						CreateDescriptorSetLayout(const  DescriptorSetLayoutCreation& creation);
+		DescriptorSetHandle								CreateDescriptorSet(const DescriptorSetCreation& creation);
+		RenderPassHandle								CreateRenderPass(const RenderPassCreation& creation);
+		FramebufferHandle								CreateFrameBuffer(const FramebufferCreation& creation);
+		ShaderStateHandle								CreateShaderState(const ShaderStateCreation& creation);
 		VulkanBuffer*									AccessBuffer(BufferHandle handle);
+		VulkanTexture*									AccessTexture(TextureHandle handle);
 	private:
 		Instance&									    _vk_instance;
 		Device&											_vk_device;
@@ -29,8 +39,6 @@ namespace vulkan {
 		ResourcePool<VulkanShaderState>					_shaders;
 		ResourcePool<VulkanDesciptorSet>				_descriptor_sets;
 		ResourcePool<VulkanSampler>						_samplers;
-
-		ResourcePool<Vertex1>							_vertexs;
 
 		// Primitive resources
 		BufferHandle									_fullscrean_vertex_buffer;

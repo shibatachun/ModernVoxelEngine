@@ -57,6 +57,10 @@
 		ResourceHandle                  index;
 	};
 
+	struct FramebufferHandle {
+		ResourceHandle                  index;
+	}; // struct FramebufferHandle
+
 	static BufferHandle                Invalid_Buffer{ invalidIndex };
 	static TextureHandle               Invalid_Texture{ invalidIndex };
 	static ShaderStateHandle           Invalid_Shader{ invalidIndex };
@@ -102,9 +106,28 @@
 		}
 	} // namespace ColorWriteEnabled
 
+
+	namespace TextureFlags {
+		enum Enum {
+			Default, RenderTarget, Compute, Sparse, ShadingRate, Count
+		};
+
+		enum Mask {
+			Default_mask = 1 << 0, RenderTarget_mask = 1 << 1, Compute_mask = 1 << 2, Sparse_mask = 1 << 3, ShadingRate_mask = 1 << 4
+		};
+
+		static const char* s_value_names[] = {
+			"Default", "RenderTarget", "Compute", "Count"
+		};
+
+		static const char* ToString(Enum e) {
+			return ((uint32_t)e < Enum::Count ? s_value_names[(int)e] : "unsupported");
+		}
+
+	} // namespace TextureFlags
 	namespace TextureType {
 		enum Enum {
-			Texture1D, Texture2D, Texture3D, Texture_1D_Array, Texture_2D_Array, Texture_Cube_Array, Count
+			Texture1D, Texture2D, Texture3D, TextureCube, Texture_1D_Array, Texture_2D_Array, Texture_Cube_Array, Count
 		};
 
 		enum Mask {

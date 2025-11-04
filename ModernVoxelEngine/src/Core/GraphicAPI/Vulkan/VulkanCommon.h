@@ -493,6 +493,8 @@ namespace vulkan {
 		void drawNode(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, SceneNode* node);
 	};
 	
+	/////////////////////////////////ResouceManager//////////////////////////////////////////
+
 
 	namespace VulkanResource {
 	

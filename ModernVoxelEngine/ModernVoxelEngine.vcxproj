@@ -158,6 +158,7 @@
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHIGraphicResourceManager.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHIResource.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VmaUsage.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineApplication.cpp" />
     <ClCompile Include="src\ModernEngine\ModernEngineCommon.cpp" />

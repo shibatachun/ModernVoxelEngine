@@ -13,7 +13,7 @@ namespace vulkan {
 		uint32_t			poolIndex;
 
 		uint64_t            references = 0;
-		const char* name = nullptr;
+		const char*			name = nullptr;
 		
 
 	}; // struct Resource
@@ -160,26 +160,79 @@ namespace vulkan {
 	//
 	struct TextureCreation {
 
-		void* initial_data = nullptr;
-		uint16_t                             width = 1;
-		uint16_t                             height = 1;
-		uint16_t                             depth = 1;
-		uint8_t                              mipmaps = 1;
-		uint8_t                              flags = 0;    // TextureFlags bitmasks
-
-		VkFormat                        format = VK_FORMAT_UNDEFINED;
-		TextureType::Enum               type = TextureType::Texture2D;
-
-		const char* name = nullptr;
-
+		void* _initial_data = nullptr;
+		uint16_t                             _width = 1;
+		uint16_t                             _height = 1;
+		uint16_t                             _depth = 1;
+		uint16_t							 _array_layer_count = 1;
+		uint8_t                              _mip_level_count = 1;
+		uint8_t                              _flags = 0;    // TextureFlags bitmasks
+											 
+		VkFormat							 _format = VK_FORMAT_UNDEFINED;
+		TextureType::Enum					 _type = TextureType::Texture2D;
+		TextureHandle						 _alias = Invalid_Texture;
+											 
+		const char* 						 _name = nullptr;
+		TextureCreation& reset();
 		TextureCreation& set_size(uint16_t width, uint16_t height, uint16_t depth);
-		TextureCreation& set_flags(uint8_t mipmaps, uint8_t flags);
+		TextureCreation& set_flags(uint8_t flags);
+		TextureCreation& set_mips(uint32_t mip_level_count);
+		TextureCreation& set_layers(uint32_t layer_count);
 		TextureCreation& set_format_type(VkFormat format, TextureType::Enum type);
 		TextureCreation& set_name(const char* name);
 		TextureCreation& set_data(void* data);
+		TextureCreation& set_alias(TextureHandle alias);
 
 	}; // struct TextureCreation
 
+	//
+	namespace TextureFormat {
+
+		inline bool                     is_depth_stencil(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM_S8_UINT && value < VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+		}
+		inline bool                     is_depth_only(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM && value < VK_FORMAT_S8_UINT;
+		}
+		inline bool                     is_stencil_only(VkFormat value) {
+			return value == VK_FORMAT_S8_UINT;
+		}
+
+		inline bool                     has_depth(VkFormat value) {
+			return is_depth_only(value) || is_depth_stencil(value);
+		}
+		inline bool                     has_stencil(VkFormat value) {
+			return value >= VK_FORMAT_S8_UINT && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
+		}
+		inline bool                     has_depth_or_stencil(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
+		}
+
+	} // namespace TextureFormat
+	//
+	struct TextureSubResource {
+
+		uint16_t                             mip_base_level = 0;
+		uint16_t                             mip_level_count = 1;
+		uint16_t                             array_base_layer = 0;
+		uint16_t                             array_layer_count = 1;
+
+	}; // struct TextureSubResource
+	struct TextureViewCreation {
+		TextureHandle				_parent_texture = Invalid_Texture;
+		VkImageViewType				_view_type = VK_IMAGE_VIEW_TYPE_1D;
+		TextureSubResource			_sub_resource;
+		
+		const char* nam = nullptr;
+
+		TextureViewCreation& reset();
+		TextureViewCreation& set_parent_texture(TextureHandle parent_texture);
+		TextureViewCreation& set_mips(uint32_t base_mip, uint32_t mip_level_count);
+		TextureViewCreation& set_array(uint32_t base_layer, uint32_t layer_count);
+		TextureViewCreation& set_name(const char* name);
+		TextureViewCreation& set_view_type(VkImageViewType view_type);
+		
+	};
 	//
 	//
 	struct SamplerCreation {
@@ -284,6 +337,42 @@ namespace vulkan {
 		DescriptorSetCreation& set_name(std::string name);
 
 	}; // struct DescriptorSetCreation
+
+	struct RenderPassCreation {
+
+	};
+
+	struct FramebufferCreation {
+
+		RenderPassHandle                render_pass;
+
+		uint16_t                             num_render_targets = 0;
+
+		TextureHandle                   output_textures[k_max_image_outputs];
+		TextureHandle                   depth_stencil_texture = { invalidIndex };
+		TextureHandle                   shading_rate_attachment = { invalidIndex };
+
+		uint16_t                             width = 0;
+		uint16_t                             height = 0;
+
+		float                             scale_x = 1.f;
+		float                             scale_y = 1.f;
+
+		uint16_t                             layers = 1;
+		uint8_t                              resize = 1;
+
+		const char*                         name = nullptr;
+
+		FramebufferCreation& reset();
+		FramebufferCreation& add_render_texture(TextureHandle texture);
+		FramebufferCreation& set_depth_stencil_texture(TextureHandle texture);
+		FramebufferCreation& add_shading_rate_attachment(TextureHandle texture);
+		FramebufferCreation& set_scaling(float scale_x, float scale_y, uint8_t resize);
+		FramebufferCreation& set_width_height(uint32_t width, uint32_t height);
+		FramebufferCreation& set_layers(uint32_t layers);
+		FramebufferCreation& set_name(const char* name);
+
+	}; // struct RenderPassCreation
 	//
 	struct VertexAttribute {
 		uint16_t		_location = 0;
@@ -362,16 +451,23 @@ namespace vulkan {
 		VkImage                         image;
 		VkImageView                     view;
 		VkFormat                        vk_format;
+		VkImageUsageFlags				vk_usage;
 		VkImageLayout                   vk_image_layout;
 		VmaAllocation                   vma_allocation;
 
 		uint16_t                        width = 1;
 		uint16_t                        height = 1;
 		uint16_t                        depth = 1;
-		uint8_t                         mipmaps = 1;
+		uint16_t						array_layer_count = 1;
+		uint8_t							mip_level_count = 1;
 		uint8_t                         flags = 0;
+		uint16_t						mip_base_level = 0;
+		uint16_t						array_base_layer = 0;
+		bool							sparse = false;
 
 		TextureHandle                   handle;
+		TextureHandle					parent_txture;
+		TextureHandle					alias_texture;
 		TextureType::Enum               type = TextureType::Texture2D;
 
 		VulkanSampler* sampler = nullptr;
@@ -425,7 +521,6 @@ namespace vulkan {
 		const VulkanDesciptorSetLayout* layout = nullptr;
 		uint32_t                             num_resources = 0;
 	}; // struct DesciptorSetVulkan
-
 
 	struct VulkanPipeline : Resource {
 

@@ -1,5 +1,7 @@
 #include "VulkanGraphicResourceManager.h"
 namespace vulkan {
+
+	
 	VulkanGraphicResourceManager::VulkanGraphicResourceManager(
 		Instance& instance,
 		Device& device,
@@ -19,7 +21,6 @@ namespace vulkan {
 		allocatorInfo.physicalDevice = _vk_device.PhysicalDevice();
 		allocatorInfo.device = _vk_device.Handle();
 		allocatorInfo.instance = _vk_instance.Handle();
-		_vertexs.init(1023);
 		_samplers.init(203);
 		_buffers.init(1024);
 
@@ -69,8 +70,61 @@ namespace vulkan {
 
 		return handle;
 	}
+	TextureHandle VulkanGraphicResourceManager::CreateTextureResource(const TextureCreation& creation)
+	{
+		uint32_t resource_index = _textures.obtain_resouce();
+		TextureHandle handle = { resource_index };
+		if (resource_index == invalidIndex) {
+			return handle;
+		}
+
+		VulkanTexture* texture = AccessTexture(handle);
+
+
+
+		return TextureHandle();
+	}
+	TextureHandle VulkanGraphicResourceManager::CreateTextureViewResource(const TextureViewCreation& creation)
+	{
+		return TextureHandle();
+	}
+	PipelineHandle VulkanGraphicResourceManager::CreatePipeline(const PipelineCreation& creation, const char* cache_path)
+	{
+		return PipelineHandle();
+	}
+	SamplerHandle VulkanGraphicResourceManager::CreateSampler(const SamplerCreation& creation)
+	{
+		return SamplerHandle();
+	}
+	DescriptorSetLayoutHandle VulkanGraphicResourceManager::CreateDescriptorSetLayout(const DescriptorSetLayoutCreation& creation)
+	{
+		return DescriptorSetLayoutHandle();
+	}
+	DescriptorSetHandle VulkanGraphicResourceManager::CreateDescriptorSet(const DescriptorSetCreation& creation)
+	{
+		return DescriptorSetHandle();
+	}
+	RenderPassHandle VulkanGraphicResourceManager::CreateRenderPass(const RenderPassCreation& creation)
+	{
+		return RenderPassHandle();
+	}
+	FramebufferHandle VulkanGraphicResourceManager::CreateFrameBuffer(const FramebufferCreation& creation)
+	{
+		return FramebufferHandle();
+	}
+	ShaderStateHandle VulkanGraphicResourceManager::CreateShaderState(const ShaderStateCreation& creation)
+	{
+		return ShaderStateHandle();
+	}
 	VulkanBuffer* VulkanGraphicResourceManager::AccessBuffer(BufferHandle handle)
 	{
 		return _buffers.get(handle.index);
 	}
+	VulkanTexture* VulkanGraphicResourceManager::AccessTexture(TextureHandle handle)
+	{
+		return _textures.get(handle.index);
+	}
+
+
+
 }
