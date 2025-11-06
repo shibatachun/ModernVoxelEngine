@@ -1,6 +1,5 @@
 #include "VulkanClasses.h"
 
-#include "vma/vk_mem_alloc.h"
 
 vulkan::Instance::Instance(GLFWwindow* window) : _window(window)
 {
@@ -485,6 +484,9 @@ vulkan::Device::Device(
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
 	Check(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device), "create logical device");
+	if (deviceFeatures12.descriptorBindingPartiallyBound && deviceFeatures12.runtimeDescriptorArray) {
+		isBindless = true;
+	}
 
 	_debugUtils.SetDevice(_device);
 	          
@@ -2025,11 +2027,7 @@ vulkan::VulkanResouceManager::~VulkanResouceManager()
 
 void vulkan::VulkanResouceManager::init()
 {
-	VmaAllocatorCreateInfo allocatorInfo = {};
-	allocatorInfo.physicalDevice = _device.PhysicalDevice();
-	allocatorInfo.device = _device.Handle();
-	allocatorInfo.instance = _instance.Handle();
-	Check(vmaCreateAllocator(&allocatorInfo, &_vmaAllocator), "Create vma Allocator");
+
 }
 
 void vulkan::VulkanResouceManager::ConvertToVulkanResource()

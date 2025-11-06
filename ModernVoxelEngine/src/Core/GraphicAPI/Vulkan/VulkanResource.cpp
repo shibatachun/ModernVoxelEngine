@@ -71,6 +71,7 @@ vulkan::TextureCreation& vulkan::TextureCreation::reset()
 vulkan::TextureCreation& vulkan::TextureCreation::set_data(void* data)
 {
     _initial_data = data;
+    return *this;
 }
 vulkan::TextureCreation& vulkan::TextureCreation::set_size(uint16_t width, uint16_t height, uint16_t depth)
 {
@@ -138,4 +139,43 @@ vulkan::BufferCreation& vulkan::BufferCreation::set_device_only(bool value)
 {
     device_only = value;
     return *this;
+}
+
+VkImageUsageFlags vulkan::vulkan_get_image_usage(const vulkan::TextureCreation& creation) {
+    const bool is_render_target = (creation._flags & TextureFlags::RenderTarget_mask) == TextureFlags::RenderTarget_mask;
+    const bool is_compute_used = (creation._flags & TextureFlags::Compute_mask) == TextureFlags::Compute_mask;
+    const bool is_shading_rate_texture = (creation._flags & TextureFlags::ShadingRate_mask) == TextureFlags::ShadingRate_mask;
+
+    // Default to always readable from shader.
+    VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    usage |= is_compute_used ? VK_IMAGE_USAGE_STORAGE_BIT : 0;
+
+    usage |= is_shading_rate_texture ? VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : 0;
+
+    if (vulkan::TextureFormatted::has_depth_or_stencil(creation._format)) {
+        // Depth/Stencil textures are normally textures you render into.
+        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT; // TODO
+
+    }
+    else {
+        usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT; // TODO
+        usage |= is_render_target ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0;
+    }
+
+    return usage;
+}
+
+VkImageType vulkan::to_vk_image_type(TextureType::Enum type) {
+    static VkImageType s_vk_target[TextureType::Count] = { VK_IMAGE_TYPE_1D, VK_IMAGE_TYPE_2D, VK_IMAGE_TYPE_3D, VK_IMAGE_TYPE_2D, VK_IMAGE_TYPE_1D, VK_IMAGE_TYPE_2D, VK_IMAGE_TYPE_2D };
+    return s_vk_target[type];
+}
+
+VkImageViewType vulkan::to_vk_image_view_type(TextureType::Enum type)
+{
+    
+        static VkImageViewType s_vk_data[] = { VK_IMAGE_VIEW_TYPE_1D, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_VIEW_TYPE_1D_ARRAY, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_VIEW_TYPE_CUBE_ARRAY };
+        return s_vk_data[type];
+    
 }

@@ -1,5 +1,8 @@
 #pragma once
 #include "VulkanClasses.h"
+#include "ResourceCreation.hpp"
+
+VK_DEFINE_HANDLE(VmaAllocator)
 
 namespace vulkan {
 	class VulkanGraphicResourceManager : RHIGraphicResourceManager
@@ -10,6 +13,8 @@ namespace vulkan {
 		~VulkanGraphicResourceManager();
 		void											Init();
 		void											Shutdown();
+
+		VkDevice										VKDevice() { return _vk_device.Handle(); };
 
 		BufferHandle									CreateBufferResouce(const BufferCreation& creation);
 		TextureHandle									CreateTextureResource(const TextureCreation& creation);
@@ -23,6 +28,10 @@ namespace vulkan {
 		ShaderStateHandle								CreateShaderState(const ShaderStateCreation& creation);
 		VulkanBuffer*									AccessBuffer(BufferHandle handle);
 		VulkanTexture*									AccessTexture(TextureHandle handle);
+		
+		VkAllocationCallbacks*							vulkan_allocation_callbacks;
+		VmaAllocator									_vma_allocator;
+		bool											_is_bindless = false;
 	private:
 		Instance&									    _vk_instance;
 		Device&											_vk_device;
@@ -52,7 +61,9 @@ namespace vulkan {
 		uint8_t*										dynamic_mapped_memory;
 		uint32_t										dynamic_allocated_size;
 		uint32_t										dynamic_per_frame_size;
-		VmaAllocator									_vma_allocator;
+	
+
+		
 	};
 }
 

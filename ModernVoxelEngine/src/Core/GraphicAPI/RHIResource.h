@@ -142,7 +142,20 @@
 			return ((uint32_t)e < Enum::Count ? s_value_names[(int)e] : "unsupported");
 		}
 	} // namespace TextureType
+	namespace ResourceUpdateType {
 
+		enum Enum {
+			Buffer, Texture, Pipeline, Sampler, DescriptorSetLayout, DescriptorSet, RenderPass, Framebuffer, ShaderState, TextureView, PagePool, Count
+		};
+
+		static const char* s_value_names[] = {
+			"Buffer", "Texture", "Pipeline", "Sampler", "DescriptorSetLayout", "DescriptorSet", "RenderPass", "Framebuffer", "ShaderState", "TextureView", "PagePool"
+		};
+
+		static const char* ToString(Enum e) {
+			return ((uint32_t)e < Enum::Count ? s_value_names[(int)e] : "unsupported");
+		}
+	} // namespace ResourceUpdateType
 	namespace FillMode {
 		enum Enum {
 			Wireframe, Solid, Point, Count

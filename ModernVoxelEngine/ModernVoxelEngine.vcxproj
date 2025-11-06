@@ -338,6 +338,7 @@
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHIGraphicResourceManager.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHIResource.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.hpp" />
     <ClInclude Include="src\ModernEngine\ModernEngineApplication.h" />
     <ClInclude Include="src\ModernEngine\ModernEngineCommon.h" />
     <ClInclude Include="src\RendererHeader.h" />

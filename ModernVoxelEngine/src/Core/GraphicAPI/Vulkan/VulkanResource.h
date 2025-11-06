@@ -1,9 +1,34 @@
 #pragma once
 #include "VulkanCommon.h"
 
+#include <vma/vk_mem_alloc.h>
 
-#include "vma/vk_mem_alloc.h"
 namespace vulkan {
+	////////////////////////////////////////////////Enum/////////////////////////////////////
+	typedef enum ResourceState {
+		RESOURCE_STATE_UNDEFINED = 0,
+		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1,
+		RESOURCE_STATE_INDEX_BUFFER = 0x2,
+		RESOURCE_STATE_RENDER_TARGET = 0x4,
+		RESOURCE_STATE_UNORDERED_ACCESS = 0x8,
+		RESOURCE_STATE_DEPTH_WRITE = 0x10,
+		RESOURCE_STATE_DEPTH_READ = 0x20,
+		RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40,
+		RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80,
+		RESOURCE_STATE_SHADER_RESOURCE = 0x40 | 0x80,
+		RESOURCE_STATE_STREAM_OUT = 0x100,
+		RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200,
+		RESOURCE_STATE_COPY_DEST = 0x400,
+		RESOURCE_STATE_COPY_SOURCE = 0x800,
+		RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
+		RESOURCE_STATE_PRESENT = 0x1000,
+		RESOURCE_STATE_COMMON = 0x2000,
+		RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
+		RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
+	} ResourceState;
+
+	
+	/// //////////////////////////////////////VulkanResouce////////////////////////////////////////////////////
 
 
 	struct Resource {
@@ -186,7 +211,7 @@ namespace vulkan {
 	}; // struct TextureCreation
 
 	//
-	namespace TextureFormat {
+	namespace TextureFormatted {
 
 		inline bool                     is_depth_stencil(VkFormat value) {
 			return value >= VK_FORMAT_D16_UNORM_S8_UINT && value < VK_FORMAT_BC1_RGB_UNORM_BLOCK;
@@ -218,6 +243,7 @@ namespace vulkan {
 		uint16_t                             array_layer_count = 1;
 
 	}; // struct TextureSubResource
+
 	struct TextureViewCreation {
 		TextureHandle				_parent_texture = Invalid_Texture;
 		VkImageViewType				_view_type = VK_IMAGE_VIEW_TYPE_1D;
@@ -254,7 +280,6 @@ namespace vulkan {
 		SamplerCreation& set_name(const char* name);
 
 	}; // struct SamplerCreation
-
 	
 	//
 	//
@@ -448,12 +473,14 @@ namespace vulkan {
 
 	struct VulkanTexture : Resource {
 
-		VkImage                         image;
-		VkImageView                     view;
+		VkImage                         vk_image;
+		VkImageView                     vk_image_view;
 		VkFormat                        vk_format;
 		VkImageUsageFlags				vk_usage;
 		VkImageLayout                   vk_image_layout;
 		VmaAllocation                   vma_allocation;
+		ResourceState					state = RESOURCE_STATE_UNDEFINED;
+		
 
 		uint16_t                        width = 1;
 		uint16_t                        height = 1;
@@ -699,5 +726,18 @@ namespace vulkan {
 
 	}; // struct Material
 
+	////////////////////update/////////////////////////////////
+	struct ResourceUpdate {
+		ResourceUpdateType::Enum type;
+		ResourceHandle	handle;
+		uint32_t current_frame;
+		uint32_t deleting;
+	};
+
+	VkImageUsageFlags vulkan_get_image_usage(const TextureCreation& creation);
+
+	VkImageType to_vk_image_type(TextureType::Enum type);
+
+	VkImageViewType to_vk_image_view_type(TextureType::Enum type); 
 }
 

@@ -1,4 +1,9 @@
 #include "VulkanGraphicResourceManager.h"
+
+#include <vma/vk_mem_alloc.h>
+
+
+
 namespace vulkan {
 
 	
@@ -11,6 +16,7 @@ namespace vulkan {
 		GraphicPipelineManager& graphic_pipelines) : _vk_instance(instance), _vk_device(device), _vk_swapchain(swapchain), _vk_descriptor_pools(descriptor_pool)
 		, _vk_descriptor_layouts(descriptor_layouts), _vk_graphic_pipelines(graphic_pipelines)
 	{
+		_is_bindless = device.isBindless;
 	}
 	VulkanGraphicResourceManager::~VulkanGraphicResourceManager()
 	{
@@ -70,6 +76,105 @@ namespace vulkan {
 
 		return handle;
 	}
+
+	static void vulkan_create_texture_view(VulkanGraphicResourceManager& resouce_manager, const TextureViewCreation& creation, VulkanTexture* texture) {
+		VkImageViewCreateInfo info = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+		info.image = texture->vk_image;
+		info.format = texture->vk_format;
+
+		if (TextureFormatted::has_depth_or_stencil(texture->vk_format)) {
+			info.subresourceRange.aspectMask = TextureFormatted::has_depth(texture->vk_format) ? VK_IMAGE_ASPECT_DEPTH_BIT : 0;
+		}
+		else {
+			info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		}
+		info.viewType = creation._view_type;
+		info.subresourceRange.baseMipLevel = creation._sub_resource.mip_level_count;
+		info.subresourceRange.baseArrayLayer = creation._sub_resource.array_base_layer;
+		info.subresourceRange.layerCount = creation._sub_resource.array_layer_count;
+		info.subresourceRange.levelCount = creation._sub_resource.mip_level_count;
+		Check(vkCreateImageView(resouce_manager.VKDevice(), &info, resouce_manager.vulkan_allocation_callbacks, &texture->vk_image_view), texture->name);
+	
+	}
+	static void VulkanCreateTexture(VulkanGraphicResourceManager& resouce_manager, const TextureCreation& creation, TextureHandle handle, VulkanTexture* texture) {
+		//判断要创建的texture 类型
+		bool is_cubemap = false;
+		uint32_t layerCount = creation._array_layer_count;
+		if (creation._type == TextureType::TextureCube || creation._type == TextureType::Texture_Cube_Array) {
+			is_cubemap = true;
+		}
+		const bool is_sparse_texture = (creation._flags & TextureFlags::Sparse_mask) == TextureFlags::Sparse_mask;
+
+		texture->width = creation._width;
+		texture->height = creation._height;
+		texture->depth = creation._depth;
+		texture->mip_base_level = 0;
+		texture->array_base_layer = 0;
+		texture->array_layer_count = layerCount;
+		texture->mip_level_count = creation._mip_level_count;
+		texture->type = creation._type;
+		texture->name = creation._name;
+		texture->vk_usage = vulkan_get_image_usage(creation);
+		texture->vk_format = creation._format;
+		texture->sampler = nullptr;
+		texture->flags = creation._flags;
+		texture->parent_txture = Invalid_Texture;
+		texture->handle = handle;
+		texture->sparse = is_sparse_texture;
+		texture->alias_texture = Invalid_Texture;
+
+		//开始创建流程，根据creation info创建vkimage
+		VkImageCreateInfo	image_info = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+		image_info.format = texture->vk_format;
+		image_info.flags = (is_cubemap ? VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT : 0) | (is_sparse_texture ? (VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT | VK_IMAGE_CREATE_SPARSE_BINDING_BIT) : 0);
+		image_info.imageType = to_vk_image_type(texture->type);
+		image_info.extent.width = creation._width;
+		image_info.extent.height = creation._height;
+		image_info.extent.depth = creation._depth;
+		image_info.mipLevels = creation._mip_level_count;
+		image_info.arrayLayers = layerCount;
+		image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+		image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+		image_info.usage = texture->vk_usage;
+		image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VmaAllocationCreateInfo memory_info{};
+		memory_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+		if (creation._alias.index == Invalid_Texture.index) {
+			if (is_sparse_texture) {
+				Check(vkCreateImage(resouce_manager.VKDevice(), &image_info, resouce_manager.vulkan_allocation_callbacks, &texture->vk_image), creation._name);
+
+			}
+			else {
+				Check(vmaCreateImage(resouce_manager._vma_allocator, &image_info, &memory_info, &texture->vk_image, &texture->vma_allocation, nullptr), creation._name);
+			}
+		}
+		else {
+			VulkanTexture* alias_textures = resouce_manager.AccessTexture(creation._alias);
+			assert(alias_textures != nullptr);
+			assert(!is_sparse_texture);
+
+			texture->vma_allocation = 0;
+			Check(vmaCreateAliasingImage(resouce_manager._vma_allocator, alias_textures->vma_allocation, &image_info, &texture->vk_image), creation._name);
+			texture->alias_texture = creation._alias;
+		}
+
+		TextureViewCreation tvc;
+		tvc.set_mips(0, creation._mip_level_count).set_array(0, layerCount).set_name(creation._name).set_view_type(to_vk_image_view_type(creation._type));
+
+		vulkan_create_texture_view(resouce_manager, tvc, texture);
+		texture->state = RESOURCE_STATE_UNDEFINED;
+		
+		//TODO::Bindless support
+		/*if (resouce_manager._is_bindless) {
+			ResourceUpdate	resource_update{ ResourceUpdateType::Texture, texture->handle.index };
+
+		}*/
+
+
+	}
 	TextureHandle VulkanGraphicResourceManager::CreateTextureResource(const TextureCreation& creation)
 	{
 		uint32_t resource_index = _textures.obtain_resouce();
@@ -80,7 +185,7 @@ namespace vulkan {
 
 		VulkanTexture* texture = AccessTexture(handle);
 
-
+		VulkanCreateTexture(*this, creation, handle, texture);
 
 		return TextureHandle();
 	}

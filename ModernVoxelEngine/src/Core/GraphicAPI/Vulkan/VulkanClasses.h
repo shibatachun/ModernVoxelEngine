@@ -3,8 +3,6 @@
 #include "VulkanInitalizer.h"
 #include "VulkanResource.h"
 
-
-
 namespace vulkan {
 
 	class Instance final {
@@ -138,6 +136,7 @@ namespace vulkan {
 		void WaitIdle() const;
 		VkPhysicalDeviceMemoryProperties GetPhyDeviceMemProperty() const { return _memProperties; };
 		VkPhysicalDeviceProperties2 GetPhyDeviceProperty() const { return _physicalDeviceProperties2; };
+		bool isBindless = false;
 	private:
 		VULKAN_HANDLE(VkDevice, _device)
 		const VkPhysicalDevice							_physicalDevice;
@@ -422,7 +421,6 @@ namespace vulkan {
 		private:
 			Device&																				_device;
 			Instance&																			_instance;
-			VmaAllocator																		_vmaAllocator;
 			std::unordered_map<std::string, uint32_t>											_renderObjectsMapping;
 			
 			BufferManager&																		_BufferManager;
