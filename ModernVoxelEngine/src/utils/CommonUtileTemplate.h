@@ -24,4 +24,7 @@ namespace utils {
         }
         return it->second;
     }
+
+    template<typename T>
+    using vector = std::vector<T>;
 }

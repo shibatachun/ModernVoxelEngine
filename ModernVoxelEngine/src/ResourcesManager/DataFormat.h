@@ -6,7 +6,7 @@
 #include <ktxvulkan.h>
 
 //¶¥µãÊý¾Ý
-struct Vertex1 {
+struct Vertex {
     glm::vec3 pos{};
     glm::vec4 color{};
     glm::vec2 uv{};
@@ -228,7 +228,7 @@ struct ModelData {
     uint32_t vertexSize = 0;
     uint32_t indiceSize = 0;
     
-    std::vector<Vertex1> vertices;
+    std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<MeshData> meshdatas;
     std::vector<std::string> images;

@@ -4,7 +4,7 @@
 
 #include "Core/GraphicAPI/RenderFactory.h"
 #include "ResourcesManager/AssetManager.h"
-#include "utils/GlfwHelper.h"
+#include "utils/GLFWHelper.h"
 #include "utils/Camera.h"
 #include "Singleton.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "MemoryAllocator.h"
-namespace rvulkan {
+namespace memory {
 	template <typename T>
 	struct RArray {
 		RArray() {};

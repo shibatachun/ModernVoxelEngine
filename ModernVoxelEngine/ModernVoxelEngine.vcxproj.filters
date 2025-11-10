@@ -96,7 +96,7 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.cpp">
+    <ClCompile Include="src\utils\MemoryAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp">
@@ -159,15 +159,24 @@
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Core\GraphicAPI\RVulkan\Array.cpp">
+    <ClCompile Include="src\utils\Array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\FlatHashMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\GraphicAPI\RHICommandBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\utils\GlfwHelper.h">
+    <ClInclude Include="src\utils\GLFWHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\minilog.h">
@@ -230,7 +239,7 @@
     <ClInclude Include="src\ResourcesManager\DataFormat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\GlmUtils.h">
+    <ClInclude Include="src\utils\GLMUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\Math.h">
@@ -290,7 +299,7 @@
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.h">
+    <ClInclude Include="src\utils\MemoryAllocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.h">
@@ -737,10 +746,19 @@
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\GraphicAPI\RVulkan\Array.h">
+    <ClInclude Include="src\utils\Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\FlatHashMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\GraphicAPI\RHICommandBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

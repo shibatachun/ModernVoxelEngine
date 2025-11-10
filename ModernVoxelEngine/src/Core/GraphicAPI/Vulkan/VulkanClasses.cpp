@@ -1413,7 +1413,7 @@ void vulkan::BufferManager::CreateIndexBuffer1(std::vector<uint32_t>& indiceData
 	vkFreeMemory(device.Handle(), stagingBufferMemory, nullptr);
 }
 
-void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory)
+void vulkan::BufferManager::CreateVertexBuffer1(std::vector<Vertex>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory)
 {
 	VkDeviceSize bufferSize = sizeof(vertexData[0]) * vertexData.size();
 	//创建一个临时缓冲区，用于直接传输顶点数据至GPU

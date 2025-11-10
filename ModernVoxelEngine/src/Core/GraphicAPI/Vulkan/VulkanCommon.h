@@ -28,7 +28,7 @@ private: \
 
 #include "../RHIResource.h"
 #include "../RHIGraphicResourceManager.h"
-
+#include "../RHICommandBuffer.h"
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -264,7 +264,7 @@ namespace vulkan {
         }
     }
 
-    inline void Check(const VkResult result, const char* const operation)
+    inline void Check(const VkResult result, const std::string& operation)
     {
         if (result != VK_SUCCESS)
         {
@@ -337,7 +337,7 @@ namespace vulkan {
     inline VkVertexInputBindingDescription getBindingDescription(){
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(Vertex1);
+        bindingDescription.stride = sizeof(Vertex);
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }

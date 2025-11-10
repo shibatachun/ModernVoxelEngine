@@ -108,7 +108,7 @@ void asset::ModelManager::loadTestExample()
 	MeshData meshData{};
 	meshData.meshes.resize(data.meshCount);
 	Mesh& mesh = meshData.meshes[0];
-	std::vector<Vertex1> test_vertices = {
+	std::vector<Vertex> test_vertices = {
 	{.pos = {-0.5f, -0.5f, 0.0f},	.color = {1.0f,0.0f,0.0f,1.0f}, .uv = {1.0f, 0.0f}},
 	{.pos = {0.5f, -0.5f, 0.0f},	.color = {0.0f,1.0f,0.0f,0.0f}, .uv = {0.0f,0.0f}},
 	{.pos = {0.5f, 0.5f, 0.0f},		.color = {0.0f,0.0f,1.0f,1.0f}, .uv = {0.0f,1.0f}},
@@ -179,7 +179,7 @@ void asset::ModelManager::loadobj(std::string filePath)
 		Mesh& meshOffset = meshdata.meshes[i];
 		const aiMesh* mesh = scene->mMeshes[i];
 		for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
-			Vertex1 vert{};
+			Vertex vert{};
 			vert.pos = glm::vec3(mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z);
 			vert.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 			vert.uv = mesh->HasTextureCoords(0) ? glm::vec2(mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y) : glm::vec2(0.0f, 0.0f);
@@ -337,7 +337,7 @@ void asset::ModelManager::loadgltf(std::string filename)
 
 }
 
-void asset::ModelManager::loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer)
+void asset::ModelManager::loadNode(aiNode* scene, std::vector<Vertex>& vertexbuffer, std::vector<uint32_t>& indicebuffer)
 {
 	
 }
@@ -371,7 +371,7 @@ void asset::ModelManager::loadgltf_test(std::string filename, std::string path)
 			MeshData& meshdata = model.meshdatas[node->meshID];
 			for (const Mesh& mashoffset : meshdata.meshes) {
 				for (uint32_t i = 0; i < mashoffset.vertexCount; i++) {
-					Vertex1& vertex = model.vertices[mashoffset.vertexOffset+i];
+					Vertex& vertex = model.vertices[mashoffset.vertexOffset+i];
 					vertex.pos = glm::vec3(localMatrix * glm::vec4(vertex.pos, 1.0f));
 					vertex.normal = glm::normalize(glm::mat3(localMatrix) * vertex.normal);
 
@@ -615,7 +615,7 @@ void asset::ModelManager::loadNode_test(Node* parent, const tinygltf::Node& node
 				vertexCount = static_cast<uint32_t>(posAccessor.count);
 
 				for (size_t v = 0; v < posAccessor.count; v++) {
-					Vertex1 vert{};
+					Vertex vert{};
 					vert.pos = glm::vec4(glm::make_vec3(&bufferPos[v * 3]), 1.0f);
 					vert.normal = glm::normalize(glm::vec3(bufferNormals ? glm::make_vec3(&bufferNormals[v * 3]) : glm::vec3(0.0f)));
 					vert.uv = bufferTexCoords ? glm::make_vec2(&bufferTexCoords[v * 2]) : glm::vec3(0.0f);

@@ -27,7 +27,7 @@ private:
 	void loadTestExample();
 	void loadobj(std::string filePath);
 	void loadgltf(std::string filename);
-	void loadNode(aiNode* scene, std::vector<Vertex1>& vertexbuffer, std::vector<uint32_t>& indicebuffer);
+	void loadNode(aiNode* scene, std::vector<Vertex>& vertexbuffer, std::vector<uint32_t>& indicebuffer);
 
 	//test function
 	void loadgltf_test(std::string filename, std::string path);

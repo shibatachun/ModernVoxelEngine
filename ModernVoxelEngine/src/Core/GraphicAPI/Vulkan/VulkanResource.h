@@ -170,7 +170,7 @@ namespace vulkan {
 		uint32_t                              device_only = 0;
 		void* initial_data = nullptr;
 
-		const char* name = nullptr;
+		const char* _name = nullptr;
 
 		BufferCreation& reset();
 		BufferCreation& set(VkBufferUsageFlags flags, ResourceUsageType::Enum usage_, uint32_t size_);
@@ -210,31 +210,7 @@ namespace vulkan {
 
 	}; // struct TextureCreation
 
-	//
-	namespace TextureFormatted {
 
-		inline bool                     is_depth_stencil(VkFormat value) {
-			return value >= VK_FORMAT_D16_UNORM_S8_UINT && value < VK_FORMAT_BC1_RGB_UNORM_BLOCK;
-		}
-		inline bool                     is_depth_only(VkFormat value) {
-			return value >= VK_FORMAT_D16_UNORM && value < VK_FORMAT_S8_UINT;
-		}
-		inline bool                     is_stencil_only(VkFormat value) {
-			return value == VK_FORMAT_S8_UINT;
-		}
-
-		inline bool                     has_depth(VkFormat value) {
-			return is_depth_only(value) || is_depth_stencil(value);
-		}
-		inline bool                     has_stencil(VkFormat value) {
-			return value >= VK_FORMAT_S8_UINT && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
-		}
-		inline bool                     has_depth_or_stencil(VkFormat value) {
-			return value >= VK_FORMAT_D16_UNORM && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
-		}
-
-	} // namespace TextureFormat
-	//
 	struct TextureSubResource {
 
 		uint16_t                             mip_base_level = 0;
@@ -249,7 +225,7 @@ namespace vulkan {
 		VkImageViewType				_view_type = VK_IMAGE_VIEW_TYPE_1D;
 		TextureSubResource			_sub_resource;
 		
-		const char* nam = nullptr;
+		const char* _name = nullptr;
 
 		TextureViewCreation& reset();
 		TextureViewCreation& set_parent_texture(TextureHandle parent_texture);
@@ -432,6 +408,15 @@ namespace vulkan {
 		BlendStateCreation			_blend_state;
 		
 	};
+
+	//
+	struct ResourceUpdate {
+
+		ResourceUpdateType::Enum        type;
+		ResourceHandle                  handle;
+		uint32_t                             current_frame;
+		uint32_t                             deleting;
+	}; // struct ResourceUpdate
 
 	struct VulkanBuffer : Resource {
 	
@@ -623,7 +608,31 @@ namespace vulkan {
 
 	///////////////////////////////////////////////////////////////////Resource///////////////////////////////////////////////////////////
 
+		//
+	namespace TextureFormatted {
 
+		inline bool                     is_depth_stencil(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM_S8_UINT && value < VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+		}
+		inline bool                     is_depth_only(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM && value < VK_FORMAT_S8_UINT;
+		}
+		inline bool                     is_stencil_only(VkFormat value) {
+			return value == VK_FORMAT_S8_UINT;
+		}
+
+		inline bool                     has_depth(VkFormat value) {
+			return is_depth_only(value) || is_depth_stencil(value);
+		}
+		inline bool                     has_stencil(VkFormat value) {
+			return value >= VK_FORMAT_S8_UINT && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
+		}
+		inline bool                     has_depth_or_stencil(VkFormat value) {
+			return value >= VK_FORMAT_D16_UNORM && value <= VK_FORMAT_D32_SFLOAT_S8_UINT;
+		}
+
+	} // namespace TextureFormat
+	//
 
 	struct BufferResource : public Resource {
 
@@ -727,12 +736,7 @@ namespace vulkan {
 	}; // struct Material
 
 	////////////////////update/////////////////////////////////
-	struct ResourceUpdate {
-		ResourceUpdateType::Enum type;
-		ResourceHandle	handle;
-		uint32_t current_frame;
-		uint32_t deleting;
-	};
+
 
 	VkImageUsageFlags vulkan_get_image_usage(const TextureCreation& creation);
 

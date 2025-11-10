@@ -5,7 +5,10 @@
 VK_DEFINE_HANDLE(VmaAllocator)
 
 namespace vulkan {
-	class VulkanGraphicResourceManager : RHIGraphicResourceManager
+	class VulkanCommandBuffer;
+	class VulkanCommandBufferManager;
+
+	 class VulkanGraphicResourceManager final : public RHIGraphicResourceManager
 	{
 	public:
 		VulkanGraphicResourceManager(Instance& instance, Device& device, SwapChain& swapchain, DescriptorPoolManager& descriptor_pool, 
@@ -29,8 +32,16 @@ namespace vulkan {
 		VulkanBuffer*									AccessBuffer(BufferHandle handle);
 		VulkanTexture*									AccessTexture(TextureHandle handle);
 		
+		VulkanCommandBuffer*							GetCommandBuffer(uint32_t thread_index, uint32_t frame_index, bool begin);
+
+		
+	public:
+		utils::vector<ResourceUpdate>					_texture_bindless_updates;
+		utils::vector<VmaAllocationInfo>				_debug_infos;
 		VkAllocationCallbacks*							vulkan_allocation_callbacks;
 		VmaAllocator									_vma_allocator;
+		//current frame
+		uint32_t										current_frame;
 		bool											_is_bindless = false;
 	private:
 		Instance&									    _vk_instance;
@@ -53,6 +64,7 @@ namespace vulkan {
 		BufferHandle									_fullscrean_vertex_buffer;
 		RenderPassHandle								_swapchain_pass;
 		SamplerHandle									_default_sampler;
+
 		//Dumy resources
 		TextureHandle									_dummy_texture;
 		BufferHandle									_dummy_constant_buffer;
@@ -61,6 +73,9 @@ namespace vulkan {
 		uint8_t*										dynamic_mapped_memory;
 		uint32_t										dynamic_allocated_size;
 		uint32_t										dynamic_per_frame_size;
+		
+	
+
 	
 
 		

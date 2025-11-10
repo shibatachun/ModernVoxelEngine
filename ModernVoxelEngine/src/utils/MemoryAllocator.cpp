@@ -1,6 +1,6 @@
 #include "MemoryAllocator.h"
 
-namespace rvulkan {
+namespace memory {
 
 	static MemoryService		s_memory_service;
 	static size_t s_size = rmega(32) + tlsf_size() + 8;

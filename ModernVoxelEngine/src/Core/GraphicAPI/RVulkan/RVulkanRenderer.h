@@ -1,5 +1,5 @@
 #pragma once
-#include "MemoryAllocator.h"
+#include "VulkanRHI.h"
 #include "../../../../external/enkiTS/TaskScheduler.h"
 namespace rvulkan {
 	//core				

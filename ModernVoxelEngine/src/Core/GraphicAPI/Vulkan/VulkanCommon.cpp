@@ -2,26 +2,26 @@
 
 VkVertexInputBindingDescription vulkan::inputBindingDescription(uint32_t binding)
 {
-	return VkVertexInputBindingDescription({ binding, sizeof(Vertex1),VK_VERTEX_INPUT_RATE_VERTEX });
+	return VkVertexInputBindingDescription({ binding, sizeof(Vertex),VK_VERTEX_INPUT_RATE_VERTEX });
 }
 
 VkVertexInputAttributeDescription vulkan::inputAttributeDescription(uint32_t binding, uint32_t location, VertexComponent component)
 {
 	switch (component) {
 	case VertexComponent::Position:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex1, pos) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos) });
 	case VertexComponent::Normal:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex1, normal) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal) });
 	case VertexComponent::UV:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex1, uv) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv) });
 	case VertexComponent::Color:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex1, color) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, color) });
 	case VertexComponent::Tangent:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex1, tangent) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, tangent) });
 	case VertexComponent::Joint0:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex1, joint0) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, joint0) });
 	case VertexComponent::Weight0:
-		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex1, weight0) });
+		return VkVertexInputAttributeDescription({ location, binding, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(Vertex, weight0) });
 	default:
 		return VkVertexInputAttributeDescription({});
 	}

@@ -135,7 +135,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Core\GraphicAPI\RVulkan\Array.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\RHICommandBuffer.cpp" />
+    <ClCompile Include="src\utils\FlatHashMap.cpp" />
+    <ClCompile Include="src\utils\Array.cpp" />
     <ClCompile Include="external\enkiTS\TaskScheduler.cpp" />
     <ClCompile Include="external\meshoptimizer\allocator.cpp" />
     <ClCompile Include="external\meshoptimizer\clusterizer.cpp" />
@@ -155,7 +157,7 @@
     <ClCompile Include="external\StackWalker.cpp" />
     <ClCompile Include="external\tlsf.c" />
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp" />
-    <ClCompile Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.cpp" />
+    <ClCompile Include="src\utils\MemoryAllocator.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHIGraphicResourceManager.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHIResource.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.cpp" />
@@ -185,9 +187,12 @@
     <ClCompile Include="src\VoxelEngine\VoxelCommon.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Core\GraphicAPI\RVulkan\Array.h" />
+    <ClInclude Include="src\Core\GraphicAPI\RHICommandBuffer.h" />
+    <ClInclude Include="src\utils\FlatHashMap.h" />
+    <ClInclude Include="src\utils\Array.h" />
     <ClInclude Include="external\cglm\affine-mat.h" />
     <ClInclude Include="external\cglm\affine.h" />
     <ClInclude Include="external\cglm\affine2d.h" />
@@ -335,7 +340,7 @@
     <ClInclude Include="external\windows_declarations.h" />
     <ClInclude Include="external\wyhash.h" />
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.h" />
-    <ClInclude Include="src\Core\GraphicAPI\RVulkan\MemoryAllocator.h" />
+    <ClInclude Include="src\utils\MemoryAllocator.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHIGraphicResourceManager.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHIResource.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\ResourceCreation.hpp" />
@@ -362,13 +367,13 @@
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.h" />
     <ClInclude Include="src\utils\CommonUtileTemplate.h" />
-    <ClInclude Include="src\utils\GlmUtils.h" />
+    <ClInclude Include="src\utils\GLMUtils.h" />
     <ClInclude Include="src\utils\LRUCache.h" />
     <ClInclude Include="src\utils\Math.h" />
     <ClInclude Include="src\utils\Pool.h" />
     <ClInclude Include="src\utils\stb_image.h" />
     <ClInclude Include="src\utils\TypeDefine.h" />
-    <ClInclude Include="src\utils\GlfwHelper.h" />
+    <ClInclude Include="src\utils\GLFWHelper.h" />
     <ClInclude Include="src\utils\GlslangCompiler.h" />
     <ClInclude Include="src\utils\minilog.h" />
     <ClInclude Include="src\utils\ScopeExit.h" />
@@ -379,6 +384,7 @@
     <ClInclude Include="src\VoxelEngine\VoxelCommon.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.h" />
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.h" />
+    <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />

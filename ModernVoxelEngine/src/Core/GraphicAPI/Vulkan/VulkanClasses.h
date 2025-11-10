@@ -210,7 +210,7 @@ namespace vulkan {
 			VkDeviceMemory* imageMemory);
 		const VkDevice& GetVkDevice() { return device.Handle(); };
 		void CreateIndexBuffer1(std::vector<uint32_t>& indiceData, VkBuffer& buffer, VkDeviceMemory& memory);
-		void CreateVertexBuffer1(std::vector<Vertex1>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory);
+		void CreateVertexBuffer1(std::vector<Vertex>& vertexData, VkBuffer& buffer, VkDeviceMemory& memory);
 		void CreateVulkanImageBuffer(const Image& image_data, VkImageLayout& image_layout, VkImage& image, VkDeviceMemory& memory);
 
 		void transitionImageLayout(VkImage image, VkFormat format, uint32_t miplevel, VkImageLayout oldLayout, VkImageLayout newLayout, QueueFamily family);

@@ -121,11 +121,11 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	BufferCreation bc;
 	ModelData model = _assetManager.getModelDataByName("Sponza");
 	VkBufferUsageFlags flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bc.set(flags, ResourceUsageType::Immutable, (sizeof(Vertex1) * model.vertexSize)).set_persistent(true).set_name(nullptr);
+	bc.set(flags, ResourceUsageType::Immutable, (sizeof(Vertex) * model.vertexSize)).set_persistent(true).set_name("Test object");
 	BufferHandle br = _GpuResouce->CreateBufferResouce(bc);
 	
-	_GpuResouce->CreateBufferResouce(bc);
-	VulkanBuffer* vertex_buffer = _GpuResouce->AccessBuffer(br);
+	//_GpuResouce->CreateBufferResouce(bc);
+	//VulkanBuffer* vertex_buffer = _GpuResouce->AccessBuffer(br);
 	CreateFrameBuffer();
 	CreateCommandBuffer(QueueFamily::GRAPHIC);
 	CreateUniformBuffers();

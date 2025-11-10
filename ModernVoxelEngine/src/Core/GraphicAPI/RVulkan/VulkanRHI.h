@@ -11,7 +11,7 @@
 #include <vulkan/vulkan.h>
 
 #include <vma/vk_mem_alloc.h>
-#include "MemoryAllocator.h"
+#include "../RHIResource.h"
 
 namespace rvulkan {
 	struct Allocator;

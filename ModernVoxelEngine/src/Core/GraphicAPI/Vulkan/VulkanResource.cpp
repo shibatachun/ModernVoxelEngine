@@ -18,6 +18,10 @@ vulkan::VertexInputCreation& vulkan::VertexInputCreation::AddVertexAttribute(con
     return *this;
 }
 
+vulkan::BufferCreation& vulkan::BufferCreation::set_name(const char* name_) {
+    _name = name_;
+    return *this;
+}
 vulkan::BufferCreation& vulkan::BufferCreation::set(VkBufferUsageFlags flags_, ResourceUsageType::Enum usage_, uint32_t size_)
 {   
     type_flags = flags_;
@@ -34,6 +38,25 @@ vulkan::BufferCreation& vulkan::BufferCreation::set_data(void* data_)
 }
 
 
+vulkan::BufferCreation& vulkan::BufferCreation::set_persistent(bool value)
+{
+    persistent = value;
+    return *this;
+}
+
+vulkan::BufferCreation& vulkan::BufferCreation::set_device_only(bool value)
+{
+    device_only = value;
+    return *this;
+}
+//////////////////////////////////////TextureViewCreationMethods/////////////////////////////////////////////////////////
+vulkan::TextureViewCreation& vulkan::TextureViewCreation::reset() {
+    _parent_texture = Invalid_Texture;
+    _sub_resource = { 0,1,0,1 };
+    _name = nullptr;
+    _view_type = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+    return *this;
+}
 vulkan::TextureViewCreation& vulkan::TextureViewCreation::set_parent_texture(TextureHandle parent_texture)
 {
     _parent_texture = parent_texture;
@@ -54,6 +77,19 @@ vulkan::TextureViewCreation& vulkan::TextureViewCreation::set_array(uint32_t bas
     return *this;
 }
 
+vulkan::TextureViewCreation& vulkan::TextureViewCreation::set_name(const char* name_) {
+    _name = name_;
+    return *this;
+}
+
+vulkan::TextureViewCreation& vulkan::TextureViewCreation::set_view_type(VkImageViewType view_type)
+{
+    _view_type = view_type;
+    return *this;
+}
+
+
+/////////////////////////////////////TxtureCreationMethod//////////////////////////////////////////////////////////////
 vulkan::TextureCreation& vulkan::TextureCreation::reset()
 {
     _mip_level_count = 1;
@@ -73,6 +109,7 @@ vulkan::TextureCreation& vulkan::TextureCreation::set_data(void* data)
     _initial_data = data;
     return *this;
 }
+
 vulkan::TextureCreation& vulkan::TextureCreation::set_size(uint16_t width, uint16_t height, uint16_t depth)
 {
     _width = width;
@@ -106,11 +143,13 @@ vulkan::TextureCreation& vulkan::TextureCreation::set_format_type(VkFormat forma
     _type = type;
     return *this;
 }
+
 vulkan::TextureCreation& vulkan::TextureCreation::set_alias(TextureHandle alias)
 {
     _alias = alias;
     return *this;
 }
+
 vulkan::TextureCreation& vulkan::TextureCreation::set_name(const char* name)
 {
     _name = name;
@@ -118,28 +157,7 @@ vulkan::TextureCreation& vulkan::TextureCreation::set_name(const char* name)
 }
 
 
-vulkan::BufferCreation& vulkan::BufferCreation::set_name(const char* name_) {
-    name = name_;
-    return *this;
-}
 
-vulkan::TextureViewCreation& vulkan::TextureViewCreation::set_view_type(VkImageViewType view_type)
-{
-    _view_type = view_type;
-    return *this;
-}
-
-vulkan::BufferCreation& vulkan::BufferCreation::set_persistent(bool value)
-{
-    persistent = value;
-    return *this;
-}
-
-vulkan::BufferCreation& vulkan::BufferCreation::set_device_only(bool value)
-{
-    device_only = value;
-    return *this;
-}
 
 VkImageUsageFlags vulkan::vulkan_get_image_usage(const vulkan::TextureCreation& creation) {
     const bool is_render_target = (creation._flags & TextureFlags::RenderTarget_mask) == TextureFlags::RenderTarget_mask;
