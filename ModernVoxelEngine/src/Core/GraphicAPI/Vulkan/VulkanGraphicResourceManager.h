@@ -8,6 +8,17 @@ namespace vulkan {
 	class VulkanCommandBuffer;
 	class VulkanCommandBufferManager;
 
+	struct GpuThreadFramePools {
+
+		VkCommandPool                   vulkan_command_pool = nullptr;
+		VkQueryPool                     vulkan_timestamp_query_pool = nullptr;
+		VkQueryPool                     vulkan_pipeline_stats_query_pool = nullptr;
+		//
+		//TODO::debug tools
+		//GpuTimeQueryTree* time_queries = nullptr;
+
+	}; // struct GpuThreadFramePools
+
 	 class VulkanGraphicResourceManager final : public RHIGraphicResourceManager
 	{
 	public:
@@ -41,6 +52,7 @@ namespace vulkan {
 		VkAllocationCallbacks*							vulkan_allocation_callbacks;
 		VmaAllocator									_vma_allocator;
 		//current frame
+		utils::vector<GpuThreadFramePools>				_thread_frame_pools;
 		uint32_t										current_frame;
 		bool											_is_bindless = false;
 	private:
@@ -59,7 +71,7 @@ namespace vulkan {
 		ResourcePool<VulkanShaderState>					_shaders;
 		ResourcePool<VulkanDesciptorSet>				_descriptor_sets;
 		ResourcePool<VulkanSampler>						_samplers;
-
+		
 		// Primitive resources
 		BufferHandle									_fullscrean_vertex_buffer;
 		RenderPassHandle								_swapchain_pass;

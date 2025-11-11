@@ -417,7 +417,8 @@ namespace vulkan {
 		uint32_t                             current_frame;
 		uint32_t                             deleting;
 	}; // struct ResourceUpdate
-
+	static const uint32_t                    k_max_swapchain_images = 3;
+	static const uint32_t                    k_max_frames = 2;
 	struct VulkanBuffer : Resource {
 	
 		VkBuffer				_vkBuffer;
