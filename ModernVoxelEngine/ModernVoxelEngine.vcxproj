@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ResourcesManager\SpvCrossComplier.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHICommandBuffer.cpp" />
     <ClCompile Include="src\utils\FlatHashMap.cpp" />
     <ClCompile Include="src\utils\Array.cpp" />
@@ -190,6 +191,7 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ResourcesManager\SpvCrossComplier.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHICommandBuffer.h" />
     <ClInclude Include="src\utils\FlatHashMap.h" />
     <ClInclude Include="src\utils\Array.h" />
