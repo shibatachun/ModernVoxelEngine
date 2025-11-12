@@ -743,6 +743,20 @@ namespace vulkan {
 
 	VkImageType to_vk_image_type(TextureType::Enum type);
 
-	VkImageViewType to_vk_image_view_type(TextureType::Enum type); 
+	VkImageViewType to_vk_image_view_type(TextureType::Enum type);
+
+	VkAccessFlags util_to_vk_access_flags2(ResourceState state);
+
+	VkAccessFlags util_to_vk_access_flags(ResourceState state);
+
+	VkPipelineStageFlags2KHR util_determine_pipeline_stage_flags2(VkAccessFlags2KHR access_flags, QueueType::Enum queue_type);
+
+	VkPipelineStageFlags util_determine_pipeline_stage_flags(VkAccessFlags access_flags, QueueType::Enum queue_type);
+
+	VkImageLayout util_to_vk_image_layout2(ResourceState usage);
+
+	VkImageLayout util_to_vk_image_layout(ResourceState usage);
+
+	
 }
 

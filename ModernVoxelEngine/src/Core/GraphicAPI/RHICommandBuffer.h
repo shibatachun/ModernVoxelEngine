@@ -1,5 +1,6 @@
 #pragma once
-#include "RHIGraphicResourceManager.h";
+#include "RHIGraphicResourceManager.h"
+
 class RHICommnadBuffer {
 
 };

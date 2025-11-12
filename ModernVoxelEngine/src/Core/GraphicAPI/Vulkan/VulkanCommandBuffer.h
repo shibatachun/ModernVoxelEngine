@@ -10,13 +10,35 @@ namespace vulkan {
 		~VulkanCommandBuffer();
 		void init(VulkanGraphicResourceManager* gpu_resource);
 		void shutdown();
+		void reset();
+
+		void Begin();
+		void End();
+
+
 		
 	public:
-		uint32_t handle;
+		
 		GpuThreadFramePools* thread_frame_pool;
 		VkCommandBuffer	_vk_command_buffer;
+		bool _is_recording;
+		VulkanRenderPass* _current_render_pass;
+		VulkanFramebuffer* _current_framebuffer;
+		VulkanPipeline* _current_pipeline;
+		VkClearValue	_clear_values[k_max_image_outputs + 1];
+		uint32_t _current_command;
+		uint32_t _handle;
+		ResourceHandle	_resource_handle;
+
+		
 	private:
 		VulkanGraphicResourceManager* gpu_resource;
+		VkDescriptorPool _vk_descriptor_pool;
+		ResourcePool<VulkanDesciptorSet>	_descriptor_sets;
+
+		
+
+
 		
 
 	};

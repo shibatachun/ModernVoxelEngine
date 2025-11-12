@@ -136,7 +136,13 @@ namespace vulkan {
 		void WaitIdle() const;
 		VkPhysicalDeviceMemoryProperties GetPhyDeviceMemProperty() const { return _memProperties; };
 		VkPhysicalDeviceProperties2 GetPhyDeviceProperty() const { return _physicalDeviceProperties2; };
+
+		void CommandBufferSubmit(QueueFamily queue_, uint32_t submit_count_, const VkSubmitInfo* submit_info_, VkFence fence);
+		void CommandBufferSubmit2(QueueFamily queue_, uint32_t submit_count, const VkSubmitInfo2KHR* submit_info_, VkFence fence);
 		bool isBindless = false;
+		bool synchronization2_extension_present = false;
+
+	
 	private:
 		VULKAN_HANDLE(VkDevice, _device)
 		const VkPhysicalDevice							_physicalDevice;
@@ -161,6 +167,12 @@ namespace vulkan {
 		VkPhysicalDeviceVulkan11Features vkFeatures11_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
 														  .pNext = &vkFeatures12_ };
 		VkPhysicalDeviceFeatures2 vkFeatures10_ = { .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, .pNext = &vkFeatures11_ };
+
+		//Extension Method
+		PFN_vkCmdBeginRenderingKHR							vkCmdBeginRenderingKHR;
+		PFN_vkCmdEndRenderingKHR							vkCmdEndRenderingKHR;
+		PFN_vkQueueSubmit2KHR								vkQueueSubmit2KHR;
+		
 	private:
 		void CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions);
 	};

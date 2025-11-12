@@ -12,12 +12,41 @@ namespace vulkan {
 	{
 		shutdown();
 	}
+	static const uint32_t k_descriptor_sets_pool_size = 4096;
 
+	void VulkanCommandBuffer::reset() {
+		_is_recording = false;
+		_current_render_pass = nullptr;
+		_current_framebuffer = nullptr;
+		_current_pipeline = nullptr;
+		_current_command = 0;
+
+		vkResetDescriptorPool(gpu_resource->VKDevice(), _vk_descriptor_pool, 0);
+		//TODO: release local descriptor sets
+		
+	}
+	void VulkanCommandBuffer::Begin()
+	{
+		if (!_is_recording) {
+			VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			vkBeginCommandBuffer(_vk_command_buffer, &beginInfo);
+			_is_recording = true;
+		}
+	}
+	void VulkanCommandBuffer::End()
+	{
+		if (_is_recording) {
+			vkEndCommandBuffer(_vk_command_buffer);
+
+			_is_recording = false;
+		}
+	}
 	void VulkanCommandBuffer::init(VulkanGraphicResourceManager* gpu_resource_)
 	{
 		gpu_resource = gpu_resource_;
 		//TODO::可以优化为动态创建，用新layout, 使用gpu resource中的descriptor pool和descriptor set layout manager
-		/*static const uint32_t k_global_pool_elements = 128;
+		static const uint32_t k_global_pool_elements = 128;
 		VkDescriptorPoolSize pool_sizes[] = {
 			{ VK_DESCRIPTOR_TYPE_SAMPLER, k_global_pool_elements },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, k_global_pool_elements },
@@ -31,7 +60,14 @@ namespace vulkan {
 			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, k_global_pool_elements },
 			{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, k_global_pool_elements}
 		};
-		VkDescriptorPoolCreateInfo pool_info = {};*/
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		pool_info.maxSets = k_descriptor_sets_pool_size;
+		pool_info.poolSizeCount = (uint32_t)ArraySize(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
+		Check(vkCreateDescriptorPool(gpu_resource->VKDevice(), &pool_info, gpu_resource->vulkan_allocation_callbacks, &_vk_descriptor_pool), "Create Descriptor Pool for buffer");
+		_descriptor_sets.init(k_descriptor_sets_pool_size);
 		
 	}
 
@@ -82,8 +118,29 @@ namespace vulkan {
 			
 			VulkanCommandBuffer& current_command_buffer = _command_buffers[i];
 			vkAllocateCommandBuffers(gpu_resource->VKDevice(), &cmd, &current_command_buffer._vk_command_buffer);
+
+			current_command_buffer._handle = i;
+			current_command_buffer.thread_frame_pool = &gpu_resource->_thread_frame_pools[pool_index];
+			current_command_buffer.init(gpu_resource);
 			
 		}
+		uint32_t handle = total_buffers;
+		for (uint32_t pool_index = 0; pool_index < total_pools; ++pool_index) {
+			VkCommandBufferAllocateInfo cmd = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr };
+			cmd.commandPool = gpu_resource->_thread_frame_pools[pool_index].vulkan_command_pool;
+			cmd.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+			cmd.commandBufferCount = k_secondary_command_buffers_count;
+			VkCommandBuffer secondary_buffers[k_secondary_command_buffers_count];
+			vkAllocateCommandBuffers(gpu_resource->VKDevice(), &cmd, secondary_buffers);
+			for (uint32_t scb_index = 0; scb_index < k_secondary_command_buffers_count; ++scb_index) {
+				VulkanCommandBuffer cb{};
+				cb._vk_command_buffer = secondary_buffers[scb_index];
+				cb._handle = handle++;
+				cb.thread_frame_pool = &gpu_resource->_thread_frame_pools[pool_index];
+				cb.init(gpu_resource);
+				_secondary_command_buffers.push_back(cb);
+			}
+		} 
 	}
 
 
@@ -94,7 +151,7 @@ namespace vulkan {
 
 	VulkanCommandBuffer* VulkanCommandBufferManager::GetCommandBuffer(uint32_t frame_index, uint32_t thread_index, bool begin)
 	{
-
+		return nullptr;
 	}
 	VulkanCommandBuffer* VulkanCommandBufferManager::GetSecondareyCommandBuffer(uint32_t frame, uint32_t thread_index)
 	{

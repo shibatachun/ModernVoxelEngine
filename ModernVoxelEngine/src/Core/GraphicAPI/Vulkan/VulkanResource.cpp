@@ -197,3 +197,294 @@ VkImageViewType vulkan::to_vk_image_view_type(TextureType::Enum type)
         return s_vk_data[type];
     
 }
+
+VkAccessFlags vulkan::util_to_vk_access_flags2(ResourceState state)
+{
+    VkAccessFlags ret = 0;
+    if (state & RESOURCE_STATE_COPY_SOURCE) {
+        ret |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_COPY_DEST) {
+        ret |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) {
+        ret |= VK_ACCESS_2_UNIFORM_READ_BIT_KHR | VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_INDEX_BUFFER) {
+        ret |= VK_ACCESS_2_INDEX_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_UNORDERED_ACCESS) {
+        ret |= VK_ACCESS_2_SHADER_READ_BIT_KHR | VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_INDIRECT_ARGUMENT) {
+        ret |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_RENDER_TARGET) {
+        ret |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT_KHR | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_DEPTH_WRITE) {
+        ret |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_SHADER_RESOURCE) {
+        ret |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_PRESENT) {
+        ret |= VK_ACCESS_2_MEMORY_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_SHADING_RATE_SOURCE) {
+        ret |= VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
+    }
+    if (state & RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE) {
+        ret |= VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+    }
+
+    return ret;
+}
+
+VkPipelineStageFlags2KHR vulkan::util_determine_pipeline_stage_flags2(VkAccessFlags2KHR access_flags, QueueType::Enum queue_type)
+{
+    VkPipelineStageFlags2KHR flags = 0;
+
+    switch (queue_type) {
+    case QueueType::Graphics:
+    {
+        if ((access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT)) != 0) {
+            flags |= VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR;
+            flags |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
+            flags |= VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
+
+            // TODO(marco): check RT extension is present/enabled
+            flags |= VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR;
+        }
+
+        if ((access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT) != 0)
+            flags |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR)) != 0)
+            flags |= VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
+
+        if ((access_flags & VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR) != 0)
+            flags = VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
+
+        break;
+    }
+    case QueueType::Compute:
+    {
+        if ((access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT)) != 0 ||
+            (access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT) != 0 ||
+            (access_flags & (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)) != 0 ||
+            (access_flags & (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)) != 0)
+            return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
+
+        break;
+    }
+    case QueueType::CopyTransfer: return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+    default: break;
+    }
+
+    // Compatible with both compute and graphics queues
+    if ((access_flags & VK_ACCESS_INDIRECT_COMMAND_READ_BIT) != 0)
+        flags |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR;
+
+    if ((access_flags & (VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT)) != 0)
+        flags |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+
+    if ((access_flags & (VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT)) != 0)
+        flags |= VK_PIPELINE_STAGE_2_HOST_BIT_KHR;
+
+    if (flags == 0)
+        flags = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR;
+
+    return flags;
+}
+
+VkPipelineStageFlags vulkan::util_determine_pipeline_stage_flags(VkAccessFlags access_flags, QueueType::Enum queue_type)
+{
+    VkPipelineStageFlags flags = 0;
+
+    switch (queue_type) {
+    case QueueType::Graphics:
+    {
+        if ((access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+
+        if ((access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT)) != 0) {
+            flags |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+            flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+            // TODO(marco): check RT extension is present/enabled
+            flags |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+        }
+
+        if ((access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT) != 0)
+            flags |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+        if ((access_flags & (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR)) != 0)
+            flags |= VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+        if ((access_flags & VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR) != 0)
+            flags = VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+
+        if ((access_flags & (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+        break;
+    }
+    case QueueType::Compute:
+    {
+        if ((access_flags & (VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT)) != 0 ||
+            (access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT) != 0 ||
+            (access_flags & (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)) != 0 ||
+            (access_flags & (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)) != 0)
+            return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+        if ((access_flags & (VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT)) != 0)
+            flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+        break;
+    }
+    case QueueType::CopyTransfer: return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    default: break;
+    }
+
+    // Compatible with both compute and graphics queues
+    if ((access_flags & VK_ACCESS_INDIRECT_COMMAND_READ_BIT) != 0)
+        flags |= VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
+
+    if ((access_flags & (VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT)) != 0)
+        flags |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+    if ((access_flags & (VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT)) != 0)
+        flags |= VK_PIPELINE_STAGE_HOST_BIT;
+
+    if (flags == 0)
+        flags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+    return flags;
+}
+
+VkImageLayout vulkan::util_to_vk_image_layout2(ResourceState usage)
+{
+    if (usage & RESOURCE_STATE_COPY_SOURCE)
+        return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_COPY_DEST)
+        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_RENDER_TARGET)
+        return VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+
+    if (usage & RESOURCE_STATE_DEPTH_WRITE)
+        return VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR;
+
+    if (usage & RESOURCE_STATE_DEPTH_READ)
+        return VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR;
+
+    if (usage & RESOURCE_STATE_UNORDERED_ACCESS)
+        return VK_IMAGE_LAYOUT_GENERAL;
+
+    if (usage & RESOURCE_STATE_SHADER_RESOURCE)
+        return VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR;
+
+    if (usage & RESOURCE_STATE_PRESENT)
+        return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    if (usage == RESOURCE_STATE_COMMON)
+        return VK_IMAGE_LAYOUT_GENERAL;
+
+    if (usage == RESOURCE_STATE_SHADING_RATE_SOURCE)
+        return VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+
+    return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
+VkImageLayout vulkan::util_to_vk_image_layout(ResourceState usage)
+{
+    if (usage & RESOURCE_STATE_COPY_SOURCE)
+        return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_COPY_DEST)
+        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_RENDER_TARGET)
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_DEPTH_WRITE)
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_DEPTH_READ)
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_UNORDERED_ACCESS)
+        return VK_IMAGE_LAYOUT_GENERAL;
+
+    if (usage & RESOURCE_STATE_SHADER_RESOURCE)
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    if (usage & RESOURCE_STATE_PRESENT)
+        return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    if (usage == RESOURCE_STATE_COMMON)
+        return VK_IMAGE_LAYOUT_GENERAL;
+
+    if (usage == RESOURCE_STATE_SHADING_RATE_SOURCE)
+        return VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+
+    return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
+VkAccessFlags vulkan::util_to_vk_access_flags(ResourceState state)
+{
+    VkAccessFlags ret = 0;
+    if (state & RESOURCE_STATE_COPY_SOURCE) {
+        ret |= VK_ACCESS_TRANSFER_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_COPY_DEST) {
+        ret |= VK_ACCESS_TRANSFER_WRITE_BIT;
+    }
+    if (state & RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER) {
+        ret |= VK_ACCESS_UNIFORM_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_INDEX_BUFFER) {
+        ret |= VK_ACCESS_INDEX_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_UNORDERED_ACCESS) {
+        ret |= VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    }
+    if (state & RESOURCE_STATE_INDIRECT_ARGUMENT) {
+        ret |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_RENDER_TARGET) {
+        ret |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    }
+    if (state & RESOURCE_STATE_DEPTH_WRITE) {
+        ret |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_SHADER_RESOURCE) {
+        ret |= VK_ACCESS_SHADER_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_PRESENT) {
+        ret |= VK_ACCESS_MEMORY_READ_BIT;
+    }
+    if (state & RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE) {
+        ret |= VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+    }
+
+    return ret;
+}

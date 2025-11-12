@@ -87,6 +87,23 @@
 			return ((uint32_t)e < Enum::Count ? _sValueNames[(int)e] : "unsupported");
 		}
 	}
+	namespace QueueType {
+		enum Enum {
+			Graphics, Compute, CopyTransfer, Count
+		};
+
+		enum Mask {
+			Graphics_mask = 1 << 0, Compute_mask = 1 << 1, CopyTransfer_mask = 1 << 2, Count_mask = 1 << 3
+		};
+
+		static const char* s_value_names[] = {
+			"Graphics", "Compute", "CopyTransfer", "Count"
+		};
+
+		static const char* ToString(Enum e) {
+			return ((uint32_t)e < Enum::Count ? s_value_names[(int)e] : "unsupported");
+		}
+	}
 
 	namespace ColorWriteEnabled {
 		enum Enum {

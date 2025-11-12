@@ -527,6 +527,41 @@ void vulkan::Device::WaitIdle() const
 	Check(vkDeviceWaitIdle(_device), "wait for device idle");
 }
 
+void vulkan::Device::CommandBufferSubmit(QueueFamily queue_, uint32_t submit_count_, const VkSubmitInfo* submit_info_, VkFence fence)
+{
+	switch (queue_)
+	{
+	case vulkan::QueueFamily::GRAPHIC:
+		Check(vkQueueSubmit(_graphicsQueue, 1, submit_info_, VK_NULL_HANDLE),"Command buffer submit");
+		vkQueueWaitIdle(_graphicsQueue);
+		break;
+	case vulkan::QueueFamily::COMPUTE:
+		break;
+	case vulkan::QueueFamily::TRANSFER:
+		break;
+	default:
+		break;
+	}
+	
+}
+
+void vulkan::Device::CommandBufferSubmit2(QueueFamily queue_, uint32_t submit_count, const VkSubmitInfo2KHR* submit_info_, VkFence fence)
+{
+	switch (queue_)
+	{
+	case vulkan::QueueFamily::GRAPHIC:
+		Check(vkQueueSubmit2KHR(_graphicsQueue, submit_count, submit_info_, VK_NULL_HANDLE), "Command buffer extension submit");
+		break;
+	case vulkan::QueueFamily::COMPUTE:
+		break;
+	case vulkan::QueueFamily::TRANSFER:
+		break;
+	default:
+		break;
+	}
+	
+}
+
 void vulkan::Device::CheckRequiredExtensions(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions) 
 {
 	uint32_t extensionsCount = 0;
@@ -2164,7 +2199,7 @@ void vulkan::VulkanResouceManager::ConstructVulkanRenderObject(std::string name,
 		_BufferManager.CreateIndexBuffer1(modeldata.indices, renderObject.indiceBuffer, renderObject.indicememory);
 		
 		BufferCreation creation{};
-		creation.size = modeldata.vertices.size();
+		creation.size = static_cast<uint32_t>(modeldata.vertices.size());
 
 	}
 	//Éú³ÉDescriptorPool

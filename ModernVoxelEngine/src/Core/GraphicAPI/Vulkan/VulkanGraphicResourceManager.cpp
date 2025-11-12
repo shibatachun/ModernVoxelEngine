@@ -149,6 +149,80 @@ namespace vulkan {
 
 		VulkanCommandBuffer* command_buffer = resource_manager.GetCommandBuffer(0, resource_manager.current_frame, false); 
 		vkBeginCommandBuffer(command_buffer->_vk_command_buffer, &beginInfo);
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset = { 0,0,0 };
+		region.imageExtent = { texture_->width, texture_->height, texture_->depth };
+
+		resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_UNDEFINED, RESOURCE_STATE_COPY_DEST, 0, 1, false);
+
+		vkCmdCopyBufferToImage(command_buffer->_vk_command_buffer, staging_buffer, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		if (texture_->mip_base_level > 1) {
+			resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_COPY_SOURCE, 0, 1, false);
+ 
+		}
+		int32_t w = texture_->width;
+		int32_t h = texture_->height;
+
+		for (int mip_index = 1; mip_index < texture_->mip_level_count; ++mip_index) {
+			resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_UNDEFINED, RESOURCE_STATE_COPY_DEST, mip_index, 1, false);
+
+			VkImageBlit blit_region{};
+			blit_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit_region.srcSubresource.mipLevel = mip_index - 1;
+			blit_region.srcSubresource.baseArrayLayer = 0;
+			blit_region.srcSubresource.layerCount = 1;
+			blit_region.srcOffsets[0] = { 0,0,0 };
+			blit_region.srcOffsets[1] = { w, h ,1 };
+			w /= 2;
+			h /= 2;
+
+			blit_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			blit_region.dstSubresource.mipLevel = mip_index;
+			blit_region.dstSubresource.baseArrayLayer = 0;
+			blit_region.dstSubresource.layerCount = 1;
+
+			blit_region.dstOffsets[0] = { 0,0,0 };
+			blit_region.dstOffsets[1] = { w , h, 1 };
+
+			vkCmdBlitImage(command_buffer->_vk_command_buffer, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit_region, VK_FILTER_LINEAR);
+
+			resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_COPY_SOURCE, mip_index, 1, false);
+		}
+		resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, (texture_->mip_level_count > 1) ? RESOURCE_STATE_COPY_SOURCE : RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_SHADER_RESOURCE, 0, texture_->mip_level_count, false);
+		texture_->state = RESOURCE_STATE_SHADER_RESOURCE;
+		vkEndCommandBuffer(command_buffer->_vk_command_buffer);
+		if (resource_manager.IsSynchronizetion2ExtensionPresent()) {
+			VkCommandBufferSubmitInfoKHR command_buffer_info{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR };
+			command_buffer_info.commandBuffer = command_buffer->_vk_command_buffer;
+			VkSubmitInfo2KHR submit_info{ VK_STRUCTURE_TYPE_SUBMIT_INFO_2_KHR };
+			submit_info.commandBufferInfoCount = 1;
+			submit_info.pCommandBufferInfos = &command_buffer_info;
+			//TODO::
+			
+		}
+		else
+		{
+			VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &command_buffer->_vk_command_buffer;
+			
+			resource_manager.SubmitCommandBuffer(QueueFamily::GRAPHIC, &submitInfo, 1, VK_NULL_HANDLE);
+			
+		}
+
+		vmaDestroyBuffer(resource_manager._vma_allocator, staging_buffer, staging_allocation);
+		vkResetCommandBuffer(command_buffer->_vk_command_buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+
 
 	}
 	void vulkan::VulkanGraphicResourceManager::Init() {
@@ -159,13 +233,62 @@ namespace vulkan {
 		
 		_samplers.init(203);
 		_buffers.init(1024);
-
-		m_command_buffer.init(this);
+		_thread_frame_pools.resize(6);
+		//m_command_buffer.init(this,1);
 		Check(vmaCreateAllocator(&allocatorInfo, &_vma_allocator), "Create Vma allocator");
 	}
 
 	void vulkan::VulkanGraphicResourceManager::Shutdown() {
 
+	}
+
+	void VulkanGraphicResourceManager::UtilAddImageBarrier(VkCommandBuffer command_buffer_, VkImage image_, ResourceState old_state_, ResourceState new_state_, uint32_t base_mip_level_, uint32_t mip_count_, bool is_depth_)
+	{
+		if (_vk_device.synchronization2_extension_present) {
+			VkImageMemoryBarrier2KHR barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR };
+			barrier.srcAccessMask = util_to_vk_access_flags2(old_state_);
+			barrier.srcStageMask = util_determine_pipeline_stage_flags2(barrier.srcAccessMask, QueueType::Graphics);
+			barrier.dstAccessMask = util_to_vk_access_flags2(new_state_);
+			barrier.dstStageMask = util_determine_pipeline_stage_flags2(barrier.dstAccessMask, QueueType::Graphics);
+			barrier.oldLayout = util_to_vk_image_layout2(old_state_);
+			barrier.newLayout = util_to_vk_image_layout2(new_state_);
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image = image_;
+			barrier.subresourceRange.aspectMask = is_depth_ ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+			barrier.subresourceRange.baseMipLevel = base_mip_level_;
+			barrier.subresourceRange.levelCount = mip_count_;
+
+			VkDependencyInfoKHR dependency_info{ VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR };
+			dependency_info.imageMemoryBarrierCount = 1;
+			dependency_info.pImageMemoryBarriers = &barrier;
+
+			vkCmdPipelineBarrier2KHR(command_buffer_, &dependency_info);
+		}
+		else
+		{
+			VkImageMemoryBarrier barrier{ VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+			barrier.image = image_;
+			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			barrier.subresourceRange.aspectMask = is_depth_ ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount = 1;
+			barrier.subresourceRange.levelCount = mip_count_;
+
+			barrier.subresourceRange.baseMipLevel = base_mip_level_;
+			barrier.oldLayout = util_to_vk_image_layout(old_state_);
+			barrier.newLayout = util_to_vk_image_layout(new_state_);
+			barrier.srcAccessMask = util_to_vk_access_flags(old_state_);
+			barrier.dstAccessMask = util_to_vk_access_flags(new_state_);
+
+			const VkPipelineStageFlags source_stage_mask = util_determine_pipeline_stage_flags(barrier.srcAccessMask, QueueType::Graphics);
+			const VkPipelineStageFlags destination_stage_mask = util_determine_pipeline_stage_flags(barrier.dstAccessMask, QueueType::Graphics);
+
+			vkCmdPipelineBarrier(command_buffer_, source_stage_mask, destination_stage_mask, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
 	}
 	BufferHandle vulkan::VulkanGraphicResourceManager::CreateBufferResouce(const BufferCreation& creation)
 	{
@@ -224,11 +347,12 @@ namespace vulkan {
 		VulkanCreateTexture(*this, creation, handle, texture);
 
 		if (creation._initial_data) {
-
+			UploadTextureData(texture, creation._initial_data, *this);
 		}
 
-		return TextureHandle();
+		return handle;
 	}
+
 	TextureHandle VulkanGraphicResourceManager::CreateTextureViewResource(const TextureViewCreation& creation)
 	{
 		return TextureHandle();
@@ -273,7 +397,15 @@ namespace vulkan {
 	VulkanCommandBuffer* VulkanGraphicResourceManager::GetCommandBuffer(uint32_t thread_index, uint32_t frame_index, bool begin)
 	{
 		VulkanCommandBuffer* cb = m_command_buffer.GetCommandBuffer(thread_index, frame_index, begin);
+		return cb;
 	}
+
+	void VulkanGraphicResourceManager::SubmitCommandBuffer(QueueFamily queue, const VkSubmitInfo* submit_info_, uint32_t submit_count_, VkFence fence)
+	{
+		_vk_device.CommandBufferSubmit(queue, submit_count_, submit_info_, fence);
+	}
+
+	
 
 
 

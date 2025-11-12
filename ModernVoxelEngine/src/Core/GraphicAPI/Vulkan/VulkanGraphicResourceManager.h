@@ -40,10 +40,27 @@ namespace vulkan {
 		RenderPassHandle								CreateRenderPass(const RenderPassCreation& creation);
 		FramebufferHandle								CreateFrameBuffer(const FramebufferCreation& creation);
 		ShaderStateHandle								CreateShaderState(const ShaderStateCreation& creation);
+
 		VulkanBuffer*									AccessBuffer(BufferHandle handle);
 		VulkanTexture*									AccessTexture(TextureHandle handle);
 		
 		VulkanCommandBuffer*							GetCommandBuffer(uint32_t thread_index, uint32_t frame_index, bool begin);
+
+		void											SubmitCommandBuffer(QueueFamily queue, const VkSubmitInfo* submit_info_, uint32_t submit_count_, VkFence fence);;
+
+		bool											IsSynchronizetion2ExtensionPresent() { return _vk_device.synchronization2_extension_present; };
+
+		//Image utils
+		void UtilAddImageBarrier(
+			VkCommandBuffer command_buffer_,
+			VkImage image_,
+			ResourceState old_state_,
+			ResourceState new_state_,
+			uint32_t base_mip_level_,
+			uint32_t mip_count_, bool is_depth_);
+		PFN_vkCmdPipelineBarrier2KHR						vkCmdPipelineBarrier2KHR;
+
+		
 
 		
 	public:
@@ -85,6 +102,7 @@ namespace vulkan {
 		uint8_t*										dynamic_mapped_memory;
 		uint32_t										dynamic_allocated_size;
 		uint32_t										dynamic_per_frame_size;
+
 		
 	
 
