@@ -124,9 +124,10 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	VkBufferUsageFlags flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	bc.set(flags, ResourceUsageType::Immutable, (sizeof(Vertex) * model.vertexSize)).set_persistent(true).set_name("Test object");
 	const Image& image = _assetManager.getImageDataByName(model.images[0]);
-	tc.set_name(image.name.c_str()).set_size(image.texWidth, image.texHeight, image.texDepth).set_data(image.pixel).set_mips(image.mipLevels);
+	tc.set_name(image.name.c_str()).set_size(image.texWidth, image.texHeight, image.texDepth).set_data(image.pixel).set_mips(image.mipLevels).set_format_type(FromFormat(image.format), TextureType::Texture2D);
 	BufferHandle br = _GpuResouce->CreateBufferResouce(bc);
 	TextureHandle tr = _GpuResouce->CreateTextureResource(tc);
+	VulkanTexture* vk_tx = _GpuResouce->AccessTexture(tr);
 	
 	//_GpuResouce->CreateBufferResouce(bc);
 	//VulkanBuffer* vertex_buffer = _GpuResouce->AccessBuffer(br);

@@ -151,7 +151,18 @@ namespace vulkan {
 
 	VulkanCommandBuffer* VulkanCommandBufferManager::GetCommandBuffer(uint32_t frame_index, uint32_t thread_index, bool begin)
 	{
-		return nullptr;
+		const uint32_t pool_index = PoolFromIndices(frame_index, thread_index);
+		uint32_t current_used_buffer = _used_buffers[pool_index];
+		assert(current_used_buffer < _num_command_buffers_per_thread);
+		if (begin) {
+			_used_buffers[pool_index] = current_used_buffer + 1;
+		}
+		VulkanCommandBuffer* cb = &_command_buffers[(pool_index * _num_command_buffers_per_thread) + current_used_buffer];
+		if (begin) {
+			cb->reset();
+			cb->Begin();
+		}
+		return cb;
 	}
 	VulkanCommandBuffer* VulkanCommandBufferManager::GetSecondareyCommandBuffer(uint32_t frame, uint32_t thread_index)
 	{

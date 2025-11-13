@@ -36,7 +36,7 @@ namespace vulkan {
 			info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		}
 		info.viewType = creation._view_type;
-		info.subresourceRange.baseMipLevel = creation._sub_resource.mip_level_count;
+		info.subresourceRange.baseMipLevel = creation._sub_resource.mip_base_level;
 		info.subresourceRange.baseArrayLayer = creation._sub_resource.array_base_layer;
 		info.subresourceRange.layerCount = creation._sub_resource.array_layer_count;
 		info.subresourceRange.levelCount = creation._sub_resource.mip_level_count;
@@ -166,7 +166,7 @@ namespace vulkan {
 
 		vkCmdCopyBufferToImage(command_buffer->_vk_command_buffer, staging_buffer, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		if (texture_->mip_base_level > 1) {
+		if (texture_->mip_level_count > 1) {
 			resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_COPY_SOURCE, 0, 1, false);
  
 		}
@@ -194,13 +194,14 @@ namespace vulkan {
 			blit_region.dstOffsets[0] = { 0,0,0 };
 			blit_region.dstOffsets[1] = { w , h, 1 };
 
-			vkCmdBlitImage(command_buffer->_vk_command_buffer, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit_region, VK_FILTER_LINEAR);
+			vkCmdBlitImage(command_buffer->_vk_command_buffer, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture_->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit_region, VK_FILTER_LINEAR);
 
 			resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_COPY_SOURCE, mip_index, 1, false);
 		}
 		resource_manager.UtilAddImageBarrier(command_buffer->_vk_command_buffer, texture_->vk_image, (texture_->mip_level_count > 1) ? RESOURCE_STATE_COPY_SOURCE : RESOURCE_STATE_COPY_DEST, RESOURCE_STATE_SHADER_RESOURCE, 0, texture_->mip_level_count, false);
 		texture_->state = RESOURCE_STATE_SHADER_RESOURCE;
 		vkEndCommandBuffer(command_buffer->_vk_command_buffer);
+
 		if (resource_manager.IsSynchronizetion2ExtensionPresent()) {
 			VkCommandBufferSubmitInfoKHR command_buffer_info{ VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR };
 			command_buffer_info.commandBuffer = command_buffer->_vk_command_buffer;
@@ -240,6 +241,7 @@ namespace vulkan {
 
 		_samplers.init(203);
 		_buffers.init(1024);
+		_textures.init(1024);
 		_thread_frame_pools.resize(6);
 
 		for (uint32_t i = 0; i < _thread_frame_pools.size(); i++) {
