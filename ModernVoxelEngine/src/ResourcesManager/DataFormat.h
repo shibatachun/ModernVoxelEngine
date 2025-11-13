@@ -104,6 +104,7 @@ struct Image {
     int mipLevels;
     int texWidth;
     int texHeight;
+    int texDepth;
     int texChannels;
     std::vector<SubResource> subresource;
 

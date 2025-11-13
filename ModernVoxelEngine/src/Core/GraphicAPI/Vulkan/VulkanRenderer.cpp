@@ -119,10 +119,14 @@ bool vulkan::VulkanRenderer::InitVulkan()
 	_GpuResouce.reset(new vulkan::VulkanGraphicResourceManager(*_instance,*_devices,*_swapchain,*_descriptorPools,*_descriptorLayouts,*_graphicsPipline));
 	_GpuResouce->Init(); 
 	BufferCreation bc;
+	TextureCreation tc;
 	ModelData model = _assetManager.getModelDataByName("Sponza");
 	VkBufferUsageFlags flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	bc.set(flags, ResourceUsageType::Immutable, (sizeof(Vertex) * model.vertexSize)).set_persistent(true).set_name("Test object");
+	const Image& image = _assetManager.getImageDataByName(model.images[0]);
+	tc.set_name(image.name.c_str()).set_size(image.texWidth, image.texHeight, image.texDepth).set_data(image.pixel).set_mips(image.mipLevels);
 	BufferHandle br = _GpuResouce->CreateBufferResouce(bc);
+	TextureHandle tr = _GpuResouce->CreateTextureResource(tc);
 	
 	//_GpuResouce->CreateBufferResouce(bc);
 	//VulkanBuffer* vertex_buffer = _GpuResouce->AccessBuffer(br);

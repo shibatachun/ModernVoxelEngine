@@ -5,6 +5,32 @@
 
 namespace vulkan {
 
+
+	struct GpuThreadFramePools {
+
+		VkCommandPool                   vulkan_command_pool = nullptr;
+		VkQueryPool                     vulkan_timestamp_query_pool = nullptr;
+		VkQueryPool                     vulkan_pipeline_stats_query_pool = nullptr;
+		//
+		//TODO::debug tools
+		//GpuTimeQueryTree* time_queries = nullptr;
+
+	}; // struct GpuThreadFramePools
+	struct GpuDescriptorPoolCreation {
+
+		uint16_t                             samplers = 256;
+		uint16_t                             combined_image_samplers = 256;
+		uint16_t                             sampled_image = 256;
+		uint16_t                             storage_image = 256;
+		uint16_t                             uniform_texel_buffers = 256;
+		uint16_t                             storage_texel_buffers = 256;
+		uint16_t                             uniform_buffer = 256;
+		uint16_t                             storage_buffer = 256;
+		uint16_t                             uniform_buffer_dynamic = 256;
+		uint16_t                             storage_buffer_dynamic = 256;
+		uint16_t                             input_attachments = 256;
+
+	}; // struct GpuDescriptorPoolCreation
 	class Instance final {
 	public:
 		VULKAN_NON_COPIABLE(Instance);
@@ -386,6 +412,7 @@ namespace vulkan {
 		DescriptorPoolManager(const Device& deivce);
 		~DescriptorPoolManager();
 		void CreateGlobalDescriptorPool();
+		void CreateGlobalDescriptorPool(const GpuDescriptorPoolCreation& creation);
 		void CreatePerFrameDescriptorPool();
 		void CreatePreFrameDescriptorSets(std::vector<VkDescriptorSetLayout>& layouts);
 		void CreatePoolForIndividualObject(uint32_t uboCount, uint32_t imageCount, std::string objectName);

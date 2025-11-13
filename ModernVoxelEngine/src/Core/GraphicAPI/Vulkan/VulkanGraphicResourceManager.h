@@ -8,17 +8,7 @@ namespace vulkan {
 	class VulkanCommandBuffer;
 	class VulkanCommandBufferManager;
 
-	struct GpuThreadFramePools {
-
-		VkCommandPool                   vulkan_command_pool = nullptr;
-		VkQueryPool                     vulkan_timestamp_query_pool = nullptr;
-		VkQueryPool                     vulkan_pipeline_stats_query_pool = nullptr;
-		//
-		//TODO::debug tools
-		//GpuTimeQueryTree* time_queries = nullptr;
-
-	}; // struct GpuThreadFramePools
-
+	
 	 class VulkanGraphicResourceManager final : public RHIGraphicResourceManager
 	{
 	public:

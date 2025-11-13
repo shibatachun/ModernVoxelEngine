@@ -1305,6 +1305,30 @@ void vulkan::DescriptorPoolManager::CreateGlobalDescriptorPool()
 	Check(vkCreateDescriptorPool(_device.Handle(), &globalPoolInfo, nullptr, &_GlobalPool), "Create GlobalDescriptorPool");
 }
 
+void vulkan::DescriptorPoolManager::CreateGlobalDescriptorPool(const GpuDescriptorPoolCreation& pool_creation)
+{
+	VkDescriptorPoolSize pool_sizes[] = {
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, pool_creation.samplers },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, pool_creation.combined_image_samplers },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, pool_creation.sampled_image },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, pool_creation.storage_image },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, pool_creation.uniform_texel_buffers },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, pool_creation.storage_texel_buffers },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, pool_creation.uniform_buffer },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, pool_creation.storage_buffer },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, pool_creation.uniform_buffer_dynamic },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, pool_creation.storage_buffer_dynamic },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, pool_creation.input_attachments }
+	};
+	VkDescriptorPoolCreateInfo pool_info = {};
+	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	pool_info.maxSets = 4096;
+	pool_info.poolSizeCount = (uint32_t)ArraySize(pool_sizes);
+	pool_info.pPoolSizes = pool_sizes;
+	Check(vkCreateDescriptorPool(_device.Handle(), &pool_info, nullptr, &_GlobalPool), "create globle pool");
+}
+
 void vulkan::DescriptorPoolManager::CreatePerFrameDescriptorPool()
 {
 	_PerFramePool.resize(MAX_FRAMES_IN_FLIGHT);

@@ -405,6 +405,7 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 		assert(result == KTX_SUCCESS);
 		texture_image.texWidth = ktxTexture->baseWidth;
 		texture_image.texHeight = ktxTexture->baseHeight;
+		texture_image.texDepth = ktxTexture->baseDepth;
 		texture_image.mipLevels = ktxTexture->numLevels;
 
 		texture_image.pixel = ktxTexture_GetData(ktxTexture);

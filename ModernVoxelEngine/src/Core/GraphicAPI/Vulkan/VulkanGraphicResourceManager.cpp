@@ -225,17 +225,33 @@ namespace vulkan {
 
 
 	}
+
 	void vulkan::VulkanGraphicResourceManager::Init() {
 		VmaAllocatorCreateInfo allocatorInfo = {};
 		allocatorInfo.physicalDevice = _vk_device.PhysicalDevice();
 		allocatorInfo.device = _vk_device.Handle();
 		allocatorInfo.instance = _vk_instance.Handle();
+		Check(vmaCreateAllocator(&allocatorInfo, &_vma_allocator), "Create Vma allocator");
+		GpuDescriptorPoolCreation pool_creation;
+
+		_vk_descriptor_pools.CreateGlobalDescriptorPool(pool_creation);
+
 		
+
 		_samplers.init(203);
 		_buffers.init(1024);
 		_thread_frame_pools.resize(6);
-		//m_command_buffer.init(this,1);
-		Check(vmaCreateAllocator(&allocatorInfo, &_vma_allocator), "Create Vma allocator");
+
+		for (uint32_t i = 0; i < _thread_frame_pools.size(); i++) {
+			GpuThreadFramePools& pool = _thread_frame_pools[i];
+			VkCommandPoolCreateInfo cmd_pool_info = { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, nullptr };
+			cmd_pool_info.queueFamilyIndex = _vk_device.GraphicsFamilyIndex();
+			cmd_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+			vkCreateCommandPool(_vk_device.Handle(), &cmd_pool_info, nullptr, &pool.vulkan_command_pool);
+
+		}
+		m_command_buffer.init(this,1);
 	}
 
 	void vulkan::VulkanGraphicResourceManager::Shutdown() {
