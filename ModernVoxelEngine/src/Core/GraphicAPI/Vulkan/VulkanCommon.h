@@ -10,7 +10,7 @@
 #include <vulkan/vulkan.h>
 
 
-#define VULKAN_NON_COPIABLE(ClassName) \
+#define NON_COPIABLE(ClassName) \
 	ClassName(const ClassName&) = delete; \
 	ClassName(ClassName&&) = delete; \
 	ClassName& operator = (const ClassName&) = delete; \
@@ -26,9 +26,9 @@ private: \
 #include <chrono>
 
 
-#include "../RHIResource.h"
-#include "../RHIGraphicResourceManager.h"
-#include "../RHICommandBuffer.h"
+#include "src/Core/GraphicAPI/RHIResource.h"
+#include "src/Core/GraphicAPI/RHIGraphicResourceManager.h"
+#include "src/Core/GraphicAPI/RHICommandBuffer.h"
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
 
@@ -268,7 +268,7 @@ namespace vulkan {
     {
         if (result != VK_SUCCESS)
         {
-            std::cerr << "Error: failed to " << operation
+            std::cerr << "[VULKAN]::Error: failed to " << operation
                 << " (" << ToString(result) << ")\n";
             throw std::runtime_error(
                 std::string("failed to ") + operation +
@@ -277,7 +277,7 @@ namespace vulkan {
         }
         else
         {
-            std::cout << "Success: do " << operation << " success!" << std::endl;
+            std::cout << "[VULKAN]::Success: do " << operation << " success!" << std::endl;
         }
     }
 

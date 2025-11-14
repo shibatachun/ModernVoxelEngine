@@ -2,8 +2,10 @@
 #include <vector>
 #include <map>
 //ktx
-#include <ktx.h>
-#include <ktxvulkan.h>
+
+#include <vulkan/vulkan.h>
+#include "ktx.h"
+#include "ktxvulkan.h"
 
 //¶¥µãÊý¾Ý
 struct Vertex {

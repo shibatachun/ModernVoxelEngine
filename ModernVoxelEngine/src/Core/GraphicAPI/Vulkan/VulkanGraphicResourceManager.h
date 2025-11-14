@@ -23,8 +23,8 @@ namespace vulkan {
 		BufferHandle									CreateBufferResouce(const BufferCreation& creation);
 		TextureHandle									CreateTextureResource(const TextureCreation& creation);
 		TextureHandle									CreateTextureViewResource(const TextureViewCreation& creation);
-		PipelineHandle									CreatePipeline(const PipelineCreation& creation, const char* cache_path = nullptr);
 		SamplerHandle									CreateSampler(const SamplerCreation& creation);
+		PipelineHandle									CreatePipeline(const PipelineCreation& creation, const char* cache_path = nullptr);
 		DescriptorSetLayoutHandle						CreateDescriptorSetLayout(const  DescriptorSetLayoutCreation& creation);
 		DescriptorSetHandle								CreateDescriptorSet(const DescriptorSetCreation& creation);
 		RenderPassHandle								CreateRenderPass(const RenderPassCreation& creation);

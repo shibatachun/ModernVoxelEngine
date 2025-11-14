@@ -247,7 +247,6 @@
 			if (freeIndicesHead < poolSize) {
 				const uint32_t freeIndex = freeIndices[freeIndicesHead++];
 				--usedIndices;
-
 				return freeIndex;
 			}
 			return invalidIndex;

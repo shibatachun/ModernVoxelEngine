@@ -326,7 +326,7 @@ VkPipelineStageFlags vulkan::util_determine_pipeline_stage_flags(VkAccessFlags a
             flags |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
             // TODO(marco): check RT extension is present/enabled
-            flags |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
+            //flags |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
         }
 
         if ((access_flags & VK_ACCESS_INPUT_ATTACHMENT_READ_BIT) != 0)

@@ -33,7 +33,7 @@ namespace vulkan {
 	}; // struct GpuDescriptorPoolCreation
 	class Instance final {
 	public:
-		VULKAN_NON_COPIABLE(Instance);
+		NON_COPIABLE(Instance);
 		Instance(GLFWwindow* window);
 		~Instance();
 		GLFWwindow* getWindow() const;
@@ -67,7 +67,7 @@ namespace vulkan {
 
 	class Surface final {
 	public:
-		VULKAN_NON_COPIABLE(Surface)
+		NON_COPIABLE(Surface)
 		explicit Surface(const Instance& instance);
 		~Surface();
 		const class Instance& getInstance() const {
@@ -80,7 +80,7 @@ namespace vulkan {
 
 	class DebugUtilsMessenger final {
 	public:
-		VULKAN_NON_COPIABLE(DebugUtilsMessenger)
+		NON_COPIABLE(DebugUtilsMessenger)
 		DebugUtilsMessenger(const Instance& instance, VkDebugUtilsMessageSeverityFlagBitsEXT threshold);
 		~DebugUtilsMessenger();
 
@@ -95,7 +95,7 @@ namespace vulkan {
 	class DebugUtils final {
 	public:
 
-		VULKAN_NON_COPIABLE(DebugUtils)
+		NON_COPIABLE(DebugUtils)
 
 			explicit DebugUtils(VkInstance instance);
 		~DebugUtils() = default;
@@ -146,7 +146,7 @@ namespace vulkan {
 
 	class Device final {
 	public:
-		VULKAN_NON_COPIABLE(Device);
+		NON_COPIABLE(Device);
 		Device(VkPhysicalDevice device,const Surface&, const std::vector<const char*>& requiredExtension, const void* nextDeviceFeatures);
 		~Device();
 
@@ -214,7 +214,7 @@ namespace vulkan {
 
 	class CommandPoolManager final {
 	public:
-		VULKAN_NON_COPIABLE(CommandPoolManager)
+		NON_COPIABLE(CommandPoolManager)
 		CommandPoolManager(const Device& device);
 		~CommandPoolManager();
 		void CreateCommandPool(QueueFamily);
@@ -294,7 +294,7 @@ namespace vulkan {
 	class SwapChain final {
 	
 	public:
-		VULKAN_NON_COPIABLE(SwapChain)
+		NON_COPIABLE(SwapChain)
 			SwapChain(const Device& device, BufferManager& buffermanager,VkPresentModeKHR presentationMode);
 		const VkExtent2D GetSwapchainExtent() const { return _extent; };
 		const VkFormat GetSwaphchainImageFormat() const { return _colorFormat; };
@@ -348,7 +348,7 @@ namespace vulkan {
 	class RenderPass final {
 	public:
 
-		VULKAN_NON_COPIABLE(RenderPass)
+		NON_COPIABLE(RenderPass)
 		RenderPass(const SwapChain& swapchain);
 		~RenderPass();
 		const VkRenderPass GetRenderPass() const { return _renderPass; }
@@ -363,7 +363,7 @@ namespace vulkan {
 	class GraphicPipelineManager final {
 	
 	public:
-		VULKAN_NON_COPIABLE(GraphicPipelineManager)
+		NON_COPIABLE(GraphicPipelineManager)
 		GraphicPipelineManager(
 			const std::unordered_map<std::string, asset::shader>& shaders, 
 			VkDevice device,
@@ -396,7 +396,7 @@ namespace vulkan {
 
 	class DescriptorLayoutManager final {
 	public:
-		VULKAN_NON_COPIABLE(DescriptorLayoutManager)
+		NON_COPIABLE(DescriptorLayoutManager)
 		DescriptorLayoutManager(const Device& deivce);
 		VkDescriptorSetLayout GetDescriptorSetLayout(LayoutConfig config) { return _LayoutCache[config]; };
 		~DescriptorLayoutManager();
@@ -408,7 +408,7 @@ namespace vulkan {
 
 	class DescriptorPoolManager final {
 	public:
-		VULKAN_NON_COPIABLE(DescriptorPoolManager)
+		NON_COPIABLE(DescriptorPoolManager)
 		DescriptorPoolManager(const Device& deivce);
 		~DescriptorPoolManager();
 		void CreateGlobalDescriptorPool();

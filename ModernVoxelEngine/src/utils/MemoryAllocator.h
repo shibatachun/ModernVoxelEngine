@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "../../external/StackWalker.h"
-#include "../../external/tlsf.h"
+#include "StackWalker.h"
+#include "src/CStyleExternal/tlsf.h"
 namespace memory {
     typedef const char* cstring;
     struct MemoryServiceConfiguration {

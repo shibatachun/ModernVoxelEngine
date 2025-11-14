@@ -63,6 +63,7 @@ void asset::ModelManager::loadImage(std::string filename, std::string path, bool
 		image.mipLevels = kt->numLevels;
 		image.subresource.resize(image.mipLevels);
 		image.pixel = ktxTexture_GetData(kt);
+		
 		image.size = ktxTexture_GetDataSize(kt);
 		image.isKtx = true;
 		image.name = filename;
@@ -409,6 +410,7 @@ void asset::ModelManager::loadImage_test(tinygltf::Model& gltfModel, ModelData& 
 		texture_image.mipLevels = ktxTexture->numLevels;
 
 		texture_image.pixel = ktxTexture_GetData(ktxTexture);
+		
 		texture_image.size = ktxTexture_GetDataSize(ktxTexture);
 		texture_image.format = FromVk(ktxTexture_GetVkFormat(ktxTexture));
 		texture_image.subresource.resize(texture_image.mipLevels);

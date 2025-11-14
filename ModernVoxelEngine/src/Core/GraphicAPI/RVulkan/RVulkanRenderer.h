@@ -1,6 +1,6 @@
 #pragma once
 #include "VulkanRHI.h"
-#include "../../../../external/enkiTS/TaskScheduler.h"
+#include "enkiTS/TaskScheduler.h"
 namespace rvulkan {
 	//core				
 	void				init();

@@ -373,16 +373,35 @@ namespace vulkan {
 
 	TextureHandle VulkanGraphicResourceManager::CreateTextureViewResource(const TextureViewCreation& creation)
 	{
-		return TextureHandle();
+		uint32_t resource_index = _textures.obtain_resouce();
+		TextureHandle handle = { resource_index };
+		if (resource_index == invalidIndex) {
+			return handle;
+		}
+		VulkanTexture* parent_texture = AccessTexture(creation._parent_texture);
+		VulkanTexture* texture_view = AccessTexture(handle);
+		memcpy(texture_view, parent_texture, sizeof(VulkanTexture));
+		texture_view->parent_txture = creation._parent_texture;
+		texture_view->handle = handle;
+		texture_view->array_base_layer = creation._sub_resource.array_base_layer;
+		texture_view->mip_base_level = creation._sub_resource.mip_base_level;
+		
+		vulkan_create_texture_view(*this, creation, texture_view);
+		return handle;
+
+		
+		
+	}
+	SamplerHandle VulkanGraphicResourceManager::CreateSampler(const SamplerCreation& creation)
+	{
+		SamplerHandle handle = { _samplers.obtain_resouce() };
+		return SamplerHandle();
 	}
 	PipelineHandle VulkanGraphicResourceManager::CreatePipeline(const PipelineCreation& creation, const char* cache_path)
 	{
 		return PipelineHandle();
 	}
-	SamplerHandle VulkanGraphicResourceManager::CreateSampler(const SamplerCreation& creation)
-	{
-		return SamplerHandle();
-	}
+
 	DescriptorSetLayoutHandle VulkanGraphicResourceManager::CreateDescriptorSetLayout(const DescriptorSetLayoutCreation& creation)
 	{
 		return DescriptorSetLayoutHandle();

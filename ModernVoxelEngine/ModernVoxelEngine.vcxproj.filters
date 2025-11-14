@@ -33,10 +33,10 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX12Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3DClasses.cpp">
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3D12Classes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp">
@@ -102,60 +102,6 @@
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="external\enkiTS\TaskScheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\allocator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\clusterizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\indexcodec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\indexgenerator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\overdrawanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\overdrawoptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\simplifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\spatialorder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\stripifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vcacheanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vcacheoptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vertexcodec.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vertexfilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vfetchanalyzer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\meshoptimizer\vfetchoptimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\StackWalker.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="external\tlsf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -175,6 +121,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ResourcesManager\SpvCrossComplier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CStyleExternal\tlsf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -206,13 +155,13 @@
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.h">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX12Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DClasses.h">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3D12Classes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DCommonUtils.hpp">
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3D12Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ResourcesManager\AssetManager.h">
@@ -308,9 +257,6 @@
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="external\cglm\call\clipspace\ortho_lh_no.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\cglm\call\clipspace\ortho_lh_zo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -348,9 +294,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\call\clipspace\view_rh_zo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\call\affine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\call\affine2d.h">
@@ -413,9 +356,6 @@
     <ClInclude Include="external\cglm\call\vec4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="external\cglm\clipspace\ortho_lh_no.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\cglm\clipspace\ortho_lh_zo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -464,13 +404,7 @@
     <ClInclude Include="external\cglm\clipspace\view_rh_zo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="external\cglm\simd\avx\affine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\cglm\simd\avx\mat4.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\simd\neon\affine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\simd\neon\mat2.h">
@@ -480,9 +414,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\simd\neon\quat.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\simd\sse2\affine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\simd\sse2\mat2.h">
@@ -497,16 +428,10 @@
     <ClInclude Include="external\cglm\simd\sse2\quat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="external\cglm\simd\arm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\cglm\simd\intrin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\simd\x86.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_no.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_zo.h">
@@ -540,9 +465,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\struct\clipspace\view_rh_zo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\struct\affine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\struct\affine2d.h">
@@ -606,9 +528,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\struct\vec4-ext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\cglm\affine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\cglm\affine2d.h">
@@ -713,16 +632,10 @@
     <ClInclude Include="external\cglm\version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="external\enkiTS\LockLessMultiReadPipe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\enkiTS\TaskScheduler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\meshoptimizer\meshoptimizer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\StackWalker.h">
@@ -765,6 +678,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ResourcesManager\SpvCrossComplier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CStyleExternal\tlsf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

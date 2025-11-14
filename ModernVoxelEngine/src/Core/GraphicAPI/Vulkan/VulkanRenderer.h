@@ -1,6 +1,6 @@
 #pragma once
-#include "../IRenderer.h"
-#include "../../../ResourcesManager/AssetManager.h"
+#include "src/Core/GraphicAPI/IRenderer.h"
+#include "src/ResourcesManager/AssetManager.h"
 #include "VulkanGraphicResourceManager.h"
 
 
@@ -10,11 +10,11 @@ namespace vulkan
 	class VulkanRenderer : public IRenderer
 	{
 	public:
-		VULKAN_NON_COPIABLE(VulkanRenderer)
+		NON_COPIABLE(VulkanRenderer)
 		VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentMode,asset::AssetManager& assetManager);
-		bool Init() override;
-		void DrawFrame() override;
-		void Cleanup() override;
+		virtual bool Init() override final;
+		virtual void DrawFrame() override final;
+		virtual void Cleanup() override final;
 		API getAPI() const override { return API::VULKAN; }
 		
 	public:

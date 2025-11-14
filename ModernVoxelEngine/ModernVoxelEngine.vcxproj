@@ -109,13 +109,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_DISABLE_DEPRECATE_IS_POD;KTX_FEATURE_STATIC_LIBRARY=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)dep\Vulkan\Include;$(SolutionDir)dep\ktx\include;$(SolutionDir)dep\ktx\other_include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\ktx\include;$(SolutionDir)external\ktx\other_include;$(ProjectDir);$(SolutionDir)external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)dep\ktx\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)external\ktx\lib;$(SolutionDir)external\CompliedLib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ThirdPartyStaticLib.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,6 +126,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,28 +137,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\CStyleExternal\tlsf.c" />
     <ClCompile Include="src\ResourcesManager\SpvCrossComplier.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHICommandBuffer.cpp" />
     <ClCompile Include="src\utils\FlatHashMap.cpp" />
     <ClCompile Include="src\utils\Array.cpp" />
-    <ClCompile Include="external\enkiTS\TaskScheduler.cpp" />
-    <ClCompile Include="external\meshoptimizer\allocator.cpp" />
-    <ClCompile Include="external\meshoptimizer\clusterizer.cpp" />
-    <ClCompile Include="external\meshoptimizer\indexcodec.cpp" />
-    <ClCompile Include="external\meshoptimizer\indexgenerator.cpp" />
-    <ClCompile Include="external\meshoptimizer\overdrawanalyzer.cpp" />
-    <ClCompile Include="external\meshoptimizer\overdrawoptimizer.cpp" />
-    <ClCompile Include="external\meshoptimizer\simplifier.cpp" />
-    <ClCompile Include="external\meshoptimizer\spatialorder.cpp" />
-    <ClCompile Include="external\meshoptimizer\stripifier.cpp" />
-    <ClCompile Include="external\meshoptimizer\vcacheanalyzer.cpp" />
-    <ClCompile Include="external\meshoptimizer\vcacheoptimizer.cpp" />
-    <ClCompile Include="external\meshoptimizer\vertexcodec.cpp" />
-    <ClCompile Include="external\meshoptimizer\vertexfilter.cpp" />
-    <ClCompile Include="external\meshoptimizer\vfetchanalyzer.cpp" />
-    <ClCompile Include="external\meshoptimizer\vfetchoptimizer.cpp" />
-    <ClCompile Include="external\StackWalker.cpp" />
-    <ClCompile Include="external\tlsf.c" />
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\RVulkanRenderer.cpp" />
     <ClCompile Include="src\utils\MemoryAllocator.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHIGraphicResourceManager.cpp" />
@@ -174,8 +159,8 @@
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\ResourcesManager\Shaders.cpp" />
     <ClCompile Include="src\ResourcesManager\AssetManager.cpp" />
-    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3DClasses.cpp" />
-    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\D3D12Classes.cpp" />
+    <ClCompile Include="src\Core\GraphicAPI\DirectX\DirectX12Renderer.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RenderFactory.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -191,23 +176,21 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CStyleExternal\tlsf.h" />
     <ClInclude Include="src\ResourcesManager\SpvCrossComplier.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHICommandBuffer.h" />
     <ClInclude Include="src\utils\FlatHashMap.h" />
     <ClInclude Include="src\utils\Array.h" />
     <ClInclude Include="external\cglm\affine-mat.h" />
-    <ClInclude Include="external\cglm\affine.h" />
     <ClInclude Include="external\cglm\affine2d.h" />
     <ClInclude Include="external\cglm\applesimd.h" />
     <ClInclude Include="external\cglm\bezier.h" />
     <ClInclude Include="external\cglm\box.h" />
     <ClInclude Include="external\cglm\call.h" />
-    <ClInclude Include="external\cglm\call\affine.h" />
     <ClInclude Include="external\cglm\call\affine2d.h" />
     <ClInclude Include="external\cglm\call\bezier.h" />
     <ClInclude Include="external\cglm\call\box.h" />
     <ClInclude Include="external\cglm\call\cam.h" />
-    <ClInclude Include="external\cglm\call\clipspace\ortho_lh_no.h" />
     <ClInclude Include="external\cglm\call\clipspace\ortho_lh_zo.h" />
     <ClInclude Include="external\cglm\call\clipspace\ortho_rh_no.h" />
     <ClInclude Include="external\cglm\call\clipspace\ortho_rh_zo.h" />
@@ -239,7 +222,6 @@
     <ClInclude Include="external\cglm\call\vec4.h" />
     <ClInclude Include="external\cglm\cam.h" />
     <ClInclude Include="external\cglm\cglm.h" />
-    <ClInclude Include="external\cglm\clipspace\ortho_lh_no.h" />
     <ClInclude Include="external\cglm\clipspace\ortho_lh_zo.h" />
     <ClInclude Include="external\cglm\clipspace\ortho_rh_no.h" />
     <ClInclude Include="external\cglm\clipspace\ortho_rh_zo.h" />
@@ -270,15 +252,11 @@
     <ClInclude Include="external\cglm\project.h" />
     <ClInclude Include="external\cglm\quat.h" />
     <ClInclude Include="external\cglm\ray.h" />
-    <ClInclude Include="external\cglm\simd\arm.h" />
-    <ClInclude Include="external\cglm\simd\avx\affine.h" />
     <ClInclude Include="external\cglm\simd\avx\mat4.h" />
     <ClInclude Include="external\cglm\simd\intrin.h" />
-    <ClInclude Include="external\cglm\simd\neon\affine.h" />
     <ClInclude Include="external\cglm\simd\neon\mat2.h" />
     <ClInclude Include="external\cglm\simd\neon\mat4.h" />
     <ClInclude Include="external\cglm\simd\neon\quat.h" />
-    <ClInclude Include="external\cglm\simd\sse2\affine.h" />
     <ClInclude Include="external\cglm\simd\sse2\mat2.h" />
     <ClInclude Include="external\cglm\simd\sse2\mat3.h" />
     <ClInclude Include="external\cglm\simd\sse2\mat4.h" />
@@ -286,11 +264,9 @@
     <ClInclude Include="external\cglm\simd\x86.h" />
     <ClInclude Include="external\cglm\sphere.h" />
     <ClInclude Include="external\cglm\struct.h" />
-    <ClInclude Include="external\cglm\struct\affine.h" />
     <ClInclude Include="external\cglm\struct\affine2d.h" />
     <ClInclude Include="external\cglm\struct\box.h" />
     <ClInclude Include="external\cglm\struct\cam.h" />
-    <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_no.h" />
     <ClInclude Include="external\cglm\struct\clipspace\ortho_lh_zo.h" />
     <ClInclude Include="external\cglm\struct\clipspace\ortho_rh_no.h" />
     <ClInclude Include="external\cglm\struct\clipspace\ortho_rh_zo.h" />
@@ -330,9 +306,7 @@
     <ClInclude Include="external\cglm\vec4-ext.h" />
     <ClInclude Include="external\cglm\vec4.h" />
     <ClInclude Include="external\cglm\version.h" />
-    <ClInclude Include="external\enkiTS\LockLessMultiReadPipe.h" />
     <ClInclude Include="external\enkiTS\TaskScheduler.h" />
-    <ClInclude Include="external\json.hpp" />
     <ClInclude Include="external\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="external\StackWalker.h" />
     <ClInclude Include="external\stb_image.h" />
@@ -361,9 +335,9 @@
     <ClInclude Include="src\ResourcesManager\Shaders.h" />
     <ClInclude Include="src\ResourcesManager\AssetCommonUtils.h" />
     <ClInclude Include="src\ResourcesManager\AssetManager.h" />
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DClasses.h" />
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3DCommonUtils.hpp" />
-    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX11Renderer.h" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3D12Classes.h" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\D3D12Common.hpp" />
+    <ClInclude Include="src\Core\GraphicAPI\DirectX\DirectX12Renderer.h" />
     <ClInclude Include="src\Core\GraphicAPI\RenderFactory.h" />
     <ClInclude Include="src\Core\GraphicAPI\IRenderer.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommon.h" />
