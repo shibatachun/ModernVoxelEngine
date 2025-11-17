@@ -20,6 +20,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	VkResult result = vkAcquireNextImageKHR(_devices->Handle(), _swapchain->Handle(), UINT64_MAX, _imageAvailableSemaphores[_currentFrame], VK_NULL_HANDLE, &imageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		RecreateSwapChain();
+		BuildCommandBuffer();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR){
@@ -37,7 +38,7 @@ void vulkan::VulkanRenderer::DrawFrame()
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &_commandBuffers[_currentFrame];
+	submitInfo.pCommandBuffers = &_commandBuffers[imageIndex];
 	
 	
 	VkSemaphore signalSemaphores[] = { _renderFinishedSemaphores[_currentFrame]};
@@ -61,7 +62,9 @@ void vulkan::VulkanRenderer::DrawFrame()
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || _framebufferResized){
 		_framebufferResized = false;
 		RecreateSwapChain();
+		BuildCommandBuffer();
 	}
+
 	else if (result != VK_SUCCESS){
 		throw std::runtime_error("failed to present swap chain Image!");
 	}
@@ -383,6 +386,8 @@ void vulkan::VulkanRenderer::RecreateSwapChain()
 	_swapchain->CreateSwapChain(_presentMode);
 	_swapchain->CreateDepthResources();
 	_swapchain->CreateFrameBuffer(_renderPass->GetRenderPass());
+	BuildCommandBuffer();
+	_devices->WaitIdle();
 	
 }
 

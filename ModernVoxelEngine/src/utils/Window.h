@@ -21,6 +21,7 @@ struct Window
 	void RegisterOSMessagesCallback(OsMessagesCallBack callback, void* user_data_);
 	void UnRegisterOsMessagesCallback(OsMessagesCallBack callback);
 	void CenterMouse(bool dragging);
+	void UpdateFPS();
 
 	utils::vector<OsMessagesCallBack> os_messages_callbacks;
 	utils::vector<void*> os_messages_callbacks_data;
@@ -30,6 +31,12 @@ struct Window
 	bool minimized = false;
 	uint32_t width = 0;
 	uint32_t height = 0;
+
+	double fps_last_time = 0.0;
+	double fps_time_accum = 0.0;
+	uint32_t fps_frame_counter = 0;
+	float fps = 0.0f;
+
 	float dispaly_refresh = 1.0f / 60.0f;
 
 };

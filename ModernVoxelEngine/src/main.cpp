@@ -6,6 +6,7 @@ static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	app->Resize();
 }
 
+
 void TitleFps(std::string windowTitle, GLFWwindow* pWindow)
 {
 	static double time0 = glfwGetTime();
@@ -138,13 +139,17 @@ int main (int argc, char* argv[]) {
 		
 
 		auto tStart = std::chrono::high_resolution_clock::now();
+		if (window.resized) {
+			app.Resize();
+			window.resized = false;
+		}
 		app.Draw();
 		frameCounter++;
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = (float)tDiff / 1000.0f;
 		gCamera.update(frameTimer);
-
+		window.UpdateFPS();
 		//TitleFps("lihai", window);
 	}
 	app.Finish();

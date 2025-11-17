@@ -75,7 +75,89 @@ void Window::HandleOSMessages()
 		case SDL_QUIT:
 		{
 			requested_exit = true;
+			break;
 		}
+        case SDL_WINDOWEVENT:
+        {
+            switch (event.window.event) {
+            case SDL_WINDOWEVENT_SIZE_CHANGED:
+            case SDL_WINDOWEVENT_RESIZED:
+            {
+         
+        
+                {
+                    uint32_t new_width = (uint32_t)(event.window.data1);
+                    uint32_t new_height = (uint32_t)(event.window.data2);
+
+                    // Update only if needed.
+                    if (new_width != width || new_height != height) {
+                        resized = true;
+                        width = new_width;
+                        height = new_height;
+
+                        std::cout << "Window resized" << std::endl;
+                    }
+                }
+
+                break;
+            }
+
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+            {
+                //rprint("Focus Gained\n");
+                break;
+            }
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+            {
+                //rprint("Focus Lost\n");
+                break;
+            }
+            case SDL_WINDOWEVENT_MAXIMIZED:
+            {
+                //rprint("Maximized\n");
+                minimized = false;
+                break;
+            }
+            case SDL_WINDOWEVENT_MINIMIZED:
+            {
+                //rprint("Minimized\n");
+                minimized = true;
+                break;
+            }
+            case SDL_WINDOWEVENT_RESTORED:
+            {
+                //rprint("Restored\n");
+                minimized = false;
+                break;
+            }
+            case SDL_WINDOWEVENT_TAKE_FOCUS:
+            {
+                //rprint("Take Focus\n");
+                break;
+            }
+            case SDL_WINDOWEVENT_EXPOSED:
+            {
+                //rprint("Exposed\n");
+                break;
+            }
+
+            case SDL_WINDOWEVENT_CLOSE:
+            {
+                requested_exit = true;
+                //rprint("Window close event received.\n");
+                break;
+            }
+            default:
+            {
+                //display_refresh = sdl_get_monitor_refresh();
+                break;
+            }
+            }
+            
+            break;
+        }
+
+		
 		default:
 			break;
 		}
@@ -96,4 +178,24 @@ void Window::UnRegisterOsMessagesCallback(OsMessagesCallBack callback)
 
 void Window::CenterMouse(bool dragging)
 {
+}
+
+void Window::UpdateFPS()
+{
+    double current = SDL_GetPerformanceCounter() / (double)SDL_GetPerformanceFrequency();
+    fps_frame_counter++;
+
+    double delta = current - fps_last_time;
+    if (delta >= 1.0) // update every second
+    {
+        fps = (float)(fps_frame_counter / delta);
+
+        char title[256];
+        snprintf(title, sizeof(title), "FPS: %.1f", fps);
+
+        SDL_SetWindowTitle((SDL_Window*)platform_handle, title);
+
+        fps_last_time = current;
+        fps_frame_counter = 0;
+    }
 }
