@@ -341,6 +341,24 @@ namespace vulkan {
         bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
+	inline VkPresentModeKHR ToVkPresentMode(PRESENTMODE mode) {
+		switch (mode){
+		   case PRESENTMODE::VSYNC:
+			   return VK_PRESENT_MODE_FIFO_KHR;                // Guaranteed supported
+
+		   case PRESENTMODE::MAILBOX:
+			   return VK_PRESENT_MODE_MAILBOX_KHR;             // Ultra smooth, low latency
+
+		   case PRESENTMODE::IMMEDIATE:
+			   return VK_PRESENT_MODE_IMMEDIATE_KHR;           // No vsync, can tear
+
+		   case PRESENTMODE::ADAPTIVE:
+			   return VK_PRESENT_MODE_FIFO_RELAXED_KHR;        // Adaptive VSync
+
+		   default:
+			   return VK_PRESENT_MODE_FIFO_KHR;
+	}
+	}
 
 	VkVertexInputBindingDescription inputBindingDescription(uint32_t binding);
 	

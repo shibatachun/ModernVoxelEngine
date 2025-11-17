@@ -4,7 +4,7 @@ class ModernEngineApplication : public Application, public Singleton<ModernEngin
 {
 	friend class Singleton<ModernEngineApplication>;
 private:
-	ModernEngineApplication(GLFWwindow* window, API api) : Application(window,api) {};
+	ModernEngineApplication(void* window, API api) : Application(window,api) {};
 public:
 	void Init() override;
 	void InitRendererBackend(API api) override;

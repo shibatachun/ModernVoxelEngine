@@ -12,9 +12,11 @@ void ModernEngineApplication::InitRendererBackend(API api)
 	switch (api)
 	{
 	case API::VULKAN:
-		_render = CreateRenderer(API::VULKAN, _window, VK_PRESENT_MODE_IMMEDIATE_KHR, *_assetManager);
+		_render = CreateRenderer(API::VULKAN, _window, PRESENTMODE::IMMEDIATE, *_assetManager);
 	case API::RVULKAN:
 		rvulkan::init();
+	case API::DIRECTX:
+		//_render = CreateRenderer(API::DIRECTX,_window,)
 
 	default:
 		break;

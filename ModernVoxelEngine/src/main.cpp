@@ -107,20 +107,23 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 }
 
-int main() {
+int main (int argc, char* argv[]) {
 	uint32_t width = 1920;
 	uint32_t height = 1080;
-	GLFWwindow* window = initWindow("GLFW example", width, height);
+	//GLFWwindow* window = initWindow("GLFW example", width, height);
 	API api = API::VULKAN;
-	//auto& app = Application::getInstance(window);
-	auto& app = ModernEngineApplication::GetInstance(window,api);
+	WindowConfiguration wconf{ 1280, 800, api, "Window creation" };
+	Window window;
+	window.Init(&wconf);
+
+	auto& app = ModernEngineApplication::GetInstance(window.platform_handle,api);
 	app.Init();
 	app.SetWindowUserPointer();
-	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-	glfwSetKeyCallback(window, keyCallback);
-	glfwSetCursorPosCallback(window, mouseMoveCallback);
-	glfwSetMouseButtonCallback(window, mouseButtonCallback);
-	glfwSetScrollCallback(window, scrollCallback);
+	//glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+	//glfwSetKeyCallback(window, keyCallback);
+	//glfwSetCursorPosCallback(window, mouseMoveCallback);
+	//glfwSetMouseButtonCallback(window, mouseButtonCallback);
+	//glfwSetScrollCallback(window, scrollCallback);
 	
 	gCamera.type = Camera::CameraType::firstperson;
 	gCamera.flipY = false;
@@ -129,9 +132,9 @@ int main() {
 	gCamera.setPerspective(60.0f, (float)width / (float)height, 0.1f, 256.0f);
 	float frameCounter = 0.0f;
 	float frameTimer = 0.0f;
-	while (!glfwWindowShouldClose(window))
+	while (!window.requested_exit)
 	{
-		glfwPollEvents();
+		window.HandleOSMessages();
 		
 
 		auto tStart = std::chrono::high_resolution_clock::now();
@@ -142,11 +145,12 @@ int main() {
 		frameTimer = (float)tDiff / 1000.0f;
 		gCamera.update(frameTimer);
 
-		TitleFps("lihai", window);
+		//TitleFps("lihai", window);
 	}
 	app.Finish();
-	glfwDestroyWindow(window);
-	glfwTerminate();
+	//glfwDestroyWindow(window);
+	//glfwTerminate();
+	window.Shutdown();
 	return 0;
 }
 

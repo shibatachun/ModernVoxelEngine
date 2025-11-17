@@ -5,6 +5,7 @@
 
 
 
+
 namespace vulkan {
 
 	static VulkanCommandBufferManager m_command_buffer;
@@ -256,9 +257,13 @@ namespace vulkan {
 		m_command_buffer.init(this,1);
 	}
 
+	
 	void vulkan::VulkanGraphicResourceManager::Shutdown() {
-
+	
+		
 	}
+
+	
 
 	void VulkanGraphicResourceManager::UtilAddImageBarrier(VkCommandBuffer command_buffer_, VkImage image_, ResourceState old_state_, ResourceState new_state_, uint32_t base_mip_level_, uint32_t mip_count_, bool is_depth_)
 	{

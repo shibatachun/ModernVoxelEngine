@@ -1,13 +1,5 @@
 #pragma once
-
-enum class API
-{
-	VULKAN,
-	OPENGL,
-	DIRECTX,
-	RVULKAN
-};
-
+#include "src/utils/CommonUtileTemplate.h"
 class IRenderer {
 public:
 	

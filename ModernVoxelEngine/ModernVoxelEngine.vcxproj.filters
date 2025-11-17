@@ -126,6 +126,9 @@
     <ClCompile Include="src\CStyleExternal\tlsf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\utils\GLFWHelper.h">
@@ -681,6 +684,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\CStyleExternal\tlsf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

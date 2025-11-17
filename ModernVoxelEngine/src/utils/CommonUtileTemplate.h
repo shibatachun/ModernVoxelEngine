@@ -13,7 +13,22 @@
 #include <unordered_map>
 #include <filesystem>
 
+enum class API
+{
+    VULKAN,
+    OPENGL,
+    DIRECTX,
+    RVULKAN
+};
+
+enum class PRESENTMODE {
+    VSYNC,
+    MAILBOX,
+    IMMEDIATE,
+    ADAPTIVE
+};
 namespace utils {
+
     template<typename Map, typename Key>
     const typename Map::mapped_type& findInMap(
         const Map& map, const Key& key, typename Map::mapped_type defaultValue = {})

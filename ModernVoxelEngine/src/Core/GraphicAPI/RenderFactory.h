@@ -5,5 +5,5 @@
 #include "Vulkan/VulkanRenderer.h"
 #include "RVulkan/RVulkanRenderer.h"
 
-std::unique_ptr<IRenderer> CreateRenderer(API api, GLFWwindow* window, VkPresentModeKHR presentMode, asset::AssetManager& assetManager );
+std::unique_ptr<IRenderer> CreateRenderer(API api, void* window, PRESENTMODE presentMode, asset::AssetManager& assetManager );
 

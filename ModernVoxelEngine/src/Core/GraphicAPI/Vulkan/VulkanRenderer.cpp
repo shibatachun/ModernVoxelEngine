@@ -1,5 +1,7 @@
 #include "VulkanRenderer.h"
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
 ///////////////////////////////////////////////////////////////Common Renderer Function////////////////////////////////////////////////////////////////////
 bool vulkan::VulkanRenderer::Init()
 {
@@ -104,6 +106,7 @@ void vulkan::VulkanRenderer::Cleanup()
 //////////////////////////////////////////////////////////////Vulkan Exclusive/////////////////////////////////////////////////////////////////////////////
 bool vulkan::VulkanRenderer::InitVulkan()
 {
+	
 	_instance.reset(new vulkan::Instance(_window));
 	_surface.reset(new vulkan::Surface(*_instance));
 	_debugMessenger.reset(new vulkan::DebugUtilsMessenger(*_instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT));
@@ -367,10 +370,12 @@ void vulkan::VulkanRenderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, 
 void vulkan::VulkanRenderer::RecreateSwapChain()
 {
 	int width = 0, height = 0;
-	glfwGetFramebufferSize(_window, &width, &height);
+	SDL_Window* sdl_window = (SDL_Window*)_window;
+	SDL_Vulkan_GetDrawableSize(sdl_window, &width, &height);
+	SDL_Event event;
 	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(_window, &width, &height);
-		glfwWaitEvents();
+		SDL_WaitEvent(&event);
+		SDL_Vulkan_GetDrawableSize(sdl_window, &width, &height);
 	}
 
 	_devices->WaitIdle();
@@ -485,7 +490,8 @@ void vulkan::VulkanRenderer::UpdateUniformBuffer(uint32_t currentImage)
 bool vulkan::VulkanRenderer::IsMinimized() const
 {
 	int width, height;
-	glfwGetFramebufferSize(_window, &width, &height);
+	SDL_Window* sdl_window = (SDL_Window*)_window;
+	SDL_Vulkan_GetDrawableSize(sdl_window, &width, &height);
 
 	return width==0 && height==0;
 }
@@ -522,7 +528,7 @@ void vulkan::VulkanRenderer::BuildCommandBuffer()
 
 
 //Constructor
-vulkan::VulkanRenderer::VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(presentmode), _assetManager(assetManager)
+vulkan::VulkanRenderer::VulkanRenderer(void* window, PRESENTMODE presentmode, asset::AssetManager& assetManager) :_window(window), _presentMode(ToVkPresentMode(presentmode)), _assetManager(assetManager)
 {
 	if (!Init())
 	{

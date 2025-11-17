@@ -11,7 +11,7 @@ namespace vulkan
 	{
 	public:
 		NON_COPIABLE(VulkanRenderer)
-		VulkanRenderer(GLFWwindow* window, VkPresentModeKHR presentMode,asset::AssetManager& assetManager);
+		VulkanRenderer(void* window, PRESENTMODE presentmode,asset::AssetManager& assetManager);
 		virtual bool Init() override final;
 		virtual void DrawFrame() override final;
 		virtual void Cleanup() override final;
@@ -23,7 +23,7 @@ namespace vulkan
 	
 	private:
 		const VkPresentModeKHR									_presentMode;
-		GLFWwindow*												_window;
+		void*													_window;
 		asset::AssetManager&									_assetManager;
 		
 		Camera													_camera;

@@ -1,15 +1,18 @@
 #include "VulkanClasses.h"
 
 
-vulkan::Instance::Instance(GLFWwindow* window) : _window(window)
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
+vulkan::Instance::Instance(void* window) : _window(window)
 {
 	
 	CheckVulkanMinimumVersion(_vulkanVersion);
 
-	uint32_t glfwExtensionCount = 0;
-	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-	
-	auto extensions = std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	uint32_t sdlExtensionCount = 0;
+	SDL_Vulkan_GetInstanceExtensions((SDL_Window*)_window, &sdlExtensionCount, nullptr);
+
+	std::vector<const char*> extensions(sdlExtensionCount);
+	SDL_Vulkan_GetInstanceExtensions((SDL_Window*)_window, &sdlExtensionCount, extensions.data());
 
 #ifdef NDEBUG
 	const bool enableValidationLayers = false;
@@ -56,7 +59,7 @@ vulkan::Instance::~Instance()
 	}
 }
 
-GLFWwindow* vulkan::Instance::getWindow() const
+void* vulkan::Instance::getWindow() const
 {
 	return _window;
 }
@@ -127,8 +130,11 @@ void vulkan::Instance::CheckValidationLayerSupport(const std::vector<const char*
 
 vulkan::Surface::Surface(const Instance& instance) : instance_(instance)
 {
-	instance_.getWindow();
-	Check(glfwCreateWindowSurface(instance_.Handle(), instance_.getWindow(), nullptr, &surface_), "create window surface");
+	
+	SDL_Window* window = (SDL_Window*)instance_.getWindow();
+	if (SDL_Vulkan_CreateSurface(window, instance_.Handle(), &surface_) == SDL_FALSE) {
+		throw std::runtime_error(SDL_GetError());
+	}
 }
 
 vulkan::Surface::~Surface()
@@ -816,14 +822,15 @@ VkPresentModeKHR vulkan::SwapChain::ChooseSwapPresentMode(const std::vector<VkPr
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D vulkan::SwapChain::ChooseSwapExtent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D vulkan::SwapChain::ChooseSwapExtent(void* window, const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 	{
 		return capabilities.currentExtent;
 	}
 	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
+	SDL_Window* sdl_window = (SDL_Window*)window;
+	SDL_GetWindowSize(sdl_window, &width, &height);
 	VkExtent2D actualExtent = VkExtent2D{ static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 	actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 	actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));

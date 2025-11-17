@@ -174,6 +174,7 @@
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.cpp" />
+    <ClCompile Include="src\utils\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CStyleExternal\tlsf.h" />
@@ -361,6 +362,7 @@
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanGraphicResourceManager.h" />
     <ClInclude Include="src\Core\GraphicAPI\RVulkan\VulkanRHI.h" />
     <ClInclude Include="src\Core\GraphicAPI\Vulkan\VulkanCommandBuffer.h" />
+    <ClInclude Include="src\utils\Window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\models\generator_LP.fbx" />

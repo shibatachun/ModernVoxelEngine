@@ -34,15 +34,15 @@ namespace vulkan {
 	class Instance final {
 	public:
 		NON_COPIABLE(Instance);
-		Instance(GLFWwindow* window);
+		Instance(void* window);
 		~Instance();
-		GLFWwindow* getWindow() const;
+		void* getWindow() const;
 
 		const std::vector<const char*>& GetValidationLayers() const { return validationLayers_; }
 		const std::vector<VkPhysicalDevice> PhysicalDevices() const { return physicalDevices_; }
 
 	private:
-		GLFWwindow* _window;
+		void* _window;
 		uint32_t _vulkanVersion = VK_API_VERSION_1_3;
 		std::vector<const char*>					validationLayers_;
 		VULKAN_HANDLE(VkInstance, instance_)
@@ -319,7 +319,7 @@ namespace vulkan {
 		SupportDetails QuerySwapChainSupport(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats);
 		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& presentModes, VkPresentModeKHR presentMode);
-		VkExtent2D ChooseSwapExtent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
+		VkExtent2D ChooseSwapExtent(void* window, const VkSurfaceCapabilitiesKHR& capabilities);
 		uint32_t ChooseImageCount(const VkSurfaceCapabilitiesKHR& capabilities);
 		
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
