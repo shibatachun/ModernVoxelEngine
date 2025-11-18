@@ -137,6 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\utils\Key.cpp" />
+    <ClCompile Include="src\Input\InputSystem.cpp" />
     <ClCompile Include="src\CStyleExternal\tlsf.c" />
     <ClCompile Include="src\ResourcesManager\SpvCrossComplier.cpp" />
     <ClCompile Include="src\Core\GraphicAPI\RHICommandBuffer.cpp" />
@@ -177,6 +179,8 @@
     <ClCompile Include="src\utils\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\utils\Key.h" />
+    <ClInclude Include="src\Input\InputSystem.h" />
     <ClInclude Include="src\CStyleExternal\tlsf.h" />
     <ClInclude Include="src\ResourcesManager\SpvCrossComplier.h" />
     <ClInclude Include="src\Core\GraphicAPI\RHICommandBuffer.h" />

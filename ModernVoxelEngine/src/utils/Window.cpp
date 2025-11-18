@@ -60,6 +60,8 @@ void Window::Init(void* configuration_)
 	// ×ª³ÉÄãµÄ u32
 	width = (uint32_t)window_width;
 	height = (uint32_t)window_height;
+    os_messages_callbacks.reserve(4);
+    os_messages_callbacks_data.reserve(4);
 	dispaly_refresh = sdl_get_monitor_refresh();
 }
 void Window::Shutdown() {
@@ -74,7 +76,9 @@ void Window::HandleOSMessages()
 		{
 		case SDL_QUIT:
 		{
+            
 			requested_exit = true;
+            goto propagate_event;
 			break;
 		}
         case SDL_WINDOWEVENT:
@@ -153,7 +157,7 @@ void Window::HandleOSMessages()
                 break;
             }
             }
-            
+            goto propagate_event;
             break;
         }
 
@@ -161,6 +165,11 @@ void Window::HandleOSMessages()
 		default:
 			break;
 		}
+    propagate_event:
+        for (uint32_t i = 0; i < os_messages_callbacks.size(); i++) {
+            OsMessagesCallBack callback = os_messages_callbacks[i];
+            callback(&event, os_messages_callbacks_data[i]);
+        }
 	}
 }
 
@@ -170,6 +179,8 @@ void Window::SetFullScreen(bool value)
 
 void Window::RegisterOSMessagesCallback(OsMessagesCallBack callback, void* user_data_)
 {
+    os_messages_callbacks.push_back(callback);
+    os_messages_callbacks_data.push_back(user_data_);
 }
 
 void Window::UnRegisterOsMessagesCallback(OsMessagesCallBack callback)

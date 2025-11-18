@@ -108,6 +108,15 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 }
 
+static void input_os_messages_callback(void* os_event, void* user_data) {
+	InputSystem* input = (InputSystem*)user_data;
+	input->OnEvent(os_event);
+}
+static void test_input(InputSystem* input) {
+	if (input->IsKeyDown(KEY_A)) {
+		std::cout << "Press A" << std::endl;
+	}
+}
 int main (int argc, char* argv[]) {
 	uint32_t width = 1920;
 	uint32_t height = 1080;
@@ -117,6 +126,10 @@ int main (int argc, char* argv[]) {
 	Window window;
 	window.Init(&wconf);
 
+	InputSystem input;
+	input.init();
+	input.has_focus = true;
+	window.RegisterOSMessagesCallback(input_os_messages_callback, &input);
 	auto& app = ModernEngineApplication::GetInstance(window.platform_handle,api);
 	app.Init();
 	app.SetWindowUserPointer();
@@ -125,7 +138,7 @@ int main (int argc, char* argv[]) {
 	//glfwSetCursorPosCallback(window, mouseMoveCallback);
 	//glfwSetMouseButtonCallback(window, mouseButtonCallback);
 	//glfwSetScrollCallback(window, scrollCallback);
-	
+
 	gCamera.type = Camera::CameraType::firstperson;
 	gCamera.flipY = false;
 	gCamera.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
@@ -133,10 +146,13 @@ int main (int argc, char* argv[]) {
 	gCamera.setPerspective(60.0f, (float)width / (float)height, 0.1f, 256.0f);
 	float frameCounter = 0.0f;
 	float frameTimer = 0.0f;
+	
 	while (!window.requested_exit)
 	{
 		window.HandleOSMessages();
 		
+		input.NewFrame();
+	
 
 		auto tStart = std::chrono::high_resolution_clock::now();
 		if (window.resized) {
@@ -148,6 +164,8 @@ int main (int argc, char* argv[]) {
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = (float)tDiff / 1000.0f;
+		input.Update(frameTimer);
+		test_input(&input);
 		gCamera.update(frameTimer);
 		window.UpdateFPS();
 		//TitleFps("lihai", window);
