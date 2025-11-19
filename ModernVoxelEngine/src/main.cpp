@@ -113,8 +113,47 @@ static void input_os_messages_callback(void* os_event, void* user_data) {
 	input->OnEvent(os_event);
 }
 static void test_input(InputSystem* input) {
+	float original_speed = gCamera.movementSpeed;
+
+	
 	if (input->IsKeyDown(KEY_A)) {
-		std::cout << "Press A" << std::endl;
+		
+		gCamera.keys.left = true;
+	}
+	else
+	{
+		gCamera.keys.left = false;
+	}
+
+	if (input->IsKeyDown(KEY_D))
+	{
+		gCamera.keys.right = true;
+	}
+	else
+	{
+		gCamera.keys.right = false;
+	}
+
+	if (input->IsKeyDown(KEY_W)) {
+	
+		gCamera.keys.up = true;
+	}
+	else
+	{
+		gCamera.keys.up = false;
+	}
+
+	if (input->IsKeyDown(KEY_S)) {
+		gCamera.keys.down = true;
+	}
+	else
+	{
+		gCamera.keys.down = false;
+	}
+
+	if (input->IsMouseDragging(MOUSE_BUTTONS_RIGHT)) {
+		glm::vec2 delta = glm::vec2((input->previous_mouse_postion.x - input->mouse_position.x), (input->previous_mouse_postion.y-input->mouse_position.y));
+		gCamera.rotate(glm::vec3(delta.y,-delta.x , 0.0f));
 	}
 }
 int main (int argc, char* argv[]) {
@@ -122,7 +161,7 @@ int main (int argc, char* argv[]) {
 	uint32_t height = 1080;
 	//GLFWwindow* window = initWindow("GLFW example", width, height);
 	API api = API::VULKAN;
-	WindowConfiguration wconf{ 1280, 800, api, "Window creation" };
+	WindowConfiguration wconf{ 1920, 1080, api, "Window creation" };
 	Window window;
 	window.Init(&wconf);
 
@@ -164,8 +203,9 @@ int main (int argc, char* argv[]) {
 		auto tEnd = std::chrono::high_resolution_clock::now();
 		auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
 		frameTimer = (float)tDiff / 1000.0f;
-		input.Update(frameTimer);
 		test_input(&input);
+		input.Update(frameTimer);
+		
 		gCamera.update(frameTimer);
 		window.UpdateFPS();
 		//TitleFps("lihai", window);

@@ -34,6 +34,7 @@ enum BindingType : uint8_t {
 struct InputVector2 {
 	float x;
 	float y;
+	
 };
 //empty for game pad future implement
 struct Gamepad {

@@ -145,12 +145,12 @@ bool InputSystem::IsKeyDown(Key key)
 
 bool InputSystem::IsKeyJustPressed(Key key, bool repeat)
 {
-    return false;
+    return Keys[key] && !previous_keys[key] && has_focus;
 }
 
 bool InputSystem::IsKeyJustReleased(Key key)
 {
-    return false;
+    return !Keys[key] && previous_keys[key] && has_focus;
 }
 
 bool InputSystem::IsMouseDown(Mousebuttons button)
