@@ -15,6 +15,8 @@
 
 
 namespace d3d12 {
+    constexpr uint32_t frame_buffer_count{ 3 };
+
     inline std::string ToString(HRESULT hr) {
         char* msgBuf = nullptr;
 
@@ -57,6 +59,18 @@ namespace d3d12 {
 
 #ifdef _DEBUG
 #define NAME_D3D12_OBJECT(obj, name) obj->SetName(name); OutputDebugString(L"::D3D12 Object Created: "); OutputDebugString(name); OutputDebugString(L"\n");
+
+#define NAME_D3D12_OBJECT_INDEXED(obj, n, name)           \
+{                                                         \
+    wchar_t full_name[128];                               \
+    if (swprintf_s(full_name, L"%s[%u]", name, n) > 0) {  \
+        obj->SetName(full_name);                          \
+        OutputDebugString(L"::D3D12 Object Created: ");   \
+        OutputDebugString(full_name);                     \
+        OutputDebugString(L"\n");                         \
+    }                                                     \
+}                                                   
+          
 #else
 #define NAME_D3D12_OBJECT(x, name)
 #endif
