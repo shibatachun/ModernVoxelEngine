@@ -13,10 +13,13 @@ void ModernEngineApplication::InitRendererBackend(API api)
 	{
 	case API::VULKAN:
 		_render = CreateRenderer(API::VULKAN, _window, PRESENTMODE::IMMEDIATE, *_assetManager);
+		break;
 	case API::RVULKAN:
 		rvulkan::init();
+		break;
 	case API::DIRECTX:
-		//_render = CreateRenderer(API::DIRECTX,_window,)
+		_render = CreateRenderer(API::DIRECTX, _window, PRESENTMODE::IMMEDIATE, *_assetManager);
+		break;
 
 	default:
 		break;

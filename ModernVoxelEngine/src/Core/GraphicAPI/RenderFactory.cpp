@@ -9,7 +9,7 @@ std::unique_ptr<IRenderer> CreateRenderer(API api, void* windows, PRESENTMODE pr
 	case API::OPENGL:
 		break;
 	case API::DIRECTX:
-		
+		return std::make_unique<d3d12::DirectX12Renderer>(windows, presentMode, assetManager);
 		break;
 	default:
 		break;

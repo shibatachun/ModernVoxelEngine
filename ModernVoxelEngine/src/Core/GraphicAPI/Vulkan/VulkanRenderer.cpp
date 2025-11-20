@@ -192,7 +192,7 @@ void vulkan::VulkanRenderer::SetSwapChain()
 {
 	while (IsMinimized())
 	{
-		glfwWaitEvents();
+		
 	}
 
 	_swapchain.reset(new vulkan::SwapChain(*_devices,*_bufferManager, _presentMode));

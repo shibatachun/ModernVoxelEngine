@@ -1,12 +1,18 @@
-#include "src/utils/CommonUtileTemplate.h"
+
 #include "src/Core/GraphicAPI/IRenderer.h"
 
 #include <dxgi1_6.h>
 #include <d3d12.h>
+
 #include <wrl.h>
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d12.lib")
+
+#include "src/Core/GraphicAPI/RHIResource.h"
+#include "src/Core/GraphicAPI/RHIGraphicResourceManager.h"
+#include "src/Core/GraphicAPI/RHICommandBuffer.h"
+
 
 namespace d3d12 {
     inline std::string ToString(HRESULT hr) {
@@ -35,5 +41,23 @@ namespace d3d12 {
                 << " failed: " << ToString(hr) << "\n";
             throw std::runtime_error("D3D12: " + operation + " (" + ToString(hr) + ")");
         }
+        else
+        {
+            std::cout << "[D3D12]::Success: do " << operation << " success!" << std::endl;
+        }
     }
+
+    template<typename T>
+    constexpr void release(T*& resource) {
+        if (resource) {
+            resource->Release();
+            resource = nullptr;
+        }
+    }
+
+#ifdef _DEBUG
+#define NAME_D3D12_OBJECT(obj, name) obj->SetName(name); OutputDebugString(L"::D3D12 Object Created: "); OutputDebugString(name); OutputDebugString(L"\n");
+#else
+#define NAME_D3D12_OBJECT(x, name)
+#endif
 }

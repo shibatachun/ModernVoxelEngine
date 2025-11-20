@@ -1,10 +1,6 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 
-
-#define NOMINMAX
 #pragma comment(lib, "vulkan-1.lib")
 
 #include <vulkan/vulkan.h>

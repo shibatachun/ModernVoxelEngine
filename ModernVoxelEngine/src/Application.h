@@ -4,7 +4,6 @@
 
 #include "Core/GraphicAPI/RenderFactory.h"
 #include "ResourcesManager/AssetManager.h"
-#include "utils/GLFWHelper.h"
 #include "utils/Camera.h"
 #include "Input/InputSystem.h"
 #include "Singleton.h"
@@ -12,8 +11,7 @@
 
 
 
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h> 
+
 
 class Application
 {
